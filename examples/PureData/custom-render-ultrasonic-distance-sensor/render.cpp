@@ -18,7 +18,6 @@
  * using libpd.
  */
 #include <Bela.h>
-#include <libraries/libpd/libpd.h>
 
 // Enable features here. These may be undef'ed below if the corresponding
 // BELA_LIBPD_DISABLE_* flag is passed
@@ -26,6 +25,8 @@
 #define BELA_LIBPD_MIDI
 #define BELA_LIBPD_TRILL
 #define BELA_LIBPD_GUI
+#define BELA_LIBPD_SERIAL
+#define BELA_LIBPD_SYSTEM_THREADED
 
 #ifdef BELA_LIBPD_DISABLE_SCOPE
 #undef BELA_LIBPD_SCOPE
@@ -39,6 +40,12 @@
 #ifdef BELA_LIBPD_DISABLE_GUI
 #undef BELA_LIBPD_GUI
 #endif // BELA_LIBPD_DISABLE_GUI
+#ifdef BELA_LIBPD_DISABLE_SERIAL
+#undef BELA_LIBPD_SERIAL
+#endif // BELA_LIBPD_DISABLE_SERIAL
+#ifdef BELA_LIBPD_DISABLE_SYSTEM_THREADD
+#undef BELA_LIBPD_SYSTEM_THREADED
+#endif // BELA_LIBPD_DISABLE_SYSTEM_THREADD
 
 #define PD_THREADED_IO
 #include <libraries/libpd/libpd.h>
@@ -49,7 +56,7 @@
 #include <libraries/Midi/Midi.h>
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_SCOPE
- #include <libraries/Scope/Scope.h>
+#include <libraries/Scope/Scope.h>
 #endif // BELA_LIBPD_SCOPE
 #include <string>
 #include <sstream>
@@ -188,6 +195,243 @@ bool guiControlDataCallback(JSONObject& root, void* arg)
 }
 
 #endif // BELA_LIBPD_GUI
+#ifdef BELA_LIBPD_SERIAL
+#include <libraries/Serial/Serial.h>
+#include <libraries/Pipe/Pipe.h>
+#include <string>
+
+Pipe gSerialPipe;
+Serial gSerial;
+std::string gSerialId;
+int gSerialEom;
+enum SerialType {
+	kSerialFloats,
+	kSerialBytes,
+	kSerialSymbol,
+	kSerialSymbols,
+} gSerialType = kSerialFloats;
+AuxiliaryTask gSerialInputTask;
+AuxiliaryTask gSerialOutputTask;
+
+struct serialMessageHeader
+{
+	uint32_t idSize = 0;
+	uint32_t dataSize = 0;
+};
+enum WaitingFor {
+	kHeader,
+	kId,
+	kData,
+};
+
+struct SerialPipeState {
+	struct serialMessageHeader h;
+	enum WaitingFor waitingFor = kHeader;
+	char id[100];
+};
+
+static void processSerialPipe(bool rt, SerialPipeState& s)
+{
+	// Not sure we actually need while() below. We were using it earlier
+	// when this was coded inside render() in order to be able to perform early returns
+	while(1)
+	{
+		auto& h = s.h;
+		auto& waitingFor = s.waitingFor;
+		auto& id = s.id;
+		if(kHeader == waitingFor)
+		{
+			int ret = rt ? gSerialPipe.readRt(h) : gSerialPipe.readNonRt(h);
+			if(ret <= 0)
+				break;
+			waitingFor = kId;
+		}
+		if(kId == waitingFor)
+		{
+			if(h.idSize > sizeof(id) - 1)
+				rt_fprintf(stderr, "Serial: ID too large\n");
+			else
+			{
+				int ret = rt ? gSerialPipe.readRt(id, h.idSize) : gSerialPipe.readNonRt(id, h.idSize);
+				if(ret <= 0)
+					break;
+				if(int(h.idSize) != ret)
+				{
+					rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.idSize, ret);
+					break;
+				}
+				id[ret] = '\0'; // ensure it's null-terminated
+				waitingFor = kData;
+			}
+		}
+		if(kData == waitingFor)
+		{
+			char data[h.dataSize + 1];
+			int ret = rt ? gSerialPipe.readRt(data, h.dataSize) : gSerialPipe.readNonRt(data, h.dataSize);
+			if(ret <= 0)
+				break;
+			if(int(h.dataSize) != ret)
+			{
+				rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.dataSize, ret);
+				break;
+			}
+			if(rt)
+			{
+				// rt: forward data from pipe to Pd
+				data[h.dataSize] = '\0'; // ensure it's null-terminated
+				if(h.dataSize)
+				{
+					const char* rec = "bela_serialIn";
+					if(kSerialSymbol == gSerialType)
+					{
+						libpd_symbol(rec, data);
+					} else if(kSerialBytes == gSerialType) {
+						if(gSerialEom >= 0) {
+							// messages are separated: send as a list
+							libpd_start_message(h.dataSize);
+							for(size_t n = 0; n < h.dataSize; ++n)
+								libpd_add_float(data[n]);
+							libpd_finish_message(rec, id);
+						} else {
+							// messages are not separated: send one byte at a time
+							for(size_t n = 0; n < h.dataSize; ++n)
+							{
+								libpd_start_message(h.dataSize);
+								libpd_add_float(data[n]);
+								libpd_finish_message(rec, id);
+							}
+						}
+					} else {
+						unsigned int nTokens = 1;
+						const uint8_t separators[] = { ' ', '\0'};
+						// find number of delimiters
+						size_t start = 0;
+						for(size_t n = 0; n < sizeof(data); ++n)
+						{
+							for(size_t c = 0; c < sizeof(separators); ++c)
+							{
+								if(separators[c] == data[n] && n != start) // exclude empty tokens
+								{
+									start = n + 1;
+									nTokens++;
+								}
+							}
+						}
+						libpd_start_message(nTokens);
+						start = 0;
+						for(size_t n = 0; n < sizeof(data); ++n)
+						{
+							bool end = false;
+							for(size_t c = 0; c < sizeof(separators); ++c)
+							{
+								if(separators[c] == data[n])
+								{
+									if(start == n)
+										start++; // remove empty tokens
+									else
+										end = true;
+									break; // no need to check for more separators
+								}
+							}
+							if(end)
+							{
+								data[n] = '\0'; // ensure the string is null-terminated so the next line works
+								if(kSerialSymbols == gSerialType)
+									libpd_add_symbol(data + start);
+								else if (kSerialFloats == gSerialType)
+									libpd_add_float(atof(data + start));
+								start = n + 1;
+							}
+						}
+						libpd_finish_message(rec, id);
+					}
+				}
+			} else {
+				// non-rt: forward data from pipe to serial
+				if(h.dataSize)
+					gSerial.write(data, h.dataSize);
+			}
+			waitingFor = kHeader;
+		}
+	}
+}
+
+static void serialOutputLoop(void* arg) {
+	// blocking read with timeout
+	gSerialPipe.setBlockingNonRt(true);
+	gSerialPipe.setTimeoutMsNonRt(100);
+	std::vector<uint8_t> rec(1024);
+	std::vector<uint8_t> id(100);
+
+	SerialPipeState serialStateNonRt {};
+	while(!Bela_stopRequested())
+	{
+		processSerialPipe(false, serialStateNonRt);
+	}
+}
+
+static void serialInputLoop(void* arg) {
+	char serialBuffer[10000];
+	unsigned int i = 0;
+	serialMessageHeader h;
+	h.idSize = strlen(gSerialId.c_str()) + 1;
+	while(!Bela_stopRequested())
+	{
+		// read from the serial port with a timeout of 100ms
+		int ret = gSerial.read(serialBuffer + i, sizeof(serialBuffer) - i, 100);
+		if (ret > 0) {
+			if(gSerialEom < 0)
+			{
+				h.dataSize = ret;
+				// send everything immediately
+				gSerialPipe.writeNonRt(h);
+				gSerialPipe.writeNonRt(gSerialId.c_str(), h.idSize);
+				gSerialPipe.writeNonRt(serialBuffer, h.dataSize);
+			} else {
+				// find EOM in new data
+				unsigned int searchStart = i;
+				unsigned int searchStop = searchStart + ret;
+				unsigned int n;
+				unsigned int lastSent = 0;
+				bool found;
+				do
+				{
+					found = false;
+					for(n = searchStart; n < searchStop; ++n)
+					{
+						if(serialBuffer[n] == gSerialEom)
+						{
+							found = true;
+							break;
+						}
+					}
+					// if found, send all data till that point
+					if(found)
+					{
+						h.dataSize = n - lastSent;
+						if(h.dataSize)
+						{
+							gSerialPipe.writeNonRt(h);
+							gSerialPipe.writeNonRt(gSerialId.c_str(), h.idSize);
+							gSerialPipe.writeNonRt(serialBuffer + lastSent, h.dataSize);
+						}
+						searchStart = n + 1;
+						lastSent += 1 + h.dataSize;
+					}
+				}
+				while(found);
+				// if we are left with any data, move it to the beginning of the buffer.
+				// TODO: avoid this and use it as a circular buffer
+				if(searchStart != i)
+					memmove(serialBuffer, serialBuffer + searchStart, searchStop - searchStart);
+				i = searchStop - searchStart;
+			}
+		}
+	}
+}
+
+#endif // BELA_LIBPD_SERIAL
+
 enum { minFirstDigitalChannel = 10 };
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
@@ -367,6 +611,47 @@ void setTrillPrintError()
 }
 #endif // BELA_LIBPD_TRILL
 
+static void systemDoSystem(const char* cmd)
+{
+	rt_printf("system(\"%s\");\n", cmd);
+	system(cmd);
+}
+#ifdef BELA_LIBPD_SYSTEM_THREADED
+#include <AuxTaskNonRT.h>
+static AuxTaskNonRT systemTask("systemTask", [](void* buf, int size) {
+	systemDoSystem((const char*)buf);
+});
+
+#endif // BELA_LIBPD_SYSTEM_THREADED
+
+static void belaSystem(const char* first, int argc, t_atom* argv)
+{
+	static std::string cmd; // make it static to try and avoid repeated allocations
+	cmd = first ? first : "";
+	for(size_t n = 0; n < argc; ++n)
+	{
+		if(0 != n || first)
+			cmd += " ";
+		if(libpd_is_float(argv + n)) {
+			float arg = libpd_get_float(argv + n);
+			if(arg == (int)arg)
+				cmd += std::to_string((int)arg);
+			else
+				cmd += std::to_string(arg);
+		} else if(libpd_is_symbol(argv + n)) {
+			cmd += libpd_get_symbol(argv + n);
+		} else {
+			rt_fprintf(stderr, "Error: argument %d of bela_system is not a float or symbol. Command so far: '%s', this will be discarded\n", n, cmd.c_str());
+			return;
+		}
+	}
+#ifdef BELA_LIBPD_SYSTEM_THREADED
+	systemTask.schedule(cmd.c_str(), cmd.size());
+#else // BELA_LIBPD_SYSTEM_THREADED
+	systemDoSystem(cmd.c_str());
+#endif // // BELA_LIBPD_SYSTEM_THREADED
+}
+
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
 #ifdef BELA_LIBPD_GUI
@@ -377,7 +662,7 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 			rt_fprintf(stderr, "Wrong format for bela_gui, the first element should be a float\n");
 			return;
 		}
-		unsigned int bufNum = libpd_get_float(&argv[1]);
+		unsigned int bufNum = libpd_get_float(&argv[0]);
 		if(libpd_is_float(&argv[1])) // if the first element is a float, we send an array of floats
 		{
 			float buf[argc - 1];
@@ -409,6 +694,11 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 		return;
 	}
 #endif // BELA_LIBPD_GUI
+	if(0 == strcmp(source, "bela_system"))
+	{
+		belaSystem(nullptr, argc, argv);
+		return;
+	}
 }
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
 #ifdef BELA_LIBPD_MIDI
@@ -485,6 +775,17 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		dcm.manage(channel, direction, isMessageRate);
 		return;
 	}
+	if(strcmp(source, "bela_system") == 0){
+		belaSystem(symbol, argc, argv);
+		return;
+	}
+	if(strcmp(source, "bela_control") == 0){
+		if(strcmp("stop", symbol) == 0){
+			rt_printf("bela_control: stop\n");
+			Bela_requestStop();
+		}
+		return;
+	}
 #ifdef BELA_LIBPD_GUI
 	if(0 == strcmp(source, "bela_setGui"))
 	{
@@ -520,6 +821,83 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 	}
 #endif // BELA_LIBPD_GUI
+#ifdef BELA_LIBPD_SERIAL
+	if(0 == strcmp(source, "bela_setSerial"))
+	{
+		if(0 == strcmp(symbol, "new"))
+		{
+			if(
+				argc < 5
+				|| !libpd_is_symbol(argv + 0) // serial_id
+				|| !libpd_is_symbol(argv + 1) // device
+				|| !libpd_is_float(argv + 2) // baudrate
+				|| !(libpd_is_symbol(argv + 3) || libpd_is_float(argv + 3)) // EOM
+				|| !libpd_is_symbol(argv + 4) // type
+			)
+			{
+				fprintf(stderr, "Invalid bela_setSerial arguments. Should be:\n"
+				"`new serial_id device baudrate EOM type`,\n"
+				"where `EOM` is one of `newline` or `none` or a character (expressed as an integer"
+				"       between 0 and 255)\n"
+				"and `type` is one of `bytes`, `floats`, `symbol`, `symbols`\n");
+				return;
+			}
+			gSerialId = libpd_get_symbol(argv + 0);
+			const char* device = libpd_get_symbol(argv + 1);
+			unsigned int baudrate = libpd_get_float(argv + 2);
+			gSerialEom = -1;
+			if(libpd_is_symbol(argv + 3)) {
+				const char* eom = libpd_get_symbol(argv + 3);
+				if(0 == strcmp(eom, "newline"))
+					gSerialEom = '\n';
+			} else if(libpd_is_float(argv + 3)) {
+				gSerialEom = libpd_get_float(argv + 3);
+			}
+			const char* type = libpd_get_symbol(argv + 4);
+			if(0 == strcmp("floats", type))
+				gSerialType = kSerialFloats;
+			else if(0 == strcmp("bytes", type))
+				gSerialType = kSerialBytes;
+			else if(0 == strcmp("symbol", type))
+				gSerialType = kSerialSymbol;
+			else if(0 == strcmp("symbols", type))
+				gSerialType = kSerialSymbols;
+
+			if(gSerial.setup(device, baudrate))
+				return;
+			gSerialInputTask = Bela_runAuxiliaryTask(serialInputLoop, 0);
+			gSerialOutputTask = Bela_runAuxiliaryTask(serialOutputLoop, 0);
+		}
+	}
+	if(0 == strcmp(source, "bela_serialOut"))
+	{
+		if(!argc) {
+			fprintf(stderr, "Invalid bela_serialOut arguments. Should be:\n"
+			"`serial_id firstByte <other bytes>`\n");
+			return;
+		}
+		const char* id = symbol;
+		// convert floats to bytes
+		char data[argc];
+		for(size_t n = 0; n < argc; ++n)
+		{
+			t_atom *a = argv + n;
+			if(libpd_is_float(a))
+			{
+				data[n] = libpd_get_float(a);
+			} else {
+				fprintf(stderr, "bela_serialOut received non-float\n");
+				return;
+			}
+		}
+		struct serialMessageHeader h;
+		h.idSize = strlen(id);
+		h.dataSize = sizeof(data);
+		gSerialPipe.writeRt(h);
+		gSerialPipe.writeRt(id, h.idSize);
+		gSerialPipe.writeRt(data, h.dataSize);
+	}
+#endif // BELA_LIBPD_SERIAL
 #ifdef BELA_LIBPD_TRILL
 	if(0 == strcmp(source, "bela_setTrill"))
 	{
@@ -626,7 +1004,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 						value = 0;
 					if(Trill::prescalerMax < value)
 						value = Trill::prescalerMax;
-					rt_printf("bela_setTrill prescaler value out of range, clipping to %u\n", value);
+					rt_printf("bela_setTrill prescaler value out of range, clipping to %.0f\n", value);
 				}
 				gTouchSensors[idx].second->setPrescaler(value);
 			}
@@ -640,7 +1018,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 void Bela_floatHook(const char *source, float value){
 	// let's make this as optimized as possible for built-in digital Out parsing
 	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between gLibpdDigitalChannelOffset and (gLibpdDigitalCHannelOffset+gDigitalChannelsInUse)
-	static int prefixLength = 15; // strlen("bela_digitalOut")
+	static int prefixLength = strlen("bela_digitalOut");
 	if(strncmp(source, "bela_digitalOut", prefixLength)==0){
 		if(source[prefixLength] != 0){ //the two ifs are used instead of if(strlen(source) >= prefixLength+2)
 			if(source[prefixLength + 1] != 0){
@@ -653,6 +1031,7 @@ void Bela_floatHook(const char *source, float value){
 				}
 			}
 		}
+		return;
 	}
 }
 
@@ -696,7 +1075,7 @@ void fdLoop(void* arg){
 
 #ifdef BELA_LIBPD_SCOPE
 Scope scope;
-float* gScopeOut;
+std::vector<float> gScopeOut;
 #endif // BELA_LIBPD_SCOPE
 void* gPatch;
 bool gDigitalEnabled = 0;
@@ -708,6 +1087,9 @@ bool setup(BelaContext *context, void *userData)
 	gui.setControlDataCallback(guiControlDataCallback, nullptr);
 	gGuiPipe.setup("guiControlPipe", 16384);
 #endif // BELA_LIBPD_GUI
+#ifdef BELA_LIBPD_SERIAL
+	gSerialPipe.setup("serialPipe", 16384);
+#endif // BELA_LIBPD_SERIAL
 	// Check Pd's version
 	int major, minor, bugfix;
 	sys_getversion(&major, &minor, &bugfix);
@@ -737,20 +1119,17 @@ bool setup(BelaContext *context, void *userData)
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_SCOPE
 	scope.setup(gScopeChannelsInUse, context->audioSampleRate);
-	gScopeOut = new float[gScopeChannelsInUse];
+	gScopeOut.resize(gScopeChannelsInUse);
 #endif // BELA_LIBPD_SCOPE
 
 	// Check first of all if the patch file exists. Will actually open it later.
 	char file[] = "_main.pd";
 	char folder[] = "./";
-	unsigned int strSize = strlen(file) + strlen(folder) + 1;
-	char* str = (char*)malloc(sizeof(char) * strSize);
-	snprintf(str, strSize, "%s%s", folder, file);
-	if(access(str, F_OK) == -1 ) {
-		printf("Error file %s/%s not found. The %s file should be your main patch.\n", folder, file, file);
+	std::string path = std::string(folder) + file;
+	if(access(path.c_str(), F_OK) == -1 ) {
+		printf("Error file %s not found. The %s file should be your main patch.\n", path.c_str(), file);
 		return false;
 	}
-	free(str);
 
 	// analog setup
 	gAnalogChannelsInUse = context->analogInChannels;
@@ -842,6 +1221,8 @@ bool setup(BelaContext *context, void *userData)
 	for(unsigned int i = 0; i < gDigitalChannelsInUse; i++)
 		libpd_bind(gReceiverOutputNames[i].c_str());
 	libpd_bind("bela_setDigital");
+	libpd_bind("bela_control");
+	libpd_bind("bela_system");
 #ifdef BELA_LIBPD_MIDI
 	libpd_bind("bela_setMidi");
 #endif // BELA_LIBPD_MIDI
@@ -849,6 +1230,10 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_guiOut");
 	libpd_bind("bela_setGui");
 #endif // BELA_LIBPD_GUI
+#ifdef BELA_LIBPD_SERIAL
+	libpd_bind("bela_serialOut");
+	libpd_bind("bela_setSerial");
+#endif // BELA_LIBPD_SERIAL
 #ifdef BELA_LIBPD_TRILL
 	libpd_bind("bela_setTrill");
 #endif // BELA_LIBPD_TRILL
@@ -919,7 +1304,7 @@ void render(BelaContext *context, void *userData)
 		}
 		if(!waitingForHeader)
 		{
-			char payload[header.size];
+			char payload[header.size + ('s' == header.type)]; // + 1 to add null termination if needed
 			int ret = gGuiPipe.readRt(&payload[0], header.size);
 			if(int(header.size) != ret)
 			{
@@ -933,14 +1318,20 @@ void render(BelaContext *context, void *userData)
 					rt_fprintf(stderr, "Unexpected message length for float: %u\n", header.size);
 					continue;
 				}
-				float value = ((float*)payload)[0];
+				float value;
+				memcpy(&value, payload, sizeof(value));
 				libpd_start_message(1);
 				libpd_add_float(value);
 				libpd_finish_message("bela_guiControl", name);
 			}
 			if('s' == header.type)
 			{
-				libpd_symbol(name, payload);
+				// add null termination
+				payload[header.size] = '\0';
+				// send to Pd
+				libpd_start_message(1);
+				libpd_add_symbol(payload);
+				libpd_finish_message("bela_guiControl", name);
 			}
 			waitingForHeader = true;
 		}
@@ -971,6 +1362,11 @@ void render(BelaContext *context, void *userData)
 		libpd_write_array(b.name.c_str(), 0, dataBuffer.getAsFloat(), dataBuffer.getNumElements());
 	}
 #endif // BELA_LIBPD_GUI
+#ifdef BELA_LIBPD_SERIAL
+	static SerialPipeState serialPipeStateRt {};
+	if(gSerialInputTask)
+		processSerialPipe(true, serialPipeStateRt);
+#endif // BELA_LIBPD_SERIAL
 #ifdef BELA_LIBPD_TRILL
 	for(auto& name : gTrillAcks)
 	{
@@ -1223,10 +1619,10 @@ void render(BelaContext *context, void *userData)
 #ifdef BELA_LIBPD_SCOPE
 		// scope output
 		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
-			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeOut.size(); k++, p1 += gLibpdBlockSize) {
 				gScopeOut[k] = *p1;
 			}
-			scope.log(gScopeOut[0], gScopeOut[1], gScopeOut[2], gScopeOut[3]);
+			scope.log(gScopeOut.data());
 		}
 #endif // BELA_LIBPD_SCOPE
 
@@ -1303,7 +1699,4 @@ void cleanup(BelaContext *context, void *userData)
 	}
 #endif // BELA_LIBPD_TRILL
 	libpd_closefile(gPatch);
-#ifdef BELA_LIBPD_SCOPE
-	delete [] gScopeOut;
-#endif // BELA_LIBPD_SCOPE
 }
