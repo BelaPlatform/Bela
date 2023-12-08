@@ -82,8 +82,11 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Unable to initialise Trill Bar\n");
 		return false;
 	}
-
 	touchSensor.printDetails();
+	// noise may cause some spurious touches with very small size to be
+	// detected. Silence them here
+	touchSensor.setMinimumTouchSize(0.1);
+	usleep(10000);
 
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_runAuxiliaryTask(loop);
