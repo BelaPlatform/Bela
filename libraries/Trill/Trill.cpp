@@ -520,10 +520,11 @@ int Trill::setIDACValue(uint8_t value) {
 int Trill::setMinimumTouchSize(float minSize) {
 	uint16_t size;
 	float maxMinSize = (1<<16) - 1;
-	if(maxMinSize > minSize / sizeRescale) // clipping to the max value we can transmit
-		size = maxMinSize;
-	else
-		size = minSize / sizeRescale;
+	minSize /= sizeRescale;
+	// clipping to the max value we can transmit
+	if(minSize > maxMinSize)
+		minSize = maxMinSize;
+	size = minSize;
 	i2c_char_t buf[] = { kCommandMinimumSize, (i2c_char_t)(size >> 8), (i2c_char_t)(size & 0xFF) };
 	return WRITE_COMMAND_BUF(buf);
 }
