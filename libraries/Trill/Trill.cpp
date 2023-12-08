@@ -213,8 +213,11 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	address = i2c_address;
 	readErrorOccurred = false;
 
-	if(setScanTrigger(kScanTriggerI2c))
-		return 1;
+	if(firmware_version_ > 3)
+	{
+		if(setScanTrigger(kScanTriggerI2c))
+			return 1;
+	}
 	return 0;
 }
 
@@ -367,8 +370,8 @@ int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, co
 
 int Trill::waitForAck(const uint8_t command, const char* name)
 {
-	if(firmware_version_ && firmware_version_ < 3) {
-		// old firmware, use old sleep time
+	if(firmware_version_ < 3) {
+		// old or unknown firmware, use old sleep time for bw compatibility
 		usleep(10000);
 		return 0;
 	}
