@@ -19,15 +19,8 @@
 #include <algorithm>
 #include <vector>
 
-#ifdef XENOMAI_SKIN_native
-#include <native/timer.h>
-// xenomai timer
-SRTIME prevChangeNs = 0;
-#endif
-#ifdef XENOMAI_SKIN_posix
 // xenomai timer
 long long int prevChangeNs = 0;
-#endif
 
 #undef DBOX_CAPE_TEST
 
@@ -649,17 +642,11 @@ void render_medium_prio(void*)
 		}
 #endif
 
-#ifdef XENOMAI_SKIN_native
-		RTIME ticks		= rt_timer_read();
-		SRTIME ns		= rt_timer_tsc2ns(ticks);
-		SRTIME delta 	= ns-prevChangeNs;
-#endif
 		long long int deltaMinThreshold = 100000000;
-#ifdef XENOMAI_SKIN_posix
 		long long int ns = 0;
 		long long int delta;
 		struct timespec tp;
-		int ret = __wrap_clock_gettime(CLOCK_REALTIME, &tp);
+		int ret = BELA_RT_WRAP(clock_gettime(CLOCK_REALTIME, &tp));
 		if(ret){
 			// if something goes wrong reading the clock, let's not
 			// make that stop us
@@ -669,7 +656,6 @@ void render_medium_prio(void*)
 			ns = tp.tv_sec * 1000000000ULL + tp.tv_nsec;
 			delta = ns - prevChangeNs;
 		}
-#endif
 
 		// switch to next bank cannot be too frequent, to avoid segfault! [for example segfault happens when removing both VDD and GND from breadboard]
 		if(gNextOscBank != gCurrentOscBank && delta > deltaMinThreshold) {
