@@ -192,11 +192,11 @@ void render(BelaContext *context, void *userData)
 void cleanup(BelaContext *context, void *userData)
 {
 	if(anaErrorCount == 0 && digErrorCount == 0){
-		rt_printf("Test was succesful with %d analog channels and a buffer size of %d\n", context->analogInChannels, context->audioFrames);
+		printf("Test was succesful with %d analog channels and a buffer size of %d\n", context->analogInChannels, context->audioFrames);
 	} else {
-		rt_printf("------------------------\n%danalog %ddigital errors over %dsamples while running test with ",
-				anaErrorCount, digErrorCount, context->audioFramesElapsed);
-		rt_printf("%d analog channels and a buffer size of %d \n\n\n",
+		printf("------------------------\n%danalog %ddigital errors over %u samples while running test with ",
+				anaErrorCount, digErrorCount, (unsigned)context->audioFramesElapsed);
+		printf("%d analog channels and a buffer size of %d \n\n\n",
 				context->analogInChannels, context->audioFrames);
 		exit(1);
 	}
