@@ -1637,7 +1637,7 @@ void render(BelaContext* context, void*)
 	static int numStates = 2;
 	if(0)
 	if((int)context->audioFramesElapsed - lastChange > 70000){
-		rt_printf("last: %d, current: %d\n", lastChange, context->audioFramesElapsed);
+		rt_printf("last: %d, current: %u\n", lastChange, (unsigned)context->audioFramesElapsed);
 		lastChange = context->audioFramesElapsed;
 		state++;
 		static int count = -1;
