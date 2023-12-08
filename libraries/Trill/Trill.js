@@ -25,7 +25,7 @@ class TrillTouch {
 }
 
 class Trill {
-	constructor(type, length, position = [200, 200], touchScale = 0.4) {
+	constructor(type, length, position = [200, 200], touchScale = 0.4, alpha = 255) {
 		this.position = position;
 		this.types = ['bar', 'square', 'hex', 'ring']
 		type = type.toLowerCase();
@@ -36,7 +36,15 @@ class Trill {
 		this.resize(length);
 
 		this.sensorColor = 'black';
-		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan'];
+		this.touchColors = [
+			color('red'),
+			color('blue'),
+			color('yellow'),
+			color('white'),
+			color('cyan'),
+		];
+		for(let n = 0; n < this.touchColors.length; ++n)
+			this.touchColors[n].setAlpha(alpha);
 		this.touches = [];
 	}
 
@@ -90,7 +98,7 @@ class Trill {
 		} else if (this.type == 'hex') {
 			_location[1] = 1 - location[1];
 		}
-		let _size = constrain(size, 0, 1);
+		let _size = constrain(size, 0.1, 1);
 		if(!this.touches[i])
 			this.touches[i] = new TrillTouch(this.touchScale,
 				this.touchColors[i % this.touchColors.length]);
