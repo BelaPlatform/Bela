@@ -389,8 +389,11 @@ static void serialInputLoop(void* arg) {
 				// if we are left with any data, move it to the beginning of the buffer.
 				// TODO: avoid this and use it as a circular buffer
 				if(searchStart != i)
+				{
 					memmove(serialBuffer, serialBuffer + searchStart, searchStop - searchStart);
-				i = searchStop - searchStart;
+					i = searchStop - searchStart;
+				} else
+					i = i + searchStop - searchStart;
 			}
 		}
 	}
