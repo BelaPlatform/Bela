@@ -12,6 +12,8 @@
 #include "../include/RtWrappers.h"
 #include <alsa/asoundlib.h>
 
+static const std::string defaultPort = "hw:1,0,0";
+
 #define kMidiInput 0
 #define kMidiOutput 1
 
@@ -100,37 +102,40 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 };
 
 
-Midi::Midi() : 
-alsaIn(NULL), alsaOut(NULL),
-inputParser(NULL), parserEnabled(false), inputEnabled(false), outputEnabled(false),
-inId(NULL), outId(NULL), outPipeName(NULL)
-	, sock(0)
+Midi::Midi()
 {
 	setup();
 }
 void Midi::setup() {
-	sprintf(defaultPort, "%s", "hw:1,0,0"); // a bug in gcc<4.10 prevents initialization with defaultPort("hw:1,0,0") in the initialization list
-	inputParser = 0;
 	size_t inputBytesInitialSize = 1000;
 	inputBytes.resize(inputBytesInitialSize);
-	outputBytes.resize(inputBytesInitialSize);
 	inputBytesWritePointer = 0;
 	inputBytesReadPointer = inputBytes.size() - 1;
+	alsaIn = nullptr;
+	alsaOut = nullptr;
+	inputParser = nullptr;
+	midiOutputTask = nullptr;
+	parserEnabled = false;
+	inputEnabled = false;
+	outputEnabled = false;
+	shouldStop = false;
 }
+
 void Midi::cleanup() {
-	free(inId);
-	free(outId);
-	free(outPipeName);
-	// dummy write so that `poll` stops polling ! 
-	//rt_pipe_write(&outPipe, NULL, 0, P_NORMAL); // does not work :(
-	close(sock);
+	shouldStop = true;
+	if(inputEnabled)
+		BELA_RT_WRAP(pthread_join(midiInputThread, NULL));
+	delete midiOutputTask;
+	midiOutputTask = nullptr;
 	if(alsaOut){
 		snd_rawmidi_drain(alsaOut);
 		snd_rawmidi_close(alsaOut);
+		alsaOut = nullptr;
 	}
 	if(alsaIn){
 		snd_rawmidi_drain(alsaIn);
 		snd_rawmidi_close(alsaIn);
+		alsaIn = nullptr;
 	}
 }
 
@@ -154,7 +159,7 @@ int Midi::attemptRecoveryRead()
 	snd_rawmidi_close(alsaIn);
 	alsaIn = NULL;
 	printf("MIDI: attempting to reopen input %s\n", inPort.c_str());
-	while(!Bela_stopRequested())
+	while(!shouldStop)
 	{
 		int err = snd_rawmidi_open(&alsaIn, NULL, inPort.c_str(), SND_RAWMIDI_NONBLOCK);
 		if (err) {
@@ -167,23 +172,28 @@ int Midi::attemptRecoveryRead()
 	return -1;
 }
 
-void Midi::readInputLoop(void* obj){
+void* Midi::readInputLoopStatic(void* obj){
 	Midi* that = (Midi*)obj;
-	while(!Bela_stopRequested()){
-		unsigned short revents;
-		int npfds = snd_rawmidi_poll_descriptors_count(that->alsaIn);
-		struct pollfd* pfds = (struct pollfd*)alloca(npfds * sizeof(struct pollfd));
-		snd_rawmidi_poll_descriptors(that->alsaIn, pfds, npfds);
+	that->readInputLoop();
+	return NULL;
+}
 
-		while(!Bela_stopRequested()){
-			int maxBytesToRead = that->inputBytes.size() - that->inputBytesWritePointer;
+void Midi::readInputLoop(){
+	while(!shouldStop){
+		unsigned short revents;
+		int npfds = snd_rawmidi_poll_descriptors_count(alsaIn);
+		struct pollfd pfds[npfds];
+		snd_rawmidi_poll_descriptors(alsaIn, pfds, npfds);
+
+		while(!shouldStop){
+			int maxBytesToRead = inputBytes.size() - inputBytesWritePointer;
 			int timeout = 50; // ms
 			int err = poll(pfds, npfds, timeout);
 			if (err < 0) {
 				fprintf(stderr, "poll failed: %s", strerror(errno));
 				break;
 			}
-			if ((err = snd_rawmidi_poll_descriptors_revents(that->alsaIn, pfds, npfds, &revents)) < 0) {
+			if ((err = snd_rawmidi_poll_descriptors_revents(alsaIn, pfds, npfds, &revents)) < 0) {
 				fprintf(stderr, "cannot get poll events: %s", snd_strerror(-err));
 				break;
 			}
@@ -197,8 +207,8 @@ void Midi::readInputLoop(void* obj){
 			}
 			// else some data is available!
 			int ret = snd_rawmidi_read(
-				that->alsaIn,
-				&that->inputBytes[that->inputBytesWritePointer],
+				alsaIn,
+				&inputBytes[inputBytesWritePointer],
 				sizeof(midi_byte_t)*maxBytesToRead
 			);
 			if(ret < 0){
@@ -209,21 +219,21 @@ void Midi::readInputLoop(void* obj){
 				}
 				continue;
 			}
-			that->inputBytesWritePointer += ret;
-			if(that->inputBytesWritePointer == that->inputBytes.size()){ //wrap pointer around
-				that->inputBytesWritePointer = 0;
+			inputBytesWritePointer += ret;
+			if(inputBytesWritePointer == inputBytes.size()){ //wrap pointer around
+				inputBytesWritePointer = 0;
 			}
 
-			if(that->parserEnabled == true && ret > 0){ // if the parser is enabled and there is new data, send the data to it
+			if(parserEnabled == true && ret > 0){ // if the parser is enabled and there is new data, send the data to it
 				int input;
-				while((input=that->_getInput()) >= 0){
+				while((input = _getInput()) >= 0){
 					midi_byte_t inputByte = (midi_byte_t)(input);
-					that->inputParser->parse(&inputByte, 1);
+					inputParser->parse(&inputByte, 1);
 				}
 			}
 		}
-		if(!Bela_stopRequested())
-			that->attemptRecoveryRead();
+		if(!shouldStop)
+			attemptRecoveryRead();
 	}
 }
 
@@ -232,7 +242,7 @@ int Midi::attemptRecoveryWrite()
 	snd_rawmidi_close(alsaOut);
 	alsaOut = NULL;
 	printf("MIDI: attempting to reopen output %s\n", outPort.c_str());
-	while(!Bela_stopRequested())
+	while(!shouldStop)
 	{
 		int err = snd_rawmidi_open(NULL, &alsaOut, outPort.c_str(), SND_RAWMIDI_NONBLOCK);
 		if (err) {
@@ -245,102 +255,47 @@ int Midi::attemptRecoveryWrite()
 	return -1;
 }
 
-void Midi::writeOutputLoop(void* obj){
-	Midi* that = (Midi*)obj;
-	//printf("Opening outPipe %s\n", that->outPipeName);
-	int pipe_fd = open(that->outPipeName, O_RDWR);
-	if (pipe_fd < 0){
-		fprintf(stderr, "could not open out pipe %s: %s\n", that->outPipeName, strerror(-pipe_fd));
-		return;
-	}
-	void* data = &that->outputBytes.front();
-	while(!Bela_stopRequested()){
-		struct pollfd fds = {
-			pipe_fd,
-			POLLIN,
-			0
-		}; 
-		while(!Bela_stopRequested()){
-			//TODO: C++11 would allow to use outputBytes.data() instead of &outputBytes.front()
-			int timeout = 50; //ms
-			int ret = poll(&fds, 1, timeout);
-			unsigned int revents = fds.revents;
-			if (revents & (POLLERR | POLLHUP))
-				break;
-			if (!(revents & POLLIN))
-				continue;	
-			// else some data is available!
-			if(revents & POLLIN){
-				// there is data available
-				ret = read(pipe_fd, data, that->outputBytes.size());
-				if(ret > 0){
-					//printf("obtained %d bytes: writing\n", ret);
-					// write the received message to the output
-					ret = snd_rawmidi_write(that->alsaOut, data, ret);
-					if(ret < 0)
-						break;
-					// make sure it is written
-					// NOTE:using _drain actually increases the latency
-					// under heavy load, so we leave it out and
-					// leave it to the driver to figure out.
-					//snd_rawmidi_drain(that->alsaOut);
-				}
-			}
-		}
-		if(!Bela_stopRequested())
-			that->attemptRecoveryWrite();
-	}
-	close(pipe_fd);
+void Midi::doWriteOutput(const void* data, int size) {
+	int ret = snd_rawmidi_write(alsaOut, data, size);
+	if(ret < 0)
+		attemptRecoveryWrite();
 }
+
+#include <RtWrappers.h>
 
 int Midi::readFrom(const char* port){
 	if(port == NULL){
-		port = defaultPort;
+		port = defaultPort.c_str();
 	}
 	inPort = port;
-	int size = snprintf(inId, 0, "bela-midiIn_%s", port);
-	inId = (char*)malloc((size + 1) * sizeof(char));
-	snprintf(inId, size + 1, "bela-midiIn_%s", port);
+	inId = "bela-midiIn_" + inPort;
 
 	int err = snd_rawmidi_open(&alsaIn, NULL, inPort.c_str(), SND_RAWMIDI_NONBLOCK);
 	if (err) {
 		return err;
 	}
-	midiInputTask = Bela_createAuxiliaryTask(Midi::readInputLoop, 50, inId, (void*)this);
-	Bela_scheduleAuxiliaryTask(midiInputTask);
+	int ret = create_and_start_thread(&midiInputThread, inId.c_str(), 50, 0, NULL, Midi::readInputLoopStatic, (void*)this);
+	if(ret)
+		return 0;
 	inputEnabled = true;
 	return 1;
 }
 
 int Midi::writeTo(const char* port){
 	if(port == NULL){
-		port = defaultPort;
+		port = defaultPort.c_str();
 	}
 	outPort = port;
-	int size = snprintf(outId, 0, "bela-midiOut_%s", port);
-	outId = (char*)malloc((size + 1) * sizeof(char));
-	snprintf(outId, size + 1, "bela-midiOut_%s", port);
+	outId = "bela-midiOut_" + outPort;
 
-	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/%s";
-	size = snprintf(outPipeName, 0, outPipeNameTemplateString, outId);
-	outPipeName = (char*)malloc((size + 1)*sizeof(char));
-	snprintf(outPipeName, size + 1, outPipeNameTemplateString, outId);
-	int ret;
-	ret = createBelaRtPipe(outId, 0);
-	sock = ret;
-	if(ret <= 0){
-		fprintf(stderr, "Error while creating pipe %s: %s\n", outId, strerror(-ret));
-		return -1;
-	}
 	int err = snd_rawmidi_open(NULL, &alsaOut, outPort.c_str(), 0);
 	if (err) {
 		return err;
 	}
-	midiOutputTask = Bela_createAuxiliaryTask(writeOutputLoop, 45, outId, (void*)this);
-	if(midiOutputTask == 0){
-		return -1;
-	}
-	Bela_scheduleAuxiliaryTask(midiOutputTask);
+	midiOutputTask = new AuxTaskNonRT();
+	midiOutputTask->create(outId, [this](void* buf, int size) {
+		this->doWriteOutput(buf, size);
+	}, 45);
 	outputEnabled = true;
 	return 1;
 }
@@ -463,17 +418,20 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 	if(!outputEnabled){
 		return 0;
 	}
+	int tries = 0;
 	do {
-		// we make sure the message length does not exceed outputBytes.size(), 
-		// which would result in incomplete messages being retrieved at
-		// the other end of the pipe.
-		ssize_t size = length < outputBytes.size() ? length : outputBytes.size();
-		int ret = BELA_RT_WRAP(sendto(sock, bytes, size, 0, NULL, 0));
-		if (ret != size){
-			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
-			return -1;
+		ssize_t size = length;
+		int ret = midiOutputTask->schedule(bytes, size);
+		tries++;
+		if(ret){
+			// pipe is full, sleep and try again in the attempt to
+			// avoid losing data
+			rt_fprintf(stderr, "Error while sending %u MIDI bytes out to thread %s: %d %s\n", length, outId.c_str(), ret, strerror(ret));
+			usleep(10000);
+			if(tries > 5)
+				return -1;
 		} else {
-			length -= ret;
+			length -= size;
 		}
 	} while (length > 0);
 	return 1;

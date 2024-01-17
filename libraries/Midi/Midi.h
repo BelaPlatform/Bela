@@ -1,7 +1,7 @@
 #pragma once
-#include <Bela.h>
 #include <vector>
 #include <string>
+#include <AuxTaskNonRT.h>
 
 typedef unsigned char midi_byte_t;
 
@@ -385,27 +385,25 @@ public:
 	 */
 	static void destroyPorts(std::vector<Midi*>& ports);
 private:
-	char defaultPort[9];
 	std::string inPort;
 	std::string outPort;
 	int _getInput();
 	int attemptRecoveryRead();
-	static void readInputLoop(void* obj);
+	static void* readInputLoopStatic(void* obj);
+	void readInputLoop();
 	int attemptRecoveryWrite();
-	static void writeOutputLoop(void* obj);
+	void doWriteOutput(const void* data, int size);
 	snd_rawmidi_t *alsaIn,*alsaOut;
 	std::vector<midi_byte_t> inputBytes;
 	unsigned int inputBytesWritePointer;
 	unsigned int inputBytesReadPointer;
-	std::vector<midi_byte_t> outputBytes;
 	MidiParser* inputParser;
 	bool parserEnabled;
 	bool inputEnabled;
 	bool outputEnabled;
-	AuxiliaryTask midiInputTask;
-	AuxiliaryTask midiOutputTask;
-	char* inId;
-	char* outId;
-	char* outPipeName;
-	int sock;
+	volatile bool shouldStop;
+	pthread_t midiInputThread;
+	AuxTaskNonRT* midiOutputTask;
+	std::string inId;
+	std::string outId;
 };
