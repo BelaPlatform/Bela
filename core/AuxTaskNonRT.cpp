@@ -14,22 +14,25 @@ bool AuxTaskNonRT::shouldStop(){
 	return (Bela_stopRequested() || lShouldStop);
 }
 
-void AuxTaskNonRT::create(std::string _name, std::function<void()> callback){
+void AuxTaskNonRT::create(std::string _name, std::function<void()> callback, int prio){
 	name = _name;
 	empty_callback = callback;
 	mode = 0;
+	priority = prio;
 	__create();
 }
-void AuxTaskNonRT::create(std::string _name, std::function<void(std::string str)> callback){
+void AuxTaskNonRT::create(std::string _name, std::function<void(std::string str)> callback, int prio){
 	name = _name;
 	str_callback = callback;
 	mode = 1;
+	priority = prio;
 	__create();
 }
-void AuxTaskNonRT::create(std::string _name, std::function<void(void* buf, int size)> callback){
+void AuxTaskNonRT::create(std::string _name, std::function<void(void* buf, int size)> callback, int prio){
 	name = _name;
 	buf_callback = callback;
 	mode = 2;
+	priority = prio;
 	__create();
 }
 
@@ -41,7 +44,6 @@ void AuxTaskNonRT::__create(){
 			c = '_';
 	
 	// create the xenomai task
-	int priority = 0;
 	int stackSize = 65536 * 4;
 
 	// create an rt_pipe
