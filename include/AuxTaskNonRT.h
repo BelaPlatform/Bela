@@ -11,14 +11,13 @@
 class AuxTaskNonRT{
 	public:
 		AuxTaskNonRT(){}
-		AuxTaskNonRT(std::string _name, std::function<void()> callback){ create(_name, callback); }
-		AuxTaskNonRT(std::string _name, std::function<void(std::string str)> callback){ create(_name, callback); }
-		AuxTaskNonRT(std::string _name, std::function<void(void* buf, int size)> callback){ create(_name, callback); }
+		template <typename T>
+		AuxTaskNonRT(std::string _name, T callback, int prio = 0){ create(_name, callback, prio); }
 		~AuxTaskNonRT(){ cleanup(); }
 		
-		void create(std::string _name, std::function<void()> callback);
-		void create(std::string _name, std::function<void(std::string str)> callback);
-		void create(std::string _name, std::function<void(void* buf, int size)> callback);
+		void create(std::string _name, std::function<void()> callback, int prio = 0);
+		void create(std::string _name, std::function<void(std::string str)> callback, int prio = 0);
+		void create(std::string _name, std::function<void(void* buf, int size)> callback, int prio = 0);
 		
 		int schedule(const void* ptr, size_t size);
 		int schedule(const char* str);
@@ -26,6 +25,7 @@ class AuxTaskNonRT{
 		
 	private:
 		bool lShouldStop = false;
+		int priority = 0;
 		bool shouldStop();
 		void cleanup();
 		

@@ -118,6 +118,8 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 		fprintf(stderr, "Error: unable to init thread attributes\n");
 		return -1;
 	}
+	if(!stackSize)
+		stackSize = 1024 * 1024; // 1 MiB default
 	if(int ret = set_thread_stack_and_priority(&attr, stackSize, priority))
 	{
 		return ret;
