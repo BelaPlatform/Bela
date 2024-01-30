@@ -417,7 +417,7 @@ settingsView.on('project-settings', function (data) {
 
 settingsView.on('IDE-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('IDE-settings', data);
+	// console.log('IDE-settings', data);
 	socket.emit('IDE-settings', data);
 });
 settingsView.on('run-on-boot', function (project) {
@@ -2179,9 +2179,20 @@ var EditorView = function (_View) {
 				this.__focus(opts.focus);
 			}
 		}
-		// editor focus has changed
+		// editor theme has changed
 
 	}, {
+		key: '_darkTheme',
+		value: function _darkTheme(value) {
+			if (parseInt(value)) {
+				this.editor.setTheme("ace/theme/xcode_dark");
+			} else {
+				this.editor.setTheme("ace/theme/chrome");
+			}
+		}
+		// editor focus has changed
+
+  	}, {
 		key: '__focus',
 		value: function __focus(data) {
 
