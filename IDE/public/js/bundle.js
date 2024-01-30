@@ -2185,7 +2185,8 @@ var EditorView = function (_View) {
 		key: '_darkTheme',
 		value: function _darkTheme(value) {
 			if (parseInt(value)) {
-				this.editor.setTheme("ace/theme/xcode_dark");
+				// this.editor.setTheme("ace/theme/xcode_dark");
+				this.editor.setTheme("ace/theme/monokai");
 			} else {
 				this.editor.setTheme("ace/theme/chrome");
 			}
@@ -4595,6 +4596,20 @@ var SettingsView = function (_View) {
 				}
 			});
 		}
+	// }, {
+	// 	key: '_darkTheme',
+	// 	value: function _darkTheme(func, key, value) {
+	// 		console.log("in _darkTheme")
+	// 		var app = document.querySelector(".app");
+	// 		// editor theme has changed
+	// 		if (parseInt(func)) {
+	// 			app.classList.remove('light');
+	// 			app.classList.add('dark');
+	// 		} else {
+	// 			app.classList.remove('dark');
+	// 			app.classList.add('light');
+    //   		}
+    // 	}
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
