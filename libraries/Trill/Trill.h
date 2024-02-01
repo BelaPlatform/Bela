@@ -70,6 +70,7 @@ class Trill : public I2c
 		uint8_t firmware_version_ = 0; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
 		bool dataBufferIncludesStatusByte = false;
+		bool quiet = false;
 		std::vector<uint8_t> dataBuffer;
 		uint16_t commandSleepTime = 1000;
 		size_t currentReadOffset = -1;

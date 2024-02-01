@@ -224,6 +224,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 Trill::Device Trill::probe(unsigned int i2c_bus, uint8_t i2c_address)
 {
 	Trill t;
+	t.quiet = true;
 	if(t.initI2C_RW(i2c_bus, i2c_address, -1)) {
 		return Trill::NONE;
 	}
@@ -329,7 +330,8 @@ int Trill::writeCommandAndHandle(const i2c_char_t* data, size_t size, const char
 	int ret = writeBytes(buf, bytesToWrite);
 	if(ret != bytesToWrite)
 	{
-		fprintf(stderr, "Trill: failed to write command \"%s\"; ret: %d, errno: %d, %s.\n", name, ret, errno, strerror(errno));
+		if(!quiet)
+			fprintf(stderr, "Trill: failed to write command \"%s\"; ret: %d, errno: %d, %s.\n", name, ret, errno, strerror(errno));
 		return 1;
 	}
 	currentReadOffset = buf[0];
@@ -351,8 +353,11 @@ int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, co
 		int ret = writeBytes(&offset, sizeof(offset));
 		if(ret != sizeof(offset))
 		{
-			fprintf(stderr, "%s: error while setting read offset\n", name);
-			printErrno(ret);
+			if(!quiet)
+			{
+				fprintf(stderr, "%s: error while setting read offset\n", name);
+				printErrno(ret);
+			}
 			return 1;
 		}
 		currentReadOffset = offset;
