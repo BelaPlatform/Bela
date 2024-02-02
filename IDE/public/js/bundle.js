@@ -417,7 +417,7 @@ settingsView.on('project-settings', function (data) {
 
 settingsView.on('IDE-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	// console.log('IDE-settings', data);
+	//console.log('IDE-settings', data);
 	socket.emit('IDE-settings', data);
 });
 settingsView.on('run-on-boot', function (project) {
@@ -2184,16 +2184,23 @@ var EditorView = function (_View) {
 	}, {
 		key: '_darkTheme',
 		value: function _darkTheme(value) {
-			if (parseInt(value)) {
-				// this.editor.setTheme("ace/theme/xcode_dark");
-				this.editor.setTheme("ace/theme/monokai");
+			var isDarkTheme = parseInt(value)
+			var body = $('body');
+
+			if (isDarkTheme) {
+				this.editor.setTheme("ace/theme/xcode_dark");
+				// this.editor.setTheme("ace/theme/monokai");
+				body.toggleClass('light-theme', Boolean(false));
+				body.toggleClass('dark-theme', Boolean(true));
 			} else {
 				this.editor.setTheme("ace/theme/chrome");
+				body.toggleClass('dark-theme', Boolean(false));
+				body.toggleClass('light-theme', Boolean(true));
 			}
 		}
 		// editor focus has changed
 
-  	}, {
+	}, {
 		key: '__focus',
 		value: function __focus(data) {
 
@@ -4596,20 +4603,6 @@ var SettingsView = function (_View) {
 				}
 			});
 		}
-	// }, {
-	// 	key: '_darkTheme',
-	// 	value: function _darkTheme(func, key, value) {
-	// 		console.log("in _darkTheme")
-	// 		var app = document.querySelector(".app");
-	// 		// editor theme has changed
-	// 		if (parseInt(func)) {
-	// 			app.classList.remove('light');
-	// 			app.classList.add('dark');
-	// 		} else {
-	// 			app.classList.remove('dark');
-	// 			app.classList.add('light');
-    //   		}
-    // 	}
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
