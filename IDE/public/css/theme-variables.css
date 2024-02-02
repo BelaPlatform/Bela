@@ -1,0 +1,62 @@
+:root {
+    --main-background-color: #ffffff;
+    --tabs-color: #c9c9c9;
+    --selected-tab-color: #ffffff;
+    --top-file-status-color: #e1e1e1;
+    --accordion-background-color: #f1f1f1;
+    --hovered-accordion-color: #bdbdbd;
+    --accordion-font-color: rgba(0, 0, 0, 0.6);
+    --accordion-font-color-accent: rgba(0, 0, 0, 0.8);
+    --main-font-color: #000000;
+    --hovered-accordion-color-two: #f9f9f9;
+    --main-font-color-accent: #000000;
+    --cursor-color: #f1f1f1;
+}
+
+/* Light Theme */
+.light-theme {
+    --main-background-color: #ffffff;
+    --tabs-color: #c9c9c9;
+    --selected-tab-color: #ffffff;
+    --top-file-status-color: #e1e1e1;
+    --accordion-background-color: #f1f1f1;
+    --hovered-accordion-color: #bdbdbd;
+    --accordion-font-color: rgba(0, 0, 0, 0.6);
+    --accordion-font-color-accent: rgba(0, 0, 0, 0.8);
+    --main-font-color: #000000;
+    --hovered-accordion-color-two: #f9f9f9;
+    --main-font-color-accent: #000000;
+    --cursor-color: #f1f1f1;
+}
+
+/* Dark Theme */
+.dark-theme {
+    --main-background-color: #292a2f;
+    --tab-color: #252729;
+    --selected-tab-color: #252729;
+    --top-file-status-color: #252729;
+    --accordion-background-color: #3f4045;
+    --hovered-accordion-color: #3e4d5c;
+    --accordion-font-color: #dfdfe0;
+    --accordion-font-color-accent: #ededf2;
+    --main-font-color: #dfdfe0;
+    --hovered-accordion-color-two: #3f4045;
+    --main-font-color-accent: #ededf2;
+    --cursor-color: rgb(44,44,44);
+}
+
+
+/*$theme: (*/
+/*    "white-to-dark-bg-color": map-get($shades, "shade-0"),*/
+/*    "grey-to-dark-toolbar-color": map-get($shades, "shade-1"),*/
+/*    "white-to-dark-toolbar-color": map-get($shades, "shade-2"),*/
+/*    "grey-to-dark-top-bar-color": map-get($shades, "shade-3"),*/
+/*    "grey-light-to-dark-accordion-color": map-get($shades, "shade-4"),*/
+/*    "grey-mid-to-dark-hov-accordion-color": map-get($shades, "shade-5"),*/
+/*    "accordion-font-color": map-get($shades, "shade-6"),*/
+/*    "accordion-highlight-font-color": map-get($shades, "shade-7"),*/
+/*    "black-to-light-text-color": map-get($shades, "shade-8"),*/
+/*    "light-to-dark-dropdown-color": map-get($shades, "shade-9"),*/
+/*    "black-to-highlight-text-color": map-get($shades, "shade-10"),*/
+/*    "cursor-highlight-color": map-get($shades, "shade-11"),*/
+/*  );*/
