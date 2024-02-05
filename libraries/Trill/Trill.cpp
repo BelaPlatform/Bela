@@ -213,7 +213,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	address = i2c_address;
 	readErrorOccurred = false;
 
-	if(firmware_version_ > 3)
+	if(firmware_version_ >= 3)
 	{
 		if(setScanTrigger(kScanTriggerI2c))
 			return 1;
