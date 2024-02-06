@@ -177,7 +177,7 @@ class Trill : public I2c
 		 *
 		 * \copydoc TAGS_canonical_return
 		 */
-		int setup(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
+		int setup(unsigned int i2c_bus, Device device = ANY, uint8_t i2c_address = 255);
 
 		/**
 		 * Probe the bus for a device at the specified address.
