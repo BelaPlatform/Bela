@@ -2,6 +2,7 @@
 #include <map>
 #include <vector>
 #include <string.h>
+#include <limits>
 
 constexpr uint8_t Trill::speedValues[4];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
@@ -130,6 +131,17 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	frameId = 0;
 	device_type_ = NONE;
 	TrillDefaults defaults = trillDefaults.at(device);
+	if(UNKNOWN == device && 255 == i2c_address) {
+		auto devs = probeRange(i2c_bus, 1);
+		if(devs.size()) {
+			const auto& d = devs[0];
+			device = d.first;
+			i2c_address = d.second;
+		} else {
+			fprintf(stderr, "No Trill device found on I2C bus %d\n", i2c_bus);
+			return 2;
+		}
+	}
 
 	if(128 <= i2c_address)
 		i2c_address = defaults.address;
@@ -232,6 +244,20 @@ Trill::Device Trill::probe(unsigned int i2c_bus, uint8_t i2c_address)
 		return Trill::NONE;
 	}
 	return t.device_type_;
+}
+
+std::vector<std::pair<Trill::Device,uint8_t> > Trill::probeRange(unsigned int i2c_bus, size_t maxCount)
+{
+	std::vector< std::pair<Device,uint8_t> > devs;
+	if(0 == maxCount)
+		maxCount = std::numeric_limits<size_t>::max();
+	// probe the valid address range on the bus to find a valid device
+	for(uint8_t n = 0x20; n <= 0x50 && devs.size() <= maxCount; ++n) {
+		Device device = probe(i2c_bus, n);
+		if(device != NONE)
+			devs.push_back({device, n});
+	}
+	return devs;
 }
 
 Trill::~Trill() {
