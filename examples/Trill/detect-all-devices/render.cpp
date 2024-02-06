@@ -34,15 +34,13 @@ bool setup(BelaContext *context, void *userData)
 	unsigned int i2cBus = 1;
 	printf("Trill devices detected on bus %d\n", i2cBus);
 	printf("Address    | Type\n");
-	unsigned int total = 0;
-	for(uint8_t n = 0x20; n <= 0x50; ++n) {
-		Trill::Device device = Trill::probe(i2cBus, n);
-		if(device != Trill::NONE) {
-			printf("%#4x (%3d) | %s\n", n, n, Trill::getNameFromDevice(device).c_str());
-			++total;
-		}
+	auto devices = Trill::probeRange(i2cBus);
+	for(auto& d : devices) {
+		const std::string& device = Trill::getNameFromDevice(d.first);
+		int addr = d.second;
+		printf("%#4x (%2d) | %s\n", addr, addr, device.c_str());
 	}
-	printf("Total: %d devices\n", total);
+	printf("Total: %d devices\n", devices.size());
 	return true;
 }
 
