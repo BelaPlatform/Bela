@@ -30,13 +30,14 @@ class Trill : public I2c
 		 */
 		typedef enum {
 			NONE = -1, ///< No device
-			UNKNOWN = 0, ///< A valid device of unknown type
+			ANY = 0, ///< A valid device of unknown type
 			BAR = 1, ///< %Trill Bar
 			SQUARE = 2, ///< %Trill Square
 			CRAFT = 3, ///< %Trill Craft
 			RING = 4, ///< %Trill Ring
 			HEX = 5, ///< %Trill Hex
 			FLEX = 6, ///< %Trill Flex
+			UNKNOWN = ANY, ///< same as ANY, for backwards compatibility
 		} Device;
 		/**
 		 * Controls when the EVT pin will be set when a new frame is
@@ -159,7 +160,7 @@ class Trill : public I2c
 		 * @param i2c_address the address at which the device can be
 		 * found.
 		 *
-		 * If @p device is #UNKNOWN then:
+		 * If @p device is #ANY then:
 		 * -  if \p i2c_address is a valid address, then
 		 * any device detected at that addres will be accepted
 		 * - if \p i2c_address is `255` or unspecified, then the range of
