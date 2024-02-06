@@ -32,7 +32,7 @@ Datasheet: https://www.mouser.com/datasheet/2/758/DHT11-Technical-Data-Sheet-Tra
 
 const unsigned digitalPin = 0;
 
-DHT dht(digitialPin, DHT11);
+DHT dht(digitalPin, DHT11);
 bool setup(BelaContext *context, void *userData)
 {
 	return true;
