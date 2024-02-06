@@ -67,7 +67,7 @@ struct TrillDefaults
 const float defaultThreshold = 0x28 / 4096.f;
 static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
 	{Trill::NONE, TrillDefaults("No device", Trill::AUTO, 0, 0xFF, -1)},
-	{Trill::UNKNOWN, TrillDefaults("Unknown device", Trill::AUTO, 0, 0xFF, -1)},
+	{Trill::ANY, TrillDefaults("Unknown device", Trill::AUTO, 0, 0xFF, -1)},
 	{Trill::BAR, TrillDefaults("Bar", Trill::CENTROID, defaultThreshold, 0x20, 2)},
 	{Trill::SQUARE, TrillDefaults("Square", Trill::CENTROID, defaultThreshold, 0x28, 1)},
 	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, defaultThreshold, 0x30, 1)},
@@ -91,7 +91,7 @@ struct trillRescaleFactors_t {
 };
 
 static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
-	{.pos = 1, .posH = 0, .size = 1}, // UNKNOWN = 0,
+	{.pos = 1, .posH = 0, .size = 1}, // ANY = 0,
 	{.pos = 3200, .posH = 0, .size = 4566}, // BAR = 1,
 	{.pos = 1792, .posH = 1792, .size = 3780}, // SQUARE = 2,
 	{.pos = 4096, .posH = 0, .size = 1}, // CRAFT = 3,
@@ -131,7 +131,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	frameId = 0;
 	device_type_ = NONE;
 	TrillDefaults defaults = trillDefaults.at(device);
-	if(UNKNOWN == device && 255 == i2c_address) {
+	if(ANY == device && 255 == i2c_address) {
 		auto devs = probeRange(i2c_bus, 1);
 		if(devs.size()) {
 			const auto& d = devs[0];
@@ -168,7 +168,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		fprintf(stderr, "Unable to identify device\n");
 		return 2;
 	}
-	if(UNKNOWN != device && device_type_ != device) {
+	if(ANY != device && device_type_ != device) {
 		fprintf(stderr, "Wrong device type detected. `%s` was requested "
 				"but `%s` was detected on bus %d at address %#x(%d).\n",
 				defaults.name.c_str(),
@@ -269,7 +269,7 @@ const std::string& Trill::getNameFromDevice(Device device)
 	__try {
 		return trillDefaults.at(device).name;
 	} __catch (std::exception e) {
-		return trillDefaults.at(Device::UNKNOWN).name;
+		return trillDefaults.at(Device::ANY).name;
 	}
 }
 
@@ -297,7 +297,7 @@ Trill::Device Trill::getDeviceFromName(const std::string& name)
 		if(strCmpIns(name, str2))
 			return Device(device);
 	}
-	return Trill::UNKNOWN;
+	return Trill::ANY;
 }
 
 const std::string& Trill::getNameFromMode(Mode mode)
