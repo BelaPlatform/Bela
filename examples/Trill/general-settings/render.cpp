@@ -287,9 +287,8 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup a Trill Craft on i2c bus 1, using the default address.
-	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
-		fprintf(stderr, "Unable to initialise Trill Craft\n");
+	// Look for a connected Trill on I2C bus 1
+	if(touchSensor.setup(1) != 0) {
 		return false;
 	}
 	touchSensor.printDetails();
