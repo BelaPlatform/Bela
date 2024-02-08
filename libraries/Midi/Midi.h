@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <AuxTaskNonRT.h>
+#include <tuple>
 
 typedef unsigned char midi_byte_t;
 
@@ -370,10 +371,31 @@ public:
 	MidiParser* getMidiParser();
 	virtual ~Midi();
 
-	bool isInputEnabled();
+	bool isInputEnabled() const;
 
-	bool isOutputEnabled();
+	bool isOutputEnabled() const;
 
+	struct Port {
+		std::string name;
+		std::string desc;
+		int card;
+		int device;
+		int sub;
+		bool hasInput;
+		bool hasOutput;
+		bool operator== (const Port& o) const {
+			return name == o.name &&
+				desc == o.desc &&
+				card == o.card &&
+				device == o.device &&
+				sub == o.sub &&
+				hasInput == o.hasInput &&
+				hasOutput == o.hasOutput;
+		}
+	};
+	const Port& getInputPort() const { return inPortFull; }
+	const Port& getOutputPort() const { return outPortFull; }
+	static std::vector<Port> listAllPorts();
 	/**
 	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
 	 * Ports open with this method should be closed with destroyPorts()
@@ -387,6 +409,8 @@ public:
 private:
 	std::string inPort;
 	std::string outPort;
+	Port inPortFull;
+	Port outPortFull;
 	int _getInput();
 	int attemptRecoveryRead();
 	static void* readInputLoopStatic(void* obj);

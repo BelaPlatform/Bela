@@ -263,6 +263,47 @@ void Midi::doWriteOutput(const void* data, int size) {
 
 #include <RtWrappers.h>
 
+static Midi::Port getPort(snd_rawmidi_info_t* info)
+{
+#if 0
+	printf("==========\n");
+	printf("device: %d\n", snd_rawmidi_info_get_device(info));
+	printf("subdevice: %d\n", snd_rawmidi_info_get_subdevice(info));
+	printf("stream: %d\n", snd_rawmidi_info_get_stream(info));
+	printf("card: %d\n", snd_rawmidi_info_get_card(info));
+	printf("flags: %d\n", snd_rawmidi_info_get_flags(info));
+	printf("id: %s\n", snd_rawmidi_info_get_id(info));
+	printf("name: %s\n", snd_rawmidi_info_get_name(info));
+	printf("subdevice_name: %s\n", snd_rawmidi_info_get_subdevice_name(info));
+	printf("subdevices_count: %d\n", snd_rawmidi_info_get_subdevices_count(info));
+	printf("subdevices_avail: %d\n", snd_rawmidi_info_get_subdevices_avail(info));
+#endif
+	int card = snd_rawmidi_info_get_card(info);
+	int sub = snd_rawmidi_info_get_subdevice(info);
+	int device = snd_rawmidi_info_get_device(info);
+	std::string name = "hw:" + std::to_string(card) + "," + std::to_string(device) + "," + std::to_string(sub);
+	std::string desc = std::string(snd_rawmidi_info_get_id(info)) + " " + snd_rawmidi_info_get_name(info) + " [  " + snd_rawmidi_info_get_subdevice_name(info) + " ]";
+	return {
+		.name = name,
+		.desc = desc,
+		.card = card,
+		.device = device,
+		.sub = (int)sub,
+		.hasInput = false, // TODO: fill these in, see is_input()/is_output()
+		.hasOutput = false,
+	};
+}
+
+static int getPort(snd_rawmidi_t* rmidi, Midi::Port& port) {
+	snd_rawmidi_info_t *info;
+	snd_rawmidi_info_alloca(&info);
+	int ret = snd_rawmidi_info(rmidi, info);
+	if(ret)
+		return ret;
+	port = getPort(info);
+	return 0;
+}
+
 int Midi::readFrom(const char* port){
 	if(port == NULL){
 		port = defaultPort.c_str();
@@ -274,7 +315,13 @@ int Midi::readFrom(const char* port){
 	if (err) {
 		return err;
 	}
-	int ret = create_and_start_thread(&midiInputThread, inId.c_str(), 50, 0, NULL, Midi::readInputLoopStatic, (void*)this);
+	int ret = getPort(alsaIn, inPortFull);
+	inPortFull.hasInput = true;
+	if(ret) {
+		fprintf(stderr, "Unable to retrieve input port information for %s\n", port);
+		return 0;
+	}
+	ret = create_and_start_thread(&midiInputThread, inId.c_str(), 50, 0, NULL, Midi::readInputLoopStatic, (void*)this);
 	if(ret)
 		return 0;
 	inputEnabled = true;
@@ -292,6 +339,12 @@ int Midi::writeTo(const char* port){
 	if (err) {
 		return err;
 	}
+	int ret = getPort(alsaOut, outPortFull);
+	inPortFull.hasOutput = true;
+	if(ret) {
+		fprintf(stderr, "Unable to retrieve output port information for %s\n", port);
+		return 0;
+	}
 	midiOutputTask = new AuxTaskNonRT();
 	midiOutputTask->create(outId, [this](void* buf, int size) {
 		this->doWriteOutput(buf, size);
@@ -300,7 +353,8 @@ int Midi::writeTo(const char* port){
 	return 1;
 }
 
-void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
+std::vector<Midi::Port> Midi::listAllPorts(){
+	std::vector<Port> ports;
 	int card = -1;
 	int status;
 	while((status = snd_card_next(&card)) == 0){
@@ -314,7 +368,7 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 		sprintf(name, "hw:%d", card);
 		if ((status = snd_ctl_open(&ctl, name, 0)) < 0) {
 			error("cannot open control for card %d: %s\n", card, snd_strerror(status));
-			return;
+			return ports;
 		}
 		do {
 			status = snd_ctl_rawmidi_next_device(ctl, &device);
@@ -342,7 +396,7 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 					if ((status = is_output(ctl, card, device, sub)) < 0) {
 						error("cannot get rawmidi information %d:%d: %s",
 						card, device, snd_strerror(status));
-						return;
+						return ports;
 					} else if (status){
 						out = true;
 						// writeTo
@@ -352,7 +406,7 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 						if ((status = is_input(ctl, card, device, sub)) < 0) {
 							error("cannot get rawmidi information %d:%d: %s",
 							card, device, snd_strerror(status));
-							return;
+							return ports;
 						}
 					} else if (status) {
 						in = true;
@@ -360,26 +414,42 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 					}
 
 					if(in || out){
-						ports.resize(ports.size() + 1);
-						unsigned int index = ports.size() - 1;
-						ports[index] = new Midi();
-						const char* myName = snd_rawmidi_info_get_name(info);
-						const char* mySubName =  snd_rawmidi_info_get_subdevice_name(info);
-						sprintf(name, "hw:%d,%d,%d", card, device, sub);
-						if(in){
-							printf("Port %d, Reading from: %s, %s %s\n", index, name, myName, mySubName);
-							ports[index]->readFrom(name);
-							ports[index]->enableParser(useParser);
-						}
-						if(out){
-							printf("Port %d, Writing to: %s %s %s\n", index, name, myName, mySubName);
-							ports[index]->writeTo(name);
-						}
+						Port port = getPort(info);
+						port.hasInput = in;
+						port.hasOutput = out;
+						ports.push_back(port);
 					}
 				}
 			}
 		} while (device >= 0);
 		snd_ctl_close(ctl);
+	}
+	return ports;
+}
+
+void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
+	auto list = listAllPorts();
+	ports.reserve(list.size());
+	for(size_t n = 0; n < list.size(); ++n) {
+		auto& l = list[n];
+		if(!(l.hasInput || l.hasOutput))
+			continue;
+		Midi* m = new Midi();
+		if(l.hasInput) {
+			std::string str = "reading from " + l.name + ": " + l.desc;
+			if(1 == m->readFrom(l.name.c_str()))
+				printf("Port %d, %s\n", n, str.c_str());
+			else
+				fprintf(stderr, "Port %d, ERROR %s\n", n, str.c_str());
+		}
+		if(l.hasOutput) {
+			std::string str = "writing to " + l.name + ": " + l.desc;
+			if(1 == m->writeTo(l.name.c_str()))
+				printf("Port %d, %s\n", n, str.c_str());
+			else
+				fprintf(stderr, "Port %d, ERROR %s\n", n, str.c_str());
+		}
+		ports.push_back(m);
 	}
 }
 
@@ -437,12 +507,12 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 	return 1;
 }
 
-bool Midi::isInputEnabled()
+bool Midi::isInputEnabled() const
 {
 	return inputEnabled;
 }
 
-bool Midi::isOutputEnabled()
+bool Midi::isOutputEnabled() const
 {
 	return outputEnabled;
 }
@@ -759,7 +829,6 @@ static int is_input(snd_ctl_t *ctl, int card, int device, int sub) {
 
    return 0;
 }
-
 
 
 //////////////////////////////
