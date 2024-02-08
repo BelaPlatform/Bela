@@ -304,6 +304,16 @@ static int getPort(snd_rawmidi_t* rmidi, Midi::Port& port) {
 	return 0;
 }
 
+bool Midi::exists(const char* port)
+{
+	snd_rawmidi_t* d;
+	if(snd_rawmidi_open(&d, NULL, port, 0)) // open in
+		if(snd_rawmidi_open(NULL, &d, port, 0)) // open out
+			return false;
+	snd_rawmidi_close(d);
+	return true;
+}
+
 int Midi::readFrom(const char* port){
 	if(port == NULL){
 		port = defaultPort.c_str();
