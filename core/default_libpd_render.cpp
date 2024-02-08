@@ -452,6 +452,8 @@ static const std::string& midiName(const Midi* m)
 static std::thread gMidiDiscoveryThread;
 static volatile bool gMidiDiscoveryThreadShouldStop;
 static volatile bool gMidiDiscoveryThreadAuto;
+static bool gMidiAny;
+
 Pipe gMidiDiscoveryPipe("midiDiscoveryPipe");
 enum MidiDiscoveryCmd {
 	kMidiAdd,
@@ -572,13 +574,14 @@ void dumpMidi()
 	      );
 	for(unsigned int n = 0; n < midi.size(); ++n)
 	{
-		printf("[%2d]%20s %3s %3s (%d-%d)\n", 
+		printf("[%2d]%20s %3s %3s (%d-%d) %s\n",
 			n,
 			midiName(midi[n]).c_str(),
 			midi[n]->isInputEnabled() ? "x" : "_",
 			midi[n]->isOutputEnabled() ? "x" : "_",
 			n * 16 + 1,
-			n * 16 + 16
+			n * 16 + 16,
+			gMidiAny ? "(ANY)" : ""
 		);
 	}
 }
@@ -615,6 +618,9 @@ static Midi* openMidiDevice(const std::string& name, bool verboseSuccess, bool v
 }
 
 static unsigned int getPortChannel(int* channel){
+	// improper way of using ANY, maybe it should be sending out to all of them instead
+	if(gMidiAny)
+		return 0;
 	unsigned int port = 0;
 	while(*channel >= 16){
 		*channel -= 16;
@@ -814,6 +820,15 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				value = libpd_get_float(argv);
 			rt_printf("%s automatic discover of new MIDI devices\n", value ? "Enabling" : "Disabling");
 			gMidiDiscoveryThreadAuto = value;
+			return;
+		}
+		if(0 == strcmp("any", symbol))
+		{
+			bool value = true;
+			if(argc && libpd_is_float(argv))
+				value = libpd_get_float(argv);
+			rt_printf("%s MIDI any\n", value ? "Enabling" : "Disabling");
+			gMidiAny = value;
 			return;
 		}
 		int num[3] = {0, 0, 0};
@@ -1563,6 +1578,8 @@ void render(BelaContext *context, void *userData)
 			}
 
 			int channel = message.getChannel();
+			if(!gMidiAny)
+				channel += port * 16;
 			switch(message.getType()){
 				case kmmNoteOn:
 				{
