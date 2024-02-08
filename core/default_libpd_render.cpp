@@ -32,13 +32,15 @@
 #undef BELA_LIBPD_SYSTEM_THREADED
 #endif // BELA_LIBPD_DISABLE_SYSTEM_THREADD
 
-#define PD_THREADED_IO
+//#define PD_THREADED_IO
 #include <libraries/libpd/libpd.h>
 #include <DigitalChannelManager.h>
 #include <stdio.h>
 
 #ifdef BELA_LIBPD_MIDI
+#include <algorithm>
 #include <libraries/Midi/Midi.h>
+#include <libraries/Pipe/Pipe.h>
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_SCOPE
 #include <libraries/Scope/Scope.h>
@@ -429,10 +431,125 @@ float* gInBuf;
 float* gOutBuf;
 #ifdef BELA_LIBPD_MIDI
 #define PARSE_MIDI
-static std::vector<Midi*> midi;
-std::vector<std::string> gMidiPortNames;
 int gMidiVerbose = 1;
 const int kMidiVerbosePrintLevel = 1;
+#include <thread>
+
+static Midi* openMidiDevice(const std::string& name, bool verboseSuccess = false, bool verboseError = false);
+static const std::string& midiName(const Midi* m)
+{
+	// assumes input and output are the same subdevice
+	if(m) {
+		if(m->isInputEnabled())
+			return m->getInputPort().name;
+		else if(m->isOutputEnabled())
+			return m->getOutputPort().name;
+	}
+	static const std::string none("NONE");
+	return none;
+}
+
+static std::thread gMidiDiscoveryThread;
+static volatile bool gMidiDiscoveryThreadShouldStop;
+static volatile bool gMidiDiscoveryThreadAuto;
+Pipe gMidiDiscoveryPipe("midiDiscoveryPipe");
+enum MidiDiscoveryCmd {
+	kMidiAdd,
+	kMidiAck,
+};
+struct MidiDiscoveryMsgFromNonRt {
+	MidiDiscoveryCmd cmd;
+	Midi* ptr;
+};
+struct MidiDiscoveryMsgFromRt {
+	MidiDiscoveryCmd cmd;
+	Midi* ptr;
+	char name[32];
+};
+
+static void midiDiscovery()
+{
+	gMidiDiscoveryPipe.setBlockingNonRt(true);
+	gMidiDiscoveryPipe.setTimeoutMsNonRt(100);
+	// it's hard to use inotify meaningfully, so we poll instead
+	auto shouldStop = []() {
+		return Bela_stopRequested() || gMidiDiscoveryThreadShouldStop;
+	};
+
+	std::vector<std::string> toOpen;
+	std::vector<Midi*> localMidi;
+	std::vector<MidiDiscoveryMsgFromNonRt> msgs;
+	int count = 1;
+	unsigned int numDevices = 0;
+	bool doDiscovery = false;
+	while(!shouldStop())
+	{
+		msgs.resize(0);
+		if(numDevices == localMidi.size())
+		{
+			//printf("We are equal: %d\n", numDevices);
+			// when we are fully synced up:
+			if(doDiscovery && !toOpen.size() && gMidiDiscoveryThreadAuto)
+			{
+				doDiscovery = false;
+				// do discovery
+				auto list = Midi::listAllPorts();
+				for(auto& l : list)
+				{
+					// Check if there are new devices that are not open yet.
+					toOpen.push_back(l.name);
+					// NOTE: devices that are unplugged and plugged back in
+					// that were previously initialised will be automatically reopened,
+					// so we are only concerned with new devices here.
+				}
+				count = 0;
+			}
+			while(toOpen.size())
+			{
+				std::string name = toOpen[0];
+				toOpen.erase(toOpen.begin());
+				bool found = false;
+				for(const auto m : localMidi)
+				{
+					if(midiName(m) == name)
+					{
+						found = true;
+						break;
+					}
+				}
+				if(!found)
+				{
+					printf("New device %s, opening it\n", name.c_str());
+					Midi* midi = openMidiDevice(name);
+					if(midi) {
+						MidiDiscoveryMsgFromNonRt msg =  {
+							.cmd = kMidiAdd,
+							.ptr = midi,
+						};
+						msgs.push_back(msg);
+						numDevices++;
+						break;
+					}
+				}
+			}
+		}
+		if(count++ > 20)
+			doDiscovery = true;
+		for(auto& msg : msgs)
+			gMidiDiscoveryPipe.writeNonRt(msg);
+		MidiDiscoveryMsgFromRt msg;
+		// potentially blocking read
+		int ret = gMidiDiscoveryPipe.readNonRt(msg);
+		if(1 == ret)
+		{
+			if(kMidiAck == msg.cmd)
+				localMidi.push_back(msg.ptr);
+			if(kMidiAdd == msg.cmd)
+				toOpen.push_back(msg.name);
+		}
+	}
+}
+static std::vector<Midi*> midi;
 
 void dumpMidi()
 {
@@ -453,7 +570,7 @@ void dumpMidi()
 	{
 		printf("[%2d]%20s %3s %3s (%d-%d)\n", 
 			n,
-			gMidiPortNames[n].c_str(),
+			midiName(midi[n]).c_str(),
 			midi[n]->isInputEnabled() ? "x" : "_",
 			midi[n]->isOutputEnabled() ? "x" : "_",
 			n * 16 + 1,
@@ -462,7 +579,7 @@ void dumpMidi()
 	}
 }
 
-Midi* openMidiDevice(std::string name, bool verboseSuccess = false, bool verboseError = false)
+static Midi* openMidiDevice(const std::string& name, bool verboseSuccess, bool verboseError)
 {
 	Midi* newMidi;
 	newMidi = new Midi();
@@ -684,6 +801,14 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			}
 			return;
 		}
+		if(0 == strcmp("auto", symbol))
+		{
+			rt_printf("Automatically discover new MIDI devices\n");
+			if(!gMidiDiscoveryThread.joinable())
+				gMidiDiscoveryThread = std::thread(midiDiscovery);
+			gMidiDiscoveryThreadAuto = true;
+			return;
+		}
 		int num[3] = {0, 0, 0};
 		for(int n = 0; n < argc && n < 3; ++n)
 		{
@@ -694,16 +819,19 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			}
 			num[n] = libpd_get_float(&argv[n]);
 		}
+		// TODO: this string/stream business is not actually realtime-safe.
 		std::ostringstream deviceName;
 		deviceName << symbol << ":" << num[0] << "," << num[1] << "," << num[2];
-		printf("Adding Midi device: %s\n", deviceName.str().c_str());
-		Midi* newMidi = openMidiDevice(deviceName.str(), false, true);
-		if(newMidi)
-		{
-			midi.push_back(newMidi);
-			gMidiPortNames.push_back(deviceName.str());
+		MidiDiscoveryMsgFromRt msg = {
+				.cmd = kMidiAdd,
+			};
+		std::string name = deviceName.str();
+		if(name.size() + 1 > sizeof(msg.name)) {
+			fprintf(stderr, "MIDI name too long: %s\n", name.c_str());
+			return;
 		}
-		dumpMidi();
+		strncpy(msg.name, deviceName.str().c_str(), sizeof(msg.name));
+		gMidiDiscoveryPipe.writeRt(msg);
 		return;
 	}
 #endif // BELA_LIBPD_MIDI
@@ -1082,9 +1210,9 @@ bool setup(BelaContext *context, void *userData)
 
 #ifdef BELA_LIBPD_MIDI
 	// add here other devices you need 
-	gMidiPortNames.push_back("hw:1,0,0");
-	//gMidiPortNames.push_back("hw:0,0,0");
-	//gMidiPortNames.push_back("hw:1,0,1");
+	std::vector<std::string> midiPortNames;
+	midiPortNames.push_back("hw:1,0,0");
+	//midiPortNames.push_back("hw:0,0,0");
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_SCOPE
 	scope.setup(gScopeChannelsInUse, context->audioSampleRate);
@@ -1133,19 +1261,15 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 #ifdef BELA_LIBPD_MIDI
-	unsigned int n = 0;
-	while(n < gMidiPortNames.size())
+	gMidiDiscoveryThread = std::thread(midiDiscovery);
+	for(const auto & name : midiPortNames)
 	{
-		Midi* newMidi = openMidiDevice(gMidiPortNames[n], false, false);
-		if(newMidi)
-		{
-			midi.push_back(newMidi);
-			++n;
-		} else {
-			gMidiPortNames.erase(gMidiPortNames.begin() + n);
-		}
+		MidiDiscoveryMsgFromRt msg;
+		msg.cmd = kMidiAdd;
+		strncpy(msg.name, name.c_str(), sizeof(msg.name));
+		gMidiDiscoveryPipe.writeRt(msg);
 	}
-	dumpMidi();
+	midi.reserve(midiPortNames.size() + 10); // hope we can avoid reallocation for a while
 #endif // BELA_LIBPD_MIDI
 
 	// check that we are not running with a blocksize smaller than gLibPdBlockSize
@@ -1400,6 +1524,22 @@ void render(BelaContext *context, void *userData)
 	}
 #endif // BELA_LIBPD_TRILL
 #ifdef BELA_LIBPD_MIDI
+	if(gMidiDiscoveryThread.joinable())
+	{
+		MidiDiscoveryMsgFromNonRt msg;
+		while(1 == gMidiDiscoveryPipe.readRt(msg))
+		{
+			if(kMidiAdd == msg.cmd)
+			{
+				rt_printf("Midi pointer created %p\n", msg.ptr);
+				midi.push_back(msg.ptr);
+				MidiDiscoveryMsgFromRt res;
+				res.cmd = kMidiAck;
+				res.ptr = msg.ptr;
+				gMidiDiscoveryPipe.writeRt(res);
+			}
+		}
+	}
 #ifdef PARSE_MIDI
 	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
@@ -1408,7 +1548,7 @@ void render(BelaContext *context, void *userData)
 			message = midi[port]->getParser()->getNextChannelMessage();
 			if(gMidiVerbose >= kMidiVerbosePrintLevel)
 			{
-				rt_printf("On port %d (%s): ", port, gMidiPortNames[port].c_str());
+				rt_printf("On port %d (%s): ", port, midiName(midi[port]).c_str());
 				message.prettyPrint(); // use this to print beautified message (channel, data bytes)
 			}
 			switch(message.getType()){
@@ -1609,6 +1749,8 @@ void render(BelaContext *context, void *userData)
 void cleanup(BelaContext *context, void *userData)
 {
 #ifdef BELA_LIBPD_MIDI
+	if(gMidiDiscoveryThread.joinable())
+		gMidiDiscoveryThread.join();
 	for(auto a : midi)
 	{
 		delete a;
