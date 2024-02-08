@@ -396,6 +396,7 @@ public:
 	const Port& getInputPort() const { return inPortFull; }
 	const Port& getOutputPort() const { return outPortFull; }
 	static std::vector<Port> listAllPorts();
+	static bool exists(const char* port);
 	/**
 	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
 	 * Ports open with this method should be closed with destroyPorts()
