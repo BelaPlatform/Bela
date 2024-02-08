@@ -1561,13 +1561,14 @@ void render(BelaContext *context, void *userData)
 				rt_printf("On port %d (%s): ", port, midiName(midi[port]).c_str());
 				message.prettyPrint(); // use this to print beautified message (channel, data bytes)
 			}
+
+			int channel = message.getChannel();
 			switch(message.getType()){
 				case kmmNoteOn:
 				{
 					int noteNumber = message.getDataByte(0);
 					int velocity = message.getDataByte(1);
-					int channel = message.getChannel();
-					libpd_noteon(channel + port * 16, noteNumber, velocity);
+					libpd_noteon(channel, noteNumber, velocity);
 					break;
 				}
 				case kmmNoteOff:
@@ -1578,51 +1579,44 @@ void render(BelaContext *context, void *userData)
 					 */
 					int noteNumber = message.getDataByte(0);
 	//				int velocity = message.getDataByte(1); // would be ignored by Pd
-					int channel = message.getChannel();
-					libpd_noteon(channel + port * 16, noteNumber, 0);
+					libpd_noteon(channel, noteNumber, 0);
 					break;
 				}
 				case kmmControlChange:
 				{
-					int channel = message.getChannel();
 					int controller = message.getDataByte(0);
 					int value = message.getDataByte(1);
-					libpd_controlchange(channel + port * 16, controller, value);
+					libpd_controlchange(channel, controller, value);
 					break;
 				}
 				case kmmProgramChange:
 				{
-					int channel = message.getChannel();
 					int program = message.getDataByte(0);
-					libpd_programchange(channel + port * 16, program);
+					libpd_programchange(channel, program);
 					break;
 				}
 				case kmmPolyphonicKeyPressure:
 				{
-					int channel = message.getChannel();
 					int pitch = message.getDataByte(0);
 					int value = message.getDataByte(1);
-					libpd_polyaftertouch(channel + port * 16, pitch, value);
+					libpd_polyaftertouch(channel, pitch, value);
 					break;
 				}
 				case kmmChannelPressure:
 				{
-					int channel = message.getChannel();
 					int value = message.getDataByte(0);
-					libpd_aftertouch(channel + port * 16, value);
+					libpd_aftertouch(channel, value);
 					break;
 				}
 				case kmmPitchBend:
 				{
-					int channel = message.getChannel();
 					int value =  ((message.getDataByte(1) << 7)| message.getDataByte(0)) - 8192;
-					libpd_pitchbend(channel + port * 16, value);
+					libpd_pitchbend(channel, value);
 					break;
 				}
 				case kmmSystem:
 				// currently Bela only handles sysrealtime, and it does so pretending it is a channel message with no data bytes, so we have to re-assemble the status byte
 				{
-					int channel = message.getChannel();
 					int status = message.getStatusByte();
 					int byte = channel | status;
 					libpd_sysrealtime(port, byte);
