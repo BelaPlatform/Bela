@@ -15,7 +15,6 @@ background: #292A2F;\
 .ace-xcode-dark {\
 display: block;\
 overflow-x: auto;\
-padding: .5em;\
 color: #DFDFE0;\
 background-color: #292A2F;\
 }\
