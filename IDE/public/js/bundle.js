@@ -2179,25 +2179,6 @@ var EditorView = function (_View) {
 				this.__focus(opts.focus);
 			}
 		}
-		// editor theme has changed
-
-	}, {
-		key: '_darkTheme',
-		value: function _darkTheme(value) {
-			var isDarkTheme = parseInt(value)
-			var body = $('body');
-
-			if (isDarkTheme) {
-				this.editor.setTheme("ace/theme/xcode_dark");
-				// this.editor.setTheme("ace/theme/monokai");
-				body.toggleClass('light-theme', Boolean(false));
-				body.toggleClass('dark-theme', Boolean(true));
-			} else {
-				this.editor.setTheme("ace/theme/chrome");
-				body.toggleClass('dark-theme', Boolean(false));
-				body.toggleClass('light-theme', Boolean(true));
-			}
-		}
 		// editor focus has changed
 
 	}, {
@@ -2268,6 +2249,24 @@ var EditorView = function (_View) {
 		key: '_fileName',
 		value: function _fileName(name, data) {
 			currentFile = name;
+		}
+
+		// switch between light and dark theme
+
+	}, {
+		key: '_darkTheme',
+		value: function _darkTheme(isDarkTheme) {
+			var body = $('body');
+			if (isDarkTheme) {
+				this.editor.setTheme("ace/theme/xcode_dark");
+				// this.editor.setTheme("ace/theme/monokai");
+				body.toggleClass('light-theme', Boolean(false));
+				body.toggleClass('dark-theme', Boolean(true));
+			} else {
+				this.editor.setTheme("ace/theme/chrome");
+				body.toggleClass('dark-theme', Boolean(false));
+				body.toggleClass('light-theme', Boolean(true));
+			}
 		}
 	}, {
 		key: 'getCurrentWord',
