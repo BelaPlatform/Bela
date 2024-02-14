@@ -1,5 +1,12 @@
+// color-themed console elements
+@include themify($themes) {
+  #beaglert-console {
+    background-color: themed('main-background-color');
+    color: themed('main-font-color');
+  }
+}
+
 #beaglert-console {
-  background-color: white;
   box-sizing: border-box;
   font-family: inconsolata, monospace;
   font-size: 12px;

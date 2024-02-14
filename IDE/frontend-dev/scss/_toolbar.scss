@@ -1,3 +1,16 @@
+// color-themed toolbar elements
+@include themify($themes) {
+  .toolbar {
+    background: themed('tabs-color');
+    .tool-text {
+      color: themed('main-font-color');
+    }
+    .system-status-text {
+      color: themed('main-font-color') !important;
+    }
+  }
+}
+
 @keyframes running-button {
   from {
     transform: rotate(0deg);
@@ -17,7 +30,6 @@
 
 
 .toolbar {
-  background: $grey-toolbar;
   bottom: 0;
   box-shadow: 5px 5px #eee;
   display: block;

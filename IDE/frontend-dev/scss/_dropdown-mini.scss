@@ -1,3 +1,10 @@
+// color-themed sub-accordion elements
+@include themify($themes) {
+  .mini-dropdown select{
+    color: themed('accordion-font-color');
+  }
+}
+
 .mini-dropdown select {
   -moz-appearance: none;
   -webkit-appearance: none;

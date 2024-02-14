@@ -1,3 +1,14 @@
+// color-themed library list elements
+@include themify($themes) {
+  ul {
+    .libraries-list {
+      li {
+        color: themed('accordion-font-color-accent');
+      }
+    }
+  }
+}
+
 ul {
   &.libraries-list-parent {
     list-style: none;
@@ -68,7 +79,6 @@ ul {
     }
     .libraries-list {
       li {
-        color: rgba(0, 0, 0, 0.8);
         cursor: pointer;
         font-family: inconsolata;
       	font-size: 14px;

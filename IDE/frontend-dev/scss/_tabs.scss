@@ -1,8 +1,28 @@
+// color-themed tabs elements
+@include themify($themes) {
+  //.tabs {
+	//background-color: themed('tabs-color');
+  //}
+  #tab-menu {
+    background-color: themed('tabs-color');
+  }
+  #tab-content-area {
+    background-color: themed('main-background-color');
+  }
+  section#tab-content {
+    .title-container {
+      background-color: themed('main-background-color');
+      h1 {
+        color: themed('accordion-font-color-accent');
+      }
+    }
+  }
+}
+
 $tab-width: 450px;
 
 /* Tabbed content */
 .tabs {
-	background-color: white;
 	height: calc(100% + 35px);
   left: calc(100% - 50px);
   position: absolute;
@@ -23,14 +43,12 @@ $tab-width: 450px;
 }
 
 #tab-menu {
-  background-color: $grey-tabs;
   float: left;
   height: 100%;
   width: 50px;
 }
 
 #tab-content-area {
-  background-color: #fff;
   height: calc(100% - 76px);
   overflow: auto;
 }
@@ -43,7 +61,6 @@ section#tab-content {
     display: none;
   }
   .title-container {
-    background-color: $white;
     height: 75px;
     position: sticky;
     position: -webkit-sticky; /* Required for Safari */
@@ -56,7 +73,6 @@ section#tab-content {
     }
     h1 {
       border-bottom: 10px solid $teal-01;
-      color: rgba(0, 0, 0, 0.8);
       display: inline-block;
       font-family: space_bold;
       font-size: 24px;

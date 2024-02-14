@@ -1,5 +1,9 @@
+// color-themed editor elements
+@include themify($themes) {
+  background: themed('main-background-color');
+}
+
 #editor {
-  background: #fff;
   display: none;
   float: left;
   height: calc(100% - 70px);

@@ -1,5 +1,29 @@
+// color-themed tab elements
+@include themify($themes) {
+  .choice {
+    color: themed('accordion-font-color');
+  }
+  p.project {
+    color: themed('main-font-color')
+  }
+  .project-actions {
+    >.project-text {
+      color: themed('accordion-font-color-accent');
+    }
+  }
+  input[type="checkbox"].checkbox-slider,
+  .checkbox-slider input[type="checkbox"] {
+    &::before {
+      background: themed('checkbox-slider-color');
+    }
+  }
+  textarea {
+    background-color: themed('text-area-color');
+    color: themed('main-font-color');
+  }
+}
+
 .choice {
-  color: rgba(0, 0, 0, 0.6);
   font-family: poppins_light;
   font-size: 12px;
   padding-bottom: 10px;
@@ -82,7 +106,6 @@ input[type="checkbox"].checkbox-slider,
   }
 
   &::before {
-    background: #ccc;
     border-radius: 18px;
     height: 18px;
     transition: background-color 200ms;
@@ -161,7 +184,6 @@ p.project {
   >.project-text {
     display: inline;
     font-family: 'inconsolata';
-    color: $grey-dark;
     font-size: .85em;
     position: absolute;
     top: 0;

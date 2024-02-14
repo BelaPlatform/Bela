@@ -1,3 +1,17 @@
+// color-themed button elements
+@include themify($themes) {
+  button,
+  .button {
+    background-color: themed('main-background-color');
+    color: themed('main-font-color');
+    &.create-project {
+      &:before {
+      color: themed('accordion-font-color-accent');
+      }
+    }
+  }
+}
+
 a.button {
   color: black;
   font-size: 11px;
@@ -10,9 +24,7 @@ a.button {
 button,
 .button {
   border: 1px solid $teal-main;
-  background-color: $white;
   border-radius: 3px;
-  color: $black;
   font-size: .8em;
   cursor: pointer;
   font-family: poppins_light;
@@ -36,7 +48,6 @@ button,
       color: $white;
     }
     &:before {
-      color: $grey-dark;
       content: '+'; /* Unicode character for "plus" sign (+) */
       font-family: space_bold;
       font-size: 36px;
