@@ -30,13 +30,14 @@ class Trill : public I2c
 		 */
 		typedef enum {
 			NONE = -1, ///< No device
-			UNKNOWN = 0, ///< A valid device of unknown type
+			ANY = 0, ///< A valid device of unknown type
 			BAR = 1, ///< %Trill Bar
 			SQUARE = 2, ///< %Trill Square
 			CRAFT = 3, ///< %Trill Craft
 			RING = 4, ///< %Trill Ring
 			HEX = 5, ///< %Trill Hex
 			FLEX = 6, ///< %Trill Flex
+			UNKNOWN = ANY, ///< same as ANY, for backwards compatibility
 		} Device;
 		/**
 		 * Controls when the EVT pin will be set when a new frame is
@@ -70,6 +71,7 @@ class Trill : public I2c
 		uint8_t firmware_version_ = 0; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
 		bool dataBufferIncludesStatusByte = false;
+		bool quiet = false;
 		std::vector<uint8_t> dataBuffer;
 		uint16_t commandSleepTime = 1000;
 		size_t currentReadOffset = -1;
@@ -153,15 +155,21 @@ class Trill : public I2c
 		 * Initialise the device.
 		 *
 		 * @param i2c_bus the bus that the device is connected to.
-		 * @param device the device type. If #UNKNOWN is passed, then
-		 * the \p i2c_address parameter has to be a valid address, and
-		 * any detected device type will be accepted. If something else
-		 * than #UNKNOWN is passed, and the detected device type is
-		 * different from the requested one, the function will fail and
-		 * the object will be left uninitialised.
+		 * @param device the device type.
+		 *
 		 * @param i2c_address the address at which the device can be
-		 * found. If `255` or no value is passed, the default address
-		 * for the specified device type will be used.
+		 * found.
+		 *
+		 * If @p device is #ANY then:
+		 * -  if \p i2c_address is a valid address, then
+		 * any device detected at that addres will be accepted
+		 * - if \p i2c_address is `255` or unspecified, then the range of
+		 *   valid addresses will be scanned, stopping at the first
+		 *   valid device encountered. Use this with caution as it may
+		 *   affect the behaviour of non-Trill devices on the I2C bus.
+		 *
+		 * Otherwise, if @p i2c_address is `255` or unspecified,
+		 * the default address for the specified device type will be used.
 		 */
 		Trill(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
 		/**
@@ -169,7 +177,7 @@ class Trill : public I2c
 		 *
 		 * \copydoc TAGS_canonical_return
 		 */
-		int setup(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
+		int setup(unsigned int i2c_bus, Device device = ANY, uint8_t i2c_address = 255);
 
 		/**
 		 * Probe the bus for a device at the specified address.
@@ -178,6 +186,20 @@ class Trill : public I2c
 		 * was found, #NONE is returned.
 		 */
 		static Device probe(unsigned int i2c_bus, uint8_t i2c_address);
+
+		/**
+		 * Probe the bus for a device at any valid address.
+		 * \warning Use with caution as it may affect the behaviour of
+		 * non-Trill devices on the I2C bus.
+		 *
+		 * @param i2c_bus the I2C bus to scan
+		 * @param maxCount stop discovering new devices after this many
+		 * have been discovered. Use 0 to find all possible devices.
+		 *
+		 * @return A vector containing the #Device and address pairs
+		 * identified.
+		 */
+		static std::vector<std::pair<Device,uint8_t> > probeRange(unsigned int i2c_bus, size_t maxCount = 0);
 
 		/**
 		 * Update the baseline value on the device.
