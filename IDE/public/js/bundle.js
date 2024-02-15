@@ -2250,6 +2250,24 @@ var EditorView = function (_View) {
 		value: function _fileName(name, data) {
 			currentFile = name;
 		}
+
+		// switch between light and dark theme
+
+	}, {
+		key: '_darkTheme',
+		value: function _darkTheme(isDarkTheme) {
+			var body = $('body');
+			if (isDarkTheme) {
+				this.editor.setTheme("ace/theme/xcode_dark");
+				// this.editor.setTheme("ace/theme/monokai");
+				body.toggleClass('light-theme', Boolean(false));
+				body.toggleClass('dark-theme', Boolean(true));
+			} else {
+				this.editor.setTheme("ace/theme/chrome");
+				body.toggleClass('dark-theme', Boolean(false));
+				body.toggleClass('light-theme', Boolean(true));
+			}
+		}
 	}, {
 		key: 'getCurrentWord',
 		value: function getCurrentWord() {

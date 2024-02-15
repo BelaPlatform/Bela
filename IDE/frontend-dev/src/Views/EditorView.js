@@ -338,6 +338,20 @@ class EditorView extends View {
 		currentFile = name;
 	}
 
+	// switch between light and dark theme
+	_darkTheme(isDarkTheme){
+		var body = $('body');
+		if (isDarkTheme) {
+			this.editor.setTheme("ace/theme/xcode_dark");
+			body.toggleClass('light-theme', Boolean(false));
+			body.toggleClass('dark-theme', Boolean(true));
+		} else {
+			this.editor.setTheme("ace/theme/chrome");
+			body.toggleClass('dark-theme', Boolean(false));
+			body.toggleClass('light-theme', Boolean(true));
+		}
+	}
+
 	getCurrentWord(){
 		var pos = this.editor.getCursorPosition();
 		//var range = this.editor.session.getAWordRange(pos.row, pos.column);

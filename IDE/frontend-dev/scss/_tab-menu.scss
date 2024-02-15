@@ -1,15 +1,60 @@
+// color-themed tab menu elements
+@include themify($themes) {
+  #tab-menu {
+    li#open-tab {
+      background-color: themed('tabs-color');
+    }
+    li {
+      background: themed('tabs-color');
+      &.explorer {
+        &.active{
+          background: themed('selected-tab-color') url('../images/icons/folder_active.svg') no-repeat center;
+        }
+      }
+      &.examples {
+        &.active {
+          background: themed('selected-tab-color') url('../images/icons/examples_active.svg') no-repeat center;
+        }
+      }
+      &.settings {
+        &.active {
+          background: themed('selected-tab-color') url('../images/icons/settings_active.svg') no-repeat center;
+        }
+      }
+      &.pins {
+        &.active {
+          background: themed('selected-tab-color') url('../images/icons/pins_active.svg') no-repeat center;
+        }
+      }
+      &.refs {
+        &.active {
+          background: themed('selected-tab-color') url('../images/icons/refs_active.svg') no-repeat center;
+        }
+      }
+      &.libraries {
+        &.active {
+          background: themed('selected-tab-color') url('../images/icons/library_green.svg') no-repeat center;
+        }
+      }
+      &.feedback {
+        &.active {
+          background: themed('selected-tab-color') url('../images/icons/feedback_active.svg') no-repeat center;
+        }
+      }
+    }
+  }
+}
+
 /*
  * Make each label stack on top of one another.
  *
  */
 #tab-menu {
   li#open-tab {
-    background-color: $grey-tabs;
     max-width: 40px;
     padding-left: 10px;
   }
   li {
-    background: $grey-tabs;
     cursor: pointer;
     height: 50px;
     padding: 0;
@@ -31,17 +76,11 @@
       &:hover {
         background: url('../images/icons/folder_active.svg') no-repeat center;
       }
-      &.active{
-        background: $white url('../images/icons/folder_active.svg') no-repeat center;
-      }
     }
     &.examples {
       background: url('../images/icons/examples_inactive.svg') no-repeat center;
         &:hover {
           background: url('../images/icons/examples_active.svg') no-repeat center;
-        }
-        &.active {
-          background: $white url('../images/icons/examples_active.svg') no-repeat center;
         }
       }
       &.settings {
@@ -49,17 +88,11 @@
       &:hover {
         background: url('../images/icons/settings_active.svg') no-repeat center;
       }
-      &.active {
-        background: $white url('../images/icons/settings_active.svg') no-repeat center;
-      }
     }
     &.pins {
         background: url('../images/icons/pins_inactive.svg') no-repeat center;
       &:hover {
         background: url('../images/icons/pins_active.svg') no-repeat center;
-      }
-      &.active {
-        background: $white url('../images/icons/pins_active.svg') no-repeat center;
       }
     }
     &.refs {
@@ -67,17 +100,11 @@
       &:hover {
         background: url('../images/icons/refs_active.svg') no-repeat center;
       }
-      &.active {
-        background: $white url('../images/icons/refs_active.svg') no-repeat center;
-      }
     }
     &.libraries {
       background: url('../images/icons/library_white.svg') no-repeat center;
       &:hover {
         background: url('../images/icons/library_green.svg') no-repeat center;
-      }
-      &.active {
-        background: $white url('../images/icons/library_green.svg') no-repeat center;
       }
     }
     &.feedback {
@@ -86,7 +113,6 @@
         background: url('../images/icons/feedback_active.svg') no-repeat center;
       }
       &.active {
-        background: $white url('../images/icons/feedback_active.svg') no-repeat center;
         border-left: 5px solid $accent-red;
       }
     }

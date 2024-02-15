@@ -5,7 +5,7 @@ $black: #000;
 $white: #ffffff;
 
 // Base Material palette teal:
-$teal-base: #009587;
+$teal-base: #950000;
 
 // Main Bela color:
 $teal-main: #00bea4; //rgb(0,190,164)
@@ -38,6 +38,59 @@ $trans-reg: 0.1s;
 $yellow-accent: #fff07c;
 $yellow-accent-fade: #FFFFC9;
 
+$themes: (
+  light: (
+    main-background-color: $white,
+    tabs-color: $grey-toolbar,
+    selected-tab-color: $white,
+    top-file-status-color: #e1e1e1,
+    accordion-background-color: $grey-light,
+    hovered-accordion-color: $grey-mid,
+    accordion-font-color: rgba(0, 0, 0, 0.6),
+    accordion-font-color-accent: $grey-dark,
+    main-font-color: $black,
+    hovered-accordion-color-two: #f9f9f9,
+    main-font-color-accent: $black,
+    cursor-color: $grey-light,
+    console-dragger-color: #999,
+    console-dragger-opacity: 0.001,
+    console-dragged-color: #bbb,
+    checkbox-slider-color: #ccc,
+    text-area-color: $white,
+  ),
+  dark: (
+    main-background-color: #292a2f,
+    tabs-color: #252729,
+    selected-tab-color: #252729,
+    top-file-status-color: #252729,
+    accordion-background-color: #3f4045,
+    hovered-accordion-color: #3e4d5c,
+    accordion-font-color: #dfdfe0,
+    accordion-font-color-accent: #ededf2,
+    main-font-color: #dfdfe0,
+    hovered-accordion-color-two: #3f4045,
+    main-font-color-accent: #ededf2,
+    cursor-color: rgb(44,44,44),
+    console-dragger-color: #3f4045,
+    console-dragger-opacity: 1,
+    console-dragged-color: #5a5a62,
+    checkbox-slider-color: #5a5a62,
+    text-area-color: #292a2f,
+  )
+);
+
+@mixin themify($themes) {
+  @each $name, $values in $themes {
+    .#{$name}-theme {
+      $theme-map: $values !global;
+      @content;
+    }
+  }
+}
+@function themed($key) {
+  @return map-get($theme-map, $key);
+}
+
 @import 'reset';
 @import 'fonts';
 
@@ -61,9 +114,28 @@ img {
   display: none;
 }
 
+// color-themed top bar elements
+@include themify($themes) {
+  .upper {
+    background-color: themed('top-file-status-color');
+  }
+  .lm_content {
+    border: 1px solid themed('tabs-color');
+  }
+  .lm_splitter {
+    background-color: themed('console-dragger-color') !important;
+    opacity: themed('console-dragger-opacity');
+    &:hover {
+      background-color: themed('console-dragged-color') !important;
+    }
+  }
+
+
+}
+
 .upper {
-	height: 100%;
-	position: relative;
+  height: 100%;
+  position: relative;
   z-index: 96;
 }
 

@@ -1,8 +1,50 @@
+// color-themed accordion menu elements
+@include themify($themes) {
+  button.accordion {
+    background-color: themed('accordion-background-color');
+    border-bottom: 2px solid themed('main-background-color');
+    color: themed('accordion-font-color');
+
+    &:hover {
+      background: themed('hovered-accordion-color');
+    }
+
+    &.active {
+      background-color: themed('accordion-background-color');
+      color: themed('accordion-font-color-accent');
+
+      &:hover {
+        color: themed('accordion-font-color-accent');
+      }
+    }
+    &:after {
+      color: themed('accordion-font-color');
+    }
+  }
+  button.accordion-sub {
+    border-bottom: 1px solid themed('tabs-color');
+    color: themed('accordion-font-color-accent');
+    &:hover {
+      color: themed('accordion-font-color-accent');
+    }
+    &.active {
+      color: themed('accordion-font-color-accent');
+      &:hover {
+        color: themed('accordion-font-color-accent');
+      }
+    }
+  }
+  .docs-content {
+    color: themed('main-font-color');
+  }
+  .panel.show {
+    color: themed('main-font-color');
+  }
+}
+
+
 button.accordion {
-  background-color: $grey-light;
   border: none;
-  border-bottom: 2px solid #fff;
-  color: rgba(0, 0, 0, 0.6);
   cursor: pointer;
   font-family: poppins_regular;
   font-size: 16px;
@@ -13,23 +55,16 @@ button.accordion {
   transition: 0.25s ease-in-out;
   width: 100%;
   &:hover {
-    background: $grey-mid;
     border-bottom: 2px solid $teal-main;
   }
   &.active {
-    background-color: $grey-light;
     border-bottom: 2px solid $teal-main;
-    color: $grey-dark;
     padding: 8px 14px;
-    &:hover {
-      color: $grey-dark;
-    }
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
     }
   }
   &:after {
-    color: rgba(0, 0, 0, 0.6);
     content: '\02795'; /* Unicode character for "plus" sign (+) */
     float: right;
     font-size: 14px;
@@ -39,12 +74,10 @@ button.accordion {
 
 button.accordion-sub {
   background: transparent;
-  border-bottom: 1px solid $grey-toolbar;
   border-top: 0;
   border-left: 0;
   border-right: 0;
   border-radius: 0;
-  color: $grey-dark;
   font-size: 1em;
   font-family: 'poppins_regular';
   padding: .4em .8em .25em;
@@ -52,17 +85,12 @@ button.accordion-sub {
   width: 100%;
   &:hover {
     background: rgba($grey-toolbar,0.2);
-    color: $grey-dark;
   }
   &.active {
     background: transparent;
     border-bottom: 2px solid $teal-01;
-    color: $grey-dark;
     padding-bottom: .2em;
     margin-top: .2em;
-    &:hover {
-      color: $grey-dark;
-    }
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
       font-size: .75em;

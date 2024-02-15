@@ -1,3 +1,13 @@
+// color-themed top bar elements
+@include themify($themes) {
+  .file-status {
+    .current {
+      color: themed('accordion-font-color');
+      background-color: themed('top-file-status-color');
+    }
+  }
+}
+
 .file-status {
   margin-left: 60px;
   white-space: nowrap;
@@ -30,7 +40,6 @@
   }
   .current {
     font-family: poppins_regular;
-    color: rgba(0, 0, 0, 0.7);
     padding-right: 20px;
     font-size: 12px;
   }
