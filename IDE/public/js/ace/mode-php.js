@@ -1,71 +1,57 @@
-ace.define("ace/mode/doc_comment_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/doc_comment_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
-
-var DocCommentHighlightRules = function() {
+var DocCommentHighlightRules = function () {
     this.$rules = {
-        "start" : [ {
-            token : "comment.doc.tag",
-            regex : "@[\\w\\d_]+" // TODO: fix email addresses
-        }, 
-        DocCommentHighlightRules.getTagRule(),
-        {
-            defaultToken : "comment.doc",
-            caseInsensitive: true
-        }]
+        "start": [
+            {
+                token: "comment.doc.tag",
+                regex: "@\\w+(?=\\s|$)"
+            }, DocCommentHighlightRules.getTagRule(), {
+                defaultToken: "comment.doc",
+                caseInsensitive: true
+            }
+        ]
     };
 };
-
 oop.inherits(DocCommentHighlightRules, TextHighlightRules);
-
-DocCommentHighlightRules.getTagRule = function(start) {
+DocCommentHighlightRules.getTagRule = function (start) {
     return {
-        token : "comment.doc.tag.storage.type",
-        regex : "\\b(?:TODO|FIXME|XXX|HACK)\\b"
+        token: "comment.doc.tag.storage.type",
+        regex: "\\b(?:TODO|FIXME|XXX|HACK)\\b"
     };
 };
-
-DocCommentHighlightRules.getStartRule = function(start) {
+DocCommentHighlightRules.getStartRule = function (start) {
     return {
-        token : "comment.doc", // doc comment
-        regex : "\\/\\*(?=\\*)",
-        next  : start
+        token: "comment.doc", // doc comment
+        regex: "\\/\\*(?=\\*)",
+        next: start
     };
 };
-
 DocCommentHighlightRules.getEndRule = function (start) {
     return {
-        token : "comment.doc", // closing comment
-        regex : "\\*\\/",
-        next  : start
+        token: "comment.doc", // closing comment
+        regex: "\\*\\/",
+        next: start
     };
 };
-
-
 exports.DocCommentHighlightRules = DocCommentHighlightRules;
 
 });
 
-ace.define("ace/mode/css_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text_highlight_rules"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/css_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var supportType = exports.supportType = "align-content|align-items|align-self|all|animation|animation-delay|animation-direction|animation-duration|animation-fill-mode|animation-iteration-count|animation-name|animation-play-state|animation-timing-function|backface-visibility|background|background-attachment|background-blend-mode|background-clip|background-color|background-image|background-origin|background-position|background-repeat|background-size|border|border-bottom|border-bottom-color|border-bottom-left-radius|border-bottom-right-radius|border-bottom-style|border-bottom-width|border-collapse|border-color|border-image|border-image-outset|border-image-repeat|border-image-slice|border-image-source|border-image-width|border-left|border-left-color|border-left-style|border-left-width|border-radius|border-right|border-right-color|border-right-style|border-right-width|border-spacing|border-style|border-top|border-top-color|border-top-left-radius|border-top-right-radius|border-top-style|border-top-width|border-width|bottom|box-shadow|box-sizing|caption-side|clear|clip|color|column-count|column-fill|column-gap|column-rule|column-rule-color|column-rule-style|column-rule-width|column-span|column-width|columns|content|counter-increment|counter-reset|cursor|direction|display|empty-cells|filter|flex|flex-basis|flex-direction|flex-flow|flex-grow|flex-shrink|flex-wrap|float|font|font-family|font-size|font-size-adjust|font-stretch|font-style|font-variant|font-weight|hanging-punctuation|height|justify-content|left|letter-spacing|line-height|list-style|list-style-image|list-style-position|list-style-type|margin|margin-bottom|margin-left|margin-right|margin-top|max-height|max-width|max-zoom|min-height|min-width|min-zoom|nav-down|nav-index|nav-left|nav-right|nav-up|opacity|order|outline|outline-color|outline-offset|outline-style|outline-width|overflow|overflow-x|overflow-y|padding|padding-bottom|padding-left|padding-right|padding-top|page-break-after|page-break-before|page-break-inside|perspective|perspective-origin|position|quotes|resize|right|tab-size|table-layout|text-align|text-align-last|text-decoration|text-decoration-color|text-decoration-line|text-decoration-style|text-indent|text-justify|text-overflow|text-shadow|text-transform|top|transform|transform-origin|transform-style|transition|transition-delay|transition-duration|transition-property|transition-timing-function|unicode-bidi|user-select|user-zoom|vertical-align|visibility|white-space|width|word-break|word-spacing|word-wrap|z-index";
 var supportFunction = exports.supportFunction = "rgb|rgba|url|attr|counter|counters";
-var supportConstant = exports.supportConstant = "absolute|after-edge|after|all-scroll|all|alphabetic|always|antialiased|armenian|auto|avoid-column|avoid-page|avoid|balance|baseline|before-edge|before|below|bidi-override|block-line-height|block|bold|bolder|border-box|both|bottom|box|break-all|break-word|capitalize|caps-height|caption|center|central|char|circle|cjk-ideographic|clone|close-quote|col-resize|collapse|column|consider-shifts|contain|content-box|cover|crosshair|cubic-bezier|dashed|decimal-leading-zero|decimal|default|disabled|disc|disregard-shifts|distribute-all-lines|distribute-letter|distribute-space|distribute|dotted|double|e-resize|ease-in|ease-in-out|ease-out|ease|ellipsis|end|exclude-ruby|fill|fixed|georgian|glyphs|grid-height|groove|hand|hanging|hebrew|help|hidden|hiragana-iroha|hiragana|horizontal|icon|ideograph-alpha|ideograph-numeric|ideograph-parenthesis|ideograph-space|ideographic|inactive|include-ruby|inherit|initial|inline-block|inline-box|inline-line-height|inline-table|inline|inset|inside|inter-ideograph|inter-word|invert|italic|justify|katakana-iroha|katakana|keep-all|last|left|lighter|line-edge|line-through|line|linear|list-item|local|loose|lower-alpha|lower-greek|lower-latin|lower-roman|lowercase|lr-tb|ltr|mathematical|max-height|max-size|medium|menu|message-box|middle|move|n-resize|ne-resize|newspaper|no-change|no-close-quote|no-drop|no-open-quote|no-repeat|none|normal|not-allowed|nowrap|nw-resize|oblique|open-quote|outset|outside|overline|padding-box|page|pointer|pre-line|pre-wrap|pre|preserve-3d|progress|relative|repeat-x|repeat-y|repeat|replaced|reset-size|ridge|right|round|row-resize|rtl|s-resize|scroll|se-resize|separate|slice|small-caps|small-caption|solid|space|square|start|static|status-bar|step-end|step-start|steps|stretch|strict|sub|super|sw-resize|table-caption|table-cell|table-column-group|table-column|table-footer-group|table-header-group|table-row-group|table-row|table|tb-rl|text-after-edge|text-before-edge|text-bottom|text-size|text-top|text|thick|thin|transparent|underline|upper-alpha|upper-latin|upper-roman|uppercase|use-script|vertical-ideographic|vertical-text|visible|w-resize|wait|whitespace|z-index|zero|zoom";
+var supportConstant = exports.supportConstant = "absolute|after-edge|after|all-scroll|all|alphabetic|always|antialiased|armenian|auto|avoid-column|avoid-page|avoid|balance|baseline|before-edge|before|below|bidi-override|block-line-height|block|bold|bolder|border-box|both|bottom|box|break-all|break-word|capitalize|caps-height|caption|center|central|char|circle|cjk-ideographic|clone|close-quote|col-resize|collapse|column|consider-shifts|contain|content-box|cover|crosshair|cubic-bezier|dashed|decimal-leading-zero|decimal|default|disabled|disc|disregard-shifts|distribute-all-lines|distribute-letter|distribute-space|distribute|dotted|double|e-resize|ease-in|ease-in-out|ease-out|ease|ellipsis|end|exclude-ruby|flex-end|flex-start|fill|fixed|georgian|glyphs|grid-height|groove|hand|hanging|hebrew|help|hidden|hiragana-iroha|hiragana|horizontal|icon|ideograph-alpha|ideograph-numeric|ideograph-parenthesis|ideograph-space|ideographic|inactive|include-ruby|inherit|initial|inline-block|inline-box|inline-line-height|inline-table|inline|inset|inside|inter-ideograph|inter-word|invert|italic|justify|katakana-iroha|katakana|keep-all|last|left|lighter|line-edge|line-through|line|linear|list-item|local|loose|lower-alpha|lower-greek|lower-latin|lower-roman|lowercase|lr-tb|ltr|mathematical|max-height|max-size|medium|menu|message-box|middle|move|n-resize|ne-resize|newspaper|no-change|no-close-quote|no-drop|no-open-quote|no-repeat|none|normal|not-allowed|nowrap|nw-resize|oblique|open-quote|outset|outside|overline|padding-box|page|pointer|pre-line|pre-wrap|pre|preserve-3d|progress|relative|repeat-x|repeat-y|repeat|replaced|reset-size|ridge|right|round|row-resize|rtl|s-resize|scroll|se-resize|separate|slice|small-caps|small-caption|solid|space|square|start|static|status-bar|step-end|step-start|steps|stretch|strict|sub|super|sw-resize|table-caption|table-cell|table-column-group|table-column|table-footer-group|table-header-group|table-row-group|table-row|table|tb-rl|text-after-edge|text-before-edge|text-bottom|text-size|text-top|text|thick|thin|transparent|underline|upper-alpha|upper-latin|upper-roman|uppercase|use-script|vertical-ideographic|vertical-text|visible|w-resize|wait|whitespace|z-index|zero|zoom";
 var supportConstantColor = exports.supportConstantColor = "aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen";
 var supportConstantFonts = exports.supportConstantFonts = "arial|century|comic|courier|cursive|fantasy|garamond|georgia|helvetica|impact|lucida|symbol|system|tahoma|times|trebuchet|utopia|verdana|webdings|sans-serif|serif|monospace";
-
 var numRe = exports.numRe = "\\-?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+))";
 var pseudoElements = exports.pseudoElements = "(\\:+)\\b(after|before|first-letter|first-line|moz-selection|selection)\\b";
-var pseudoClasses  = exports.pseudoClasses =  "(:)\\b(active|checked|disabled|empty|enabled|first-child|first-of-type|focus|hover|indeterminate|invalid|last-child|last-of-type|link|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|only-child|only-of-type|required|root|target|valid|visited)\\b";
-
-var CssHighlightRules = function() {
-
+var pseudoClasses = exports.pseudoClasses = "(:)\\b(active|checked|disabled|empty|enabled|first-child|first-of-type|focus|hover|indeterminate|invalid|last-child|last-of-type|link|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|only-child|only-of-type|required|root|target|valid|visited)\\b";
+var CssHighlightRules = function () {
     var keywordMapper = this.createKeywordMapper({
         "support.function": supportFunction,
         "support.constant": supportConstant,
@@ -73,213 +59,317 @@ var CssHighlightRules = function() {
         "support.constant.color": supportConstantColor,
         "support.constant.fonts": supportConstantFonts
     }, "text", true);
-
     this.$rules = {
-        "start" : [{
-            include : ["strings", "url", "comments"]
-        }, {
-            token: "paren.lparen",
-            regex: "\\{",
-            next:  "ruleset"
-        }, {
-            token: "paren.rparen",
-            regex: "\\}"
-        }, {
-            token: "string",
-            regex: "@(?!viewport)",
-            next:  "media"
-        }, {
-            token: "keyword",
-            regex: "#[a-z0-9-_]+"
-        }, {
-            token: "keyword",
-            regex: "%"
-        }, {
-            token: "variable",
-            regex: "\\.[a-z0-9-_]+"
-        }, {
-            token: "string",
-            regex: ":[a-z0-9-_]+"
-        }, {
-            token : "constant.numeric",
-            regex : numRe
-        }, {
-            token: "constant",
-            regex: "[a-z0-9-_]+"
-        }, {
-            caseInsensitive: true
-        }],
-
+        "start": [{
+                include: ["strings", "url", "comments"]
+            }, {
+                token: "paren.lparen",
+                regex: "\\{",
+                next: "ruleset"
+            }, {
+                token: "paren.rparen",
+                regex: "\\}"
+            }, {
+                token: "string",
+                regex: "@(?!viewport)",
+                next: "media"
+            }, {
+                token: "keyword",
+                regex: "#[a-z0-9-_]+"
+            }, {
+                token: "keyword",
+                regex: "%"
+            }, {
+                token: "variable",
+                regex: "\\.[a-z0-9-_]+"
+            }, {
+                token: "string",
+                regex: ":[a-z0-9-_]+"
+            }, {
+                token: "constant.numeric",
+                regex: numRe
+            }, {
+                token: "constant",
+                regex: "[a-z0-9-_]+"
+            }, {
+                caseInsensitive: true
+            }],
         "media": [{
-            include : ["strings", "url", "comments"]
-        }, {
-            token: "paren.lparen",
-            regex: "\\{",
-            next:  "start"
-        }, {
-            token: "paren.rparen",
-            regex: "\\}",
-            next:  "start"
-        }, {
-            token: "string",
-            regex: ";",
-            next:  "start"
-        }, {
-            token: "keyword",
-            regex: "(?:media|supports|document|charset|import|namespace|media|supports|document"
-                + "|page|font|keyframes|viewport|counter-style|font-feature-values"
-                + "|swash|ornaments|annotation|stylistic|styleset|character-variant)"
-        }],
-
-        "comments" : [{
-            token: "comment", // multi line comment
-            regex: "\\/\\*",
-            push: [{
-                token : "comment",
-                regex : "\\*\\/",
-                next : "pop"
+                include: ["strings", "url", "comments"]
             }, {
-                defaultToken : "comment"
-            }]
-        }],
-
-        "ruleset" : [{
-            regex : "-(webkit|ms|moz|o)-",
-            token : "text"
-        }, {
-            token : "punctuation.operator",
-            regex : "[:;]"
-        }, {
-            token : "paren.rparen",
-            regex : "\\}",
-            next : "start"
-        }, {
-            include : ["strings", "url", "comments"]
-        }, {
-            token : ["constant.numeric", "keyword"],
-            regex : "(" + numRe + ")(ch|cm|deg|em|ex|fr|gd|grad|Hz|in|kHz|mm|ms|pc|pt|px|rad|rem|s|turn|vh|vmax|vmin|vm|vw|%)"
-        }, {
-            token : "constant.numeric",
-            regex : numRe
-        }, {
-            token : "constant.numeric",  // hex6 color
-            regex : "#[a-f0-9]{6}"
-        }, {
-            token : "constant.numeric", // hex3 color
-            regex : "#[a-f0-9]{3}"
-        }, {
-            token : ["punctuation", "entity.other.attribute-name.pseudo-element.css"],
-            regex : pseudoElements
-        }, {
-            token : ["punctuation", "entity.other.attribute-name.pseudo-class.css"],
-            regex : pseudoClasses
-        }, {
-            include: "url"
-        }, {
-            token : keywordMapper,
-            regex : "\\-?[a-zA-Z_][a-zA-Z0-9_\\-]*"
-        }, {
-            caseInsensitive: true
-        }],
-
+                token: "paren.lparen",
+                regex: "\\{",
+                next: "start"
+            }, {
+                token: "paren.rparen",
+                regex: "\\}",
+                next: "start"
+            }, {
+                token: "string",
+                regex: ";",
+                next: "start"
+            }, {
+                token: "keyword",
+                regex: "(?:media|supports|document|charset|import|namespace|media|supports|document"
+                    + "|page|font|keyframes|viewport|counter-style|font-feature-values"
+                    + "|swash|ornaments|annotation|stylistic|styleset|character-variant)"
+            }],
+        "comments": [{
+                token: "comment", // multi line comment
+                regex: "\\/\\*",
+                push: [{
+                        token: "comment",
+                        regex: "\\*\\/",
+                        next: "pop"
+                    }, {
+                        defaultToken: "comment"
+                    }]
+            }],
+        "ruleset": [{
+                regex: "-(webkit|ms|moz|o)-",
+                token: "text"
+            }, {
+                token: "punctuation.operator",
+                regex: "[:;]"
+            }, {
+                token: "paren.rparen",
+                regex: "\\}",
+                next: "start"
+            }, {
+                include: ["strings", "url", "comments"]
+            }, {
+                token: ["constant.numeric", "keyword"],
+                regex: "(" + numRe + ")(ch|cm|deg|em|ex|fr|gd|grad|Hz|in|kHz|mm|ms|pc|pt|px|rad|rem|s|turn|vh|vmax|vmin|vm|vw|%)"
+            }, {
+                token: "constant.numeric",
+                regex: numRe
+            }, {
+                token: "constant.numeric", // hex6 color
+                regex: "#[a-f0-9]{6}"
+            }, {
+                token: "constant.numeric", // hex3 color
+                regex: "#[a-f0-9]{3}"
+            }, {
+                token: ["punctuation", "entity.other.attribute-name.pseudo-element.css"],
+                regex: pseudoElements
+            }, {
+                token: ["punctuation", "entity.other.attribute-name.pseudo-class.css"],
+                regex: pseudoClasses
+            }, {
+                include: "url"
+            }, {
+                token: keywordMapper,
+                regex: "\\-?[a-zA-Z_][a-zA-Z0-9_\\-]*"
+            }, {
+                caseInsensitive: true
+            }],
         url: [{
-            token : "support.function",
-            regex : "(?:url(:?-prefix)?|domain|regexp)\\(",
-            push: [{
-                token : "support.function",
-                regex : "\\)",
-                next : "pop"
-            }, {
-                defaultToken: "string"
-            }]
-        }],
-
+                token: "support.function",
+                regex: "(?:url(:?-prefix)?|domain|regexp)\\(",
+                push: [{
+                        token: "support.function",
+                        regex: "\\)",
+                        next: "pop"
+                    }, {
+                        defaultToken: "string"
+                    }]
+            }],
         strings: [{
-            token : "string.start",
-            regex : "'",
-            push : [{
-                token : "string.end",
-                regex : "'|$",
-                next: "pop"
+                token: "string.start",
+                regex: "'",
+                push: [{
+                        token: "string.end",
+                        regex: "'|$",
+                        next: "pop"
+                    }, {
+                        include: "escapes"
+                    }, {
+                        token: "constant.language.escape",
+                        regex: /\\$/,
+                        consumeLineEnd: true
+                    }, {
+                        defaultToken: "string"
+                    }]
             }, {
-                include : "escapes"
-            }, {
-                token : "constant.language.escape",
-                regex : /\\$/,
-                consumeLineEnd: true
-            }, {
-                defaultToken: "string"
-            }]
-        }, {
-            token : "string.start",
-            regex : '"',
-            push : [{
-                token : "string.end",
-                regex : '"|$',
-                next: "pop"
-            }, {
-                include : "escapes"
-            }, {
-                token : "constant.language.escape",
-                regex : /\\$/,
-                consumeLineEnd: true
-            }, {
-                defaultToken: "string"
-            }]
-        }],
+                token: "string.start",
+                regex: '"',
+                push: [{
+                        token: "string.end",
+                        regex: '"|$',
+                        next: "pop"
+                    }, {
+                        include: "escapes"
+                    }, {
+                        token: "constant.language.escape",
+                        regex: /\\$/,
+                        consumeLineEnd: true
+                    }, {
+                        defaultToken: "string"
+                    }]
+            }],
         escapes: [{
-            token : "constant.language.escape",
-            regex : /\\([a-fA-F\d]{1,6}|[^a-fA-F\d])/
-        }]
-
+                token: "constant.language.escape",
+                regex: /\\([a-fA-F\d]{1,6}|[^a-fA-F\d])/
+            }]
     };
-
     this.normalizeRules();
 };
-
 oop.inherits(CssHighlightRules, TextHighlightRules);
-
 exports.CssHighlightRules = CssHighlightRules;
 
 });
 
-ace.define("ace/mode/javascript_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/doc_comment_highlight_rules","ace/mode/text_highlight_rules"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/jsdoc_comment_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
-var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
+var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
+var JsDocCommentHighlightRules = function () {
+    this.$rules = {
+        "start": [
+            {
+                token: ["comment.doc.tag", "comment.doc.text", "lparen.doc"],
+                regex: "(@(?:param|member|typedef|property|namespace|var|const|callback))(\\s*)({)",
+                push: [
+                    {
+                        token: "lparen.doc",
+                        regex: "{",
+                        push: [
+                            {
+                                include: "doc-syntax"
+                            }, {
+                                token: "rparen.doc",
+                                regex: "}|(?=$)",
+                                next: "pop"
+                            }
+                        ]
+                    }, {
+                        token: ["rparen.doc", "text.doc", "variable.parameter.doc", "lparen.doc", "variable.parameter.doc", "rparen.doc"],
+                        regex: /(})(\s*)(?:([\w=:\/\.]+)|(?:(\[)([\w=:\/\.]+)(\])))/,
+                        next: "pop"
+                    }, {
+                        token: "rparen.doc",
+                        regex: "}|(?=$)",
+                        next: "pop"
+                    }, {
+                        include: "doc-syntax"
+                    }, {
+                        defaultToken: "text.doc"
+                    }
+                ]
+            }, {
+                token: ["comment.doc.tag", "text.doc", "lparen.doc"],
+                regex: "(@(?:returns?|yields|type|this|suppress|public|protected|private|package|modifies|"
+                    + "implements|external|exception|throws|enum|define|extends))(\\s*)({)",
+                push: [
+                    {
+                        token: "lparen.doc",
+                        regex: "{",
+                        push: [
+                            {
+                                include: "doc-syntax"
+                            }, {
+                                token: "rparen.doc",
+                                regex: "}|(?=$)",
+                                next: "pop"
+                            }
+                        ]
+                    }, {
+                        token: "rparen.doc",
+                        regex: "}|(?=$)",
+                        next: "pop"
+                    }, {
+                        include: "doc-syntax"
+                    }, {
+                        defaultToken: "text.doc"
+                    }
+                ]
+            }, {
+                token: ["comment.doc.tag", "text.doc", "variable.parameter.doc"],
+                regex: "(@(?:alias|memberof|instance|module|name|lends|namespace|external|this|template|"
+                    + "requires|param|implements|function|extends|typedef|mixes|constructor|var|"
+                    + "memberof\\!|event|listens|exports|class|constructs|interface|emits|fires|"
+                    + "throws|const|callback|borrows|augments))(\\s+)(\\w[\\w#\.:\/~\"\\-]*)?"
+            }, {
+                token: ["comment.doc.tag", "text.doc", "variable.parameter.doc"],
+                regex: "(@method)(\\s+)(\\w[\\w\.\\(\\)]*)"
+            }, {
+                token: "comment.doc.tag",
+                regex: "@access\\s+(?:private|public|protected)"
+            }, {
+                token: "comment.doc.tag",
+                regex: "@kind\\s+(?:class|constant|event|external|file|function|member|mixin|module|namespace|typedef)"
+            }, {
+                token: "comment.doc.tag",
+                regex: "@\\w+(?=\\s|$)"
+            },
+            JsDocCommentHighlightRules.getTagRule(),
+            {
+                defaultToken: "comment.doc",
+                caseInsensitive: true
+            }
+        ],
+        "doc-syntax": [{
+                token: "operator.doc",
+                regex: /[|:]/
+            }, {
+                token: "paren.doc",
+                regex: /[\[\]]/
+            }]
+    };
+    this.normalizeRules();
+};
+oop.inherits(JsDocCommentHighlightRules, TextHighlightRules);
+JsDocCommentHighlightRules.getTagRule = function (start) {
+    return {
+        token: "comment.doc.tag.storage.type",
+        regex: "\\b(?:TODO|FIXME|XXX|HACK)\\b"
+    };
+};
+JsDocCommentHighlightRules.getStartRule = function (start) {
+    return {
+        token: "comment.doc", // doc comment
+        regex: "\\/\\*(?=\\*)",
+        next: start
+    };
+};
+JsDocCommentHighlightRules.getEndRule = function (start) {
+    return {
+        token: "comment.doc", // closing comment
+        regex: "\\*\\/",
+        next: start
+    };
+};
+exports.JsDocCommentHighlightRules = JsDocCommentHighlightRules;
+
+});
+
+ace.define("ace/mode/javascript_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/jsdoc_comment_highlight_rules","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
+var oop = require("../lib/oop");
+var DocCommentHighlightRules = require("./jsdoc_comment_highlight_rules").JsDocCommentHighlightRules;
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var identifierRe = "[a-zA-Z\\$_\u00a1-\uffff][a-zA-Z\\d\\$_\u00a1-\uffff]*";
-
-var JavaScriptHighlightRules = function(options) {
+var JavaScriptHighlightRules = function (options) {
     var keywordMapper = this.createKeywordMapper({
-        "variable.language":
-            "Array|Boolean|Date|Function|Iterator|Number|Object|RegExp|String|Proxy|"  + // Constructors
-            "Namespace|QName|XML|XMLList|"                                             + // E4X
-            "ArrayBuffer|Float32Array|Float64Array|Int16Array|Int32Array|Int8Array|"   +
-            "Uint16Array|Uint32Array|Uint8Array|Uint8ClampedArray|"                    +
-            "Error|EvalError|InternalError|RangeError|ReferenceError|StopIteration|"   + // Errors
-            "SyntaxError|TypeError|URIError|"                                          +
+        "variable.language": "Array|Boolean|Date|Function|Iterator|Number|Object|RegExp|String|Proxy|Symbol|" + // Constructors
+            "Namespace|QName|XML|XMLList|" + // E4X
+            "ArrayBuffer|Float32Array|Float64Array|Int16Array|Int32Array|Int8Array|" +
+            "Uint16Array|Uint32Array|Uint8Array|Uint8ClampedArray|" +
+            "Error|EvalError|InternalError|RangeError|ReferenceError|StopIteration|" + // Errors
+            "SyntaxError|TypeError|URIError|" +
             "decodeURI|decodeURIComponent|encodeURI|encodeURIComponent|eval|isFinite|" + // Non-constructor functions
-            "isNaN|parseFloat|parseInt|"                                               +
-            "JSON|Math|"                                                               + // Other
-            "this|arguments|prototype|window|document"                                 , // Pseudo
-        "keyword":
-            "const|yield|import|get|set|async|await|" +
+            "isNaN|parseFloat|parseInt|" +
+            "JSON|Math|" + // Other
+            "this|arguments|prototype|window|document", // Pseudo
+        "keyword": "const|yield|import|get|set|async|await|" +
             "break|case|catch|continue|default|delete|do|else|finally|for|function|" +
             "if|in|of|instanceof|new|return|switch|throw|try|typeof|let|var|while|with|debugger|" +
             "__parent__|__count__|escape|unescape|with|__proto__|" +
-            "class|enum|extends|super|export|implements|private|public|interface|package|protected|static",
-        "storage.type":
-            "const|let|var|function",
-        "constant.language":
-            "null|Infinity|NaN|undefined",
-        "support.function":
-            "alert",
+            "class|enum|extends|super|export|implements|private|public|interface|package|protected|static|constructor",
+        "storage.type": "const|let|var|function",
+        "constant.language": "null|Infinity|NaN|undefined",
+        "support.function": "alert",
         "constant.language.boolean": "true|false"
     }, "identifier");
     var kwBeforeRe = "case|do|else|finally|in|instanceof|return|throw|try|typeof|yield|void";
-
     var escapedRe = "\\\\(?:x[0-9a-fA-F]{2}|" + // hex
         "u[0-9a-fA-F]{4}|" + // unicode
         "u{[0-9a-fA-F]{1,6}}|" + // es6 unicode
@@ -287,143 +377,142 @@ var JavaScriptHighlightRules = function(options) {
         "3[0-7][0-7]?|" + // oct
         "[4-7][0-7]?|" + //oct
         ".)";
-
     this.$rules = {
-        "no_regex" : [
+        "no_regex": [
             DocCommentHighlightRules.getStartRule("doc-start"),
             comments("no_regex"),
             {
-                token : "string",
-                regex : "'(?=.)",
-                next  : "qstring"
+                token: "string",
+                regex: "'(?=.)",
+                next: "qstring"
             }, {
-                token : "string",
-                regex : '"(?=.)',
-                next  : "qqstring"
+                token: "string",
+                regex: '"(?=.)',
+                next: "qqstring"
             }, {
-                token : "constant.numeric", // hexadecimal, octal and binary
-                regex : /0(?:[xX][0-9a-fA-F]+|[oO][0-7]+|[bB][01]+)\b/
+                token: "constant.numeric", // hexadecimal, octal and binary
+                regex: /0(?:[xX][0-9a-fA-F]+|[oO][0-7]+|[bB][01]+)\b/
             }, {
-                token : "constant.numeric", // decimal integers and floats
-                regex : /(?:\d\d*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+\b)?/
+                token: "constant.numeric", // decimal integers and floats
+                regex: /(?:\d\d*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+\b)?/
             }, {
-                token : [
+                token: [
                     "storage.type", "punctuation.operator", "support.function",
-                    "punctuation.operator", "entity.name.function", "text","keyword.operator"
+                    "punctuation.operator", "entity.name.function", "text", "keyword.operator"
                 ],
-                regex : "(" + identifierRe + ")(\\.)(prototype)(\\.)(" + identifierRe +")(\\s*)(=)",
+                regex: "(" + identifierRe + ")(\\.)(prototype)(\\.)(" + identifierRe + ")(\\s*)(=)",
                 next: "function_arguments"
             }, {
-                token : [
+                token: [
                     "storage.type", "punctuation.operator", "entity.name.function", "text",
                     "keyword.operator", "text", "storage.type", "text", "paren.lparen"
                 ],
-                regex : "(" + identifierRe + ")(\\.)(" + identifierRe +")(\\s*)(=)(\\s*)(function)(\\s*)(\\()",
+                regex: "(" + identifierRe + ")(\\.)(" + identifierRe + ")(\\s*)(=)(\\s*)(function\\*?)(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : [
+                token: [
                     "entity.name.function", "text", "keyword.operator", "text", "storage.type",
                     "text", "paren.lparen"
                 ],
-                regex : "(" + identifierRe +")(\\s*)(=)(\\s*)(function)(\\s*)(\\()",
+                regex: "(" + identifierRe + ")(\\s*)(=)(\\s*)(function\\*?)(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : [
+                token: [
                     "storage.type", "punctuation.operator", "entity.name.function", "text",
                     "keyword.operator", "text",
                     "storage.type", "text", "entity.name.function", "text", "paren.lparen"
                 ],
-                regex : "(" + identifierRe + ")(\\.)(" + identifierRe +")(\\s*)(=)(\\s*)(function)(\\s+)(\\w+)(\\s*)(\\()",
+                regex: "(" + identifierRe + ")(\\.)(" + identifierRe + ")(\\s*)(=)(\\s*)(function\\*?)(\\s+)(\\w+)(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : [
+                token: [
                     "storage.type", "text", "entity.name.function", "text", "paren.lparen"
                 ],
-                regex : "(function)(\\s+)(" + identifierRe + ")(\\s*)(\\()",
+                regex: "(function\\*?)(\\s+)(" + identifierRe + ")(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : [
+                token: [
                     "entity.name.function", "text", "punctuation.operator",
                     "text", "storage.type", "text", "paren.lparen"
                 ],
-                regex : "(" + identifierRe + ")(\\s*)(:)(\\s*)(function)(\\s*)(\\()",
+                regex: "(" + identifierRe + ")(\\s*)(:)(\\s*)(function\\*?)(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : [
+                token: [
                     "text", "text", "storage.type", "text", "paren.lparen"
                 ],
-                regex : "(:)(\\s*)(function)(\\s*)(\\()",
+                regex: "(:)(\\s*)(function\\*?)(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : "keyword",
-                regex : "from(?=\\s*('|\"))"
+                token: "keyword",
+                regex: "from(?=\\s*('|\"))"
             }, {
-                token : "keyword",
-                regex : "(?:" + kwBeforeRe + ")\\b",
-                next : "start"
+                token: "keyword",
+                regex: "(?:" + kwBeforeRe + ")\\b",
+                next: "start"
             }, {
-                token : ["support.constant"],
-                regex : /that\b/
+                token: "support.constant",
+                regex: /that\b/
             }, {
-                token : ["storage.type", "punctuation.operator", "support.function.firebug"],
-                regex : /(console)(\.)(warn|info|log|error|time|trace|timeEnd|assert)\b/
+                token: ["storage.type", "punctuation.operator", "support.function.firebug"],
+                regex: /(console)(\.)(warn|info|log|error|debug|time|trace|timeEnd|assert)\b/
             }, {
-                token : keywordMapper,
-                regex : identifierRe
+                token: keywordMapper,
+                regex: identifierRe
             }, {
-                token : "punctuation.operator",
-                regex : /[.](?![.])/,
-                next  : "property"
+                token: "punctuation.operator",
+                regex: /[.](?![.])/,
+                next: "property"
             }, {
-                token : "storage.type",
-                regex : /=>/,
-                next  : "start"
+                token: "storage.type",
+                regex: /=>/,
+                next: "start"
             }, {
-                token : "keyword.operator",
-                regex : /--|\+\+|\.{3}|===|==|=|!=|!==|<+=?|>+=?|!|&&|\|\||\?:|[!$%&*+\-~\/^]=?/,
-                next  : "start"
+                token: "keyword.operator",
+                regex: /--|\+\+|\.{3}|===|==|=|!=|!==|<+=?|>+=?|!|&&|\|\||\?:|[!$%&*+\-~\/^]=?/,
+                next: "start"
             }, {
-                token : "punctuation.operator",
-                regex : /[?:,;.]/,
-                next  : "start"
+                token: "punctuation.operator",
+                regex: /[?:,;.]/,
+                next: "start"
             }, {
-                token : "paren.lparen",
-                regex : /[\[({]/,
-                next  : "start"
+                token: "paren.lparen",
+                regex: /[\[({]/,
+                next: "start"
             }, {
-                token : "paren.rparen",
-                regex : /[\])}]/
+                token: "paren.rparen",
+                regex: /[\])}]/
             }, {
                 token: "comment",
                 regex: /^#!.*$/
             }
         ],
         property: [{
-                token : "text",
-                regex : "\\s+"
+                token: "text",
+                regex: "\\s+"
             }, {
-                token : [
+                token: [
                     "storage.type", "punctuation.operator", "entity.name.function", "text",
                     "keyword.operator", "text",
                     "storage.type", "text", "entity.name.function", "text", "paren.lparen"
                 ],
-                regex : "(" + identifierRe + ")(\\.)(" + identifierRe +")(\\s*)(=)(\\s*)(function)(?:(\\s+)(\\w+))?(\\s*)(\\()",
+                regex: "(" + identifierRe + ")(\\.)(" + identifierRe + ")(\\s*)(=)(\\s*)(function\\*?)(?:(\\s+)(\\w+))?(\\s*)(\\()",
                 next: "function_arguments"
             }, {
-                token : "punctuation.operator",
-                regex : /[.](?![.])/
+                token: "punctuation.operator",
+                regex: /[.](?![.])/
             }, {
-                token : "support.function",
-                regex : /(s(?:h(?:ift|ow(?:Mod(?:elessDialog|alDialog)|Help))|croll(?:X|By(?:Pages|Lines)?|Y|To)?|t(?:op|rike)|i(?:n|zeToContent|debar|gnText)|ort|u(?:p|b(?:str(?:ing)?)?)|pli(?:ce|t)|e(?:nd|t(?:Re(?:sizable|questHeader)|M(?:i(?:nutes|lliseconds)|onth)|Seconds|Ho(?:tKeys|urs)|Year|Cursor|Time(?:out)?|Interval|ZOptions|Date|UTC(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Date|FullYear)|FullYear|Active)|arch)|qrt|lice|avePreferences|mall)|h(?:ome|andleEvent)|navigate|c(?:har(?:CodeAt|At)|o(?:s|n(?:cat|textual|firm)|mpile)|eil|lear(?:Timeout|Interval)?|a(?:ptureEvents|ll)|reate(?:StyleSheet|Popup|EventObject))|t(?:o(?:GMTString|S(?:tring|ource)|U(?:TCString|pperCase)|Lo(?:caleString|werCase))|est|a(?:n|int(?:Enabled)?))|i(?:s(?:NaN|Finite)|ndexOf|talics)|d(?:isableExternalCapture|ump|etachEvent)|u(?:n(?:shift|taint|escape|watch)|pdateCommands)|j(?:oin|avaEnabled)|p(?:o(?:p|w)|ush|lugins.refresh|a(?:ddings|rse(?:Int|Float)?)|r(?:int|ompt|eference))|e(?:scape|nableExternalCapture|val|lementFromPoint|x(?:p|ec(?:Script|Command)?))|valueOf|UTC|queryCommand(?:State|Indeterm|Enabled|Value)|f(?:i(?:nd|le(?:ModifiedDate|Size|CreatedDate|UpdatedDate)|xed)|o(?:nt(?:size|color)|rward)|loor|romCharCode)|watch|l(?:ink|o(?:ad|g)|astIndexOf)|a(?:sin|nchor|cos|t(?:tachEvent|ob|an(?:2)?)|pply|lert|b(?:s|ort))|r(?:ou(?:nd|teEvents)|e(?:size(?:By|To)|calc|turnValue|place|verse|l(?:oad|ease(?:Capture|Events)))|andom)|g(?:o|et(?:ResponseHeader|M(?:i(?:nutes|lliseconds)|onth)|Se(?:conds|lection)|Hours|Year|Time(?:zoneOffset)?|Da(?:y|te)|UTC(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Da(?:y|te)|FullYear)|FullYear|A(?:ttention|llResponseHeaders)))|m(?:in|ove(?:B(?:y|elow)|To(?:Absolute)?|Above)|ergeAttributes|a(?:tch|rgins|x))|b(?:toa|ig|o(?:ld|rderWidths)|link|ack))\b(?=\()/
+                token: "support.function",
+                regex: /(s(?:h(?:ift|ow(?:Mod(?:elessDialog|alDialog)|Help))|croll(?:X|By(?:Pages|Lines)?|Y|To)?|t(?:op|rike)|i(?:n|zeToContent|debar|gnText)|ort|u(?:p|b(?:str(?:ing)?)?)|pli(?:ce|t)|e(?:nd|t(?:Re(?:sizable|questHeader)|M(?:i(?:nutes|lliseconds)|onth)|Seconds|Ho(?:tKeys|urs)|Year|Cursor|Time(?:out)?|Interval|ZOptions|Date|UTC(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Date|FullYear)|FullYear|Active)|arch)|qrt|lice|avePreferences|mall)|h(?:ome|andleEvent)|navigate|c(?:har(?:CodeAt|At)|o(?:s|n(?:cat|textual|firm)|mpile)|eil|lear(?:Timeout|Interval)?|a(?:ptureEvents|ll)|reate(?:StyleSheet|Popup|EventObject))|t(?:o(?:GMTString|S(?:tring|ource)|U(?:TCString|pperCase)|Lo(?:caleString|werCase))|est|a(?:n|int(?:Enabled)?))|i(?:s(?:NaN|Finite)|ndexOf|talics)|d(?:isableExternalCapture|ump|etachEvent)|u(?:n(?:shift|taint|escape|watch)|pdateCommands)|j(?:oin|avaEnabled)|p(?:o(?:p|w)|ush|lugins.refresh|a(?:ddings|rse(?:Int|Float)?)|r(?:int|ompt|eference))|e(?:scape|nableExternalCapture|val|lementFromPoint|x(?:p|ec(?:Script|Command)?))|valueOf|UTC|queryCommand(?:State|Indeterm|Enabled|Value)|f(?:i(?:nd|lter|le(?:ModifiedDate|Size|CreatedDate|UpdatedDate)|xed)|o(?:nt(?:size|color)|rward|rEach)|loor|romCharCode)|watch|l(?:ink|o(?:ad|g)|astIndexOf)|a(?:sin|nchor|cos|t(?:tachEvent|ob|an(?:2)?)|pply|lert|b(?:s|ort))|r(?:ou(?:nd|teEvents)|e(?:size(?:By|To)|calc|turnValue|place|verse|l(?:oad|ease(?:Capture|Events)))|andom)|g(?:o|et(?:ResponseHeader|M(?:i(?:nutes|lliseconds)|onth)|Se(?:conds|lection)|Hours|Year|Time(?:zoneOffset)?|Da(?:y|te)|UTC(?:M(?:i(?:nutes|lliseconds)|onth)|Seconds|Hours|Da(?:y|te)|FullYear)|FullYear|A(?:ttention|llResponseHeaders)))|m(?:in|ove(?:B(?:y|elow)|To(?:Absolute)?|Above)|ergeAttributes|a(?:tch|rgins|x))|b(?:toa|ig|o(?:ld|rderWidths)|link|ack))\b(?=\()/
             }, {
-                token : "support.function.dom",
-                regex : /(s(?:ub(?:stringData|mit)|plitText|e(?:t(?:NamedItem|Attribute(?:Node)?)|lect))|has(?:ChildNodes|Feature)|namedItem|c(?:l(?:ick|o(?:se|neNode))|reate(?:C(?:omment|DATASection|aption)|T(?:Head|extNode|Foot)|DocumentFragment|ProcessingInstruction|E(?:ntityReference|lement)|Attribute))|tabIndex|i(?:nsert(?:Row|Before|Cell|Data)|tem)|open|delete(?:Row|C(?:ell|aption)|T(?:Head|Foot)|Data)|focus|write(?:ln)?|a(?:dd|ppend(?:Child|Data))|re(?:set|place(?:Child|Data)|move(?:NamedItem|Child|Attribute(?:Node)?)?)|get(?:NamedItem|Element(?:sBy(?:Name|TagName|ClassName)|ById)|Attribute(?:Node)?)|blur)\b(?=\()/
+                token: "support.function.dom",
+                regex: /(s(?:ub(?:stringData|mit)|plitText|e(?:t(?:NamedItem|Attribute(?:Node)?)|lect))|has(?:ChildNodes|Feature)|namedItem|c(?:l(?:ick|o(?:se|neNode))|reate(?:C(?:omment|DATASection|aption)|T(?:Head|extNode|Foot)|DocumentFragment|ProcessingInstruction|E(?:ntityReference|lement)|Attribute))|tabIndex|i(?:nsert(?:Row|Before|Cell|Data)|tem)|open|delete(?:Row|C(?:ell|aption)|T(?:Head|Foot)|Data)|focus|write(?:ln)?|a(?:dd|ppend(?:Child|Data))|re(?:set|place(?:Child|Data)|move(?:NamedItem|Child|Attribute(?:Node)?)?)|get(?:NamedItem|Element(?:sBy(?:Name|TagName|ClassName)|ById)|Attribute(?:Node)?)|blur)\b(?=\()/
             }, {
-                token :  "support.constant",
-                regex : /(s(?:ystemLanguage|cr(?:ipts|ollbars|een(?:X|Y|Top|Left))|t(?:yle(?:Sheets)?|atus(?:Text|bar)?)|ibling(?:Below|Above)|ource|uffixes|e(?:curity(?:Policy)?|l(?:ection|f)))|h(?:istory|ost(?:name)?|as(?:h|Focus))|y|X(?:MLDocument|SLDocument)|n(?:ext|ame(?:space(?:s|URI)|Prop))|M(?:IN_VALUE|AX_VALUE)|c(?:haracterSet|o(?:n(?:structor|trollers)|okieEnabled|lorDepth|mp(?:onents|lete))|urrent|puClass|l(?:i(?:p(?:boardData)?|entInformation)|osed|asses)|alle(?:e|r)|rypto)|t(?:o(?:olbar|p)|ext(?:Transform|Indent|Decoration|Align)|ags)|SQRT(?:1_2|2)|i(?:n(?:ner(?:Height|Width)|put)|ds|gnoreCase)|zIndex|o(?:scpu|n(?:readystatechange|Line)|uter(?:Height|Width)|p(?:sProfile|ener)|ffscreenBuffering)|NEGATIVE_INFINITY|d(?:i(?:splay|alog(?:Height|Top|Width|Left|Arguments)|rectories)|e(?:scription|fault(?:Status|Ch(?:ecked|arset)|View)))|u(?:ser(?:Profile|Language|Agent)|n(?:iqueID|defined)|pdateInterval)|_content|p(?:ixelDepth|ort|ersonalbar|kcs11|l(?:ugins|atform)|a(?:thname|dding(?:Right|Bottom|Top|Left)|rent(?:Window|Layer)?|ge(?:X(?:Offset)?|Y(?:Offset)?))|r(?:o(?:to(?:col|type)|duct(?:Sub)?|mpter)|e(?:vious|fix)))|e(?:n(?:coding|abledPlugin)|x(?:ternal|pando)|mbeds)|v(?:isibility|endor(?:Sub)?|Linkcolor)|URLUnencoded|P(?:I|OSITIVE_INFINITY)|f(?:ilename|o(?:nt(?:Size|Family|Weight)|rmName)|rame(?:s|Element)|gColor)|E|whiteSpace|l(?:i(?:stStyleType|n(?:eHeight|kColor))|o(?:ca(?:tion(?:bar)?|lName)|wsrc)|e(?:ngth|ft(?:Context)?)|a(?:st(?:M(?:odified|atch)|Index|Paren)|yer(?:s|X)|nguage))|a(?:pp(?:MinorVersion|Name|Co(?:deName|re)|Version)|vail(?:Height|Top|Width|Left)|ll|r(?:ity|guments)|Linkcolor|bove)|r(?:ight(?:Context)?|e(?:sponse(?:XML|Text)|adyState))|global|x|m(?:imeTypes|ultiline|enubar|argin(?:Right|Bottom|Top|Left))|L(?:N(?:10|2)|OG(?:10E|2E))|b(?:o(?:ttom|rder(?:Width|RightWidth|BottomWidth|Style|Color|TopWidth|LeftWidth))|ufferDepth|elow|ackground(?:Color|Image)))\b/
+                token: "support.constant",
+                regex: /(s(?:ystemLanguage|cr(?:ipts|ollbars|een(?:X|Y|Top|Left))|t(?:yle(?:Sheets)?|atus(?:Text|bar)?)|ibling(?:Below|Above)|ource|uffixes|e(?:curity(?:Policy)?|l(?:ection|f)))|h(?:istory|ost(?:name)?|as(?:h|Focus))|y|X(?:MLDocument|SLDocument)|n(?:ext|ame(?:space(?:s|URI)|Prop))|M(?:IN_VALUE|AX_VALUE)|c(?:haracterSet|o(?:n(?:structor|trollers)|okieEnabled|lorDepth|mp(?:onents|lete))|urrent|puClass|l(?:i(?:p(?:boardData)?|entInformation)|osed|asses)|alle(?:e|r)|rypto)|t(?:o(?:olbar|p)|ext(?:Transform|Indent|Decoration|Align)|ags)|SQRT(?:1_2|2)|i(?:n(?:ner(?:Height|Width)|put)|ds|gnoreCase)|zIndex|o(?:scpu|n(?:readystatechange|Line)|uter(?:Height|Width)|p(?:sProfile|ener)|ffscreenBuffering)|NEGATIVE_INFINITY|d(?:i(?:splay|alog(?:Height|Top|Width|Left|Arguments)|rectories)|e(?:scription|fault(?:Status|Ch(?:ecked|arset)|View)))|u(?:ser(?:Profile|Language|Agent)|n(?:iqueID|defined)|pdateInterval)|_content|p(?:ixelDepth|ort|ersonalbar|kcs11|l(?:ugins|atform)|a(?:thname|dding(?:Right|Bottom|Top|Left)|rent(?:Window|Layer)?|ge(?:X(?:Offset)?|Y(?:Offset)?))|r(?:o(?:to(?:col|type)|duct(?:Sub)?|mpter)|e(?:vious|fix)))|e(?:n(?:coding|abledPlugin)|x(?:ternal|pando)|mbeds)|v(?:isibility|endor(?:Sub)?|Linkcolor)|URLUnencoded|P(?:I|OSITIVE_INFINITY)|f(?:ilename|o(?:nt(?:Size|Family|Weight)|rmName)|rame(?:s|Element)|gColor)|E|whiteSpace|l(?:i(?:stStyleType|n(?:eHeight|kColor))|o(?:ca(?:tion(?:bar)?|lName)|wsrc)|e(?:ngth|ft(?:Context)?)|a(?:st(?:M(?:odified|atch)|Index|Paren)|yer(?:s|X)|nguage))|a(?:pp(?:MinorVersion|Name|Co(?:deName|re)|Version)|vail(?:Height|Top|Width|Left)|ll|r(?:ity|guments)|Linkcolor|bove)|r(?:ight(?:Context)?|e(?:sponse(?:XML|Text)|adyState))|global|x|m(?:imeTypes|ultiline|enubar|argin(?:Right|Bottom|Top|Left))|L(?:N(?:10|2)|OG(?:10E|2E))|b(?:o(?:ttom|rder(?:Width|RightWidth|BottomWidth|Style|Color|TopWidth|LeftWidth))|ufferDepth|elow|ackground(?:Color|Image)))\b/
             }, {
-                token : "identifier",
-                regex : identifierRe
+                token: "identifier",
+                regex: identifierRe
             }, {
                 regex: "",
                 token: "empty",
@@ -438,9 +527,9 @@ var JavaScriptHighlightRules = function(options) {
                 regex: "\\/",
                 next: "regex"
             }, {
-                token : "text",
-                regex : "\\s+|^$",
-                next : "start"
+                token: "text",
+                regex: "\\s+|^$",
+                next: "start"
             }, {
                 token: "empty",
                 regex: "",
@@ -456,13 +545,13 @@ var JavaScriptHighlightRules = function(options) {
                 regex: "/[sxngimy]*",
                 next: "no_regex"
             }, {
-                token : "invalid",
+                token: "invalid",
                 regex: /\{\d+\b,?\d*\}[+*]|[+*$^?][+*]|[$^][?]|\?{3,}/
             }, {
-                token : "constant.language.escape",
+                token: "constant.language.escape",
                 regex: /\(\?[:=!]|\)|\{\d+\b,?\d*\}|[+*]\?|[()$^+*?.]/
             }, {
-                token : "constant.language.delimiter",
+                token: "constant.language.delimiter",
                 regex: /\|/
             }, {
                 token: "constant.language.escape",
@@ -495,13 +584,47 @@ var JavaScriptHighlightRules = function(options) {
                 defaultToken: "string.regexp.charachterclass"
             }
         ],
-        "function_arguments": [
+        "default_parameter": [
             {
-                token: "variable.parameter",
-                regex: identifierRe
+                token: "string",
+                regex: "'(?=.)",
+                push: [
+                    {
+                        token: "string",
+                        regex: "'|$",
+                        next: "pop"
+                    }, {
+                        include: "qstring"
+                    }
+                ]
+            }, {
+                token: "string",
+                regex: '"(?=.)',
+                push: [
+                    {
+                        token: "string",
+                        regex: '"|$',
+                        next: "pop"
+                    }, {
+                        include: "qqstring"
+                    }
+                ]
+            }, {
+                token: "constant.language",
+                regex: "null|Infinity|NaN|undefined"
+            }, {
+                token: "constant.numeric", // hexadecimal, octal and binary
+                regex: /0(?:[xX][0-9a-fA-F]+|[oO][0-7]+|[bB][01]+)\b/
+            }, {
+                token: "constant.numeric", // decimal integers and floats
+                regex: /(?:\d\d*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+\b)?/
             }, {
                 token: "punctuation.operator",
-                regex: "[, ]+"
+                regex: ",",
+                next: "function_arguments"
+            }, {
+                token: "text",
+                regex: "\\s+"
             }, {
                 token: "punctuation.operator",
                 regex: "$"
@@ -511,44 +634,62 @@ var JavaScriptHighlightRules = function(options) {
                 next: "no_regex"
             }
         ],
-        "qqstring" : [
+        "function_arguments": [
+            comments("function_arguments"),
             {
-                token : "constant.language.escape",
-                regex : escapedRe
+                token: "variable.parameter",
+                regex: identifierRe
             }, {
-                token : "string",
-                regex : "\\\\$",
-                consumeLineEnd  : true
+                token: "punctuation.operator",
+                regex: ","
             }, {
-                token : "string",
-                regex : '"|$',
-                next  : "no_regex"
+                token: "text",
+                regex: "\\s+"
+            }, {
+                token: "punctuation.operator",
+                regex: "$"
+            }, {
+                token: "empty",
+                regex: "",
+                next: "no_regex"
+            }
+        ],
+        "qqstring": [
+            {
+                token: "constant.language.escape",
+                regex: escapedRe
+            }, {
+                token: "string",
+                regex: "\\\\$",
+                consumeLineEnd: true
+            }, {
+                token: "string",
+                regex: '"|$',
+                next: "no_regex"
             }, {
                 defaultToken: "string"
             }
         ],
-        "qstring" : [
+        "qstring": [
             {
-                token : "constant.language.escape",
-                regex : escapedRe
+                token: "constant.language.escape",
+                regex: escapedRe
             }, {
-                token : "string",
-                regex : "\\\\$",
-                consumeLineEnd  : true
+                token: "string",
+                regex: "\\\\$",
+                consumeLineEnd: true
             }, {
-                token : "string",
-                regex : "'|$",
-                next  : "no_regex"
+                token: "string",
+                regex: "'|$",
+                next: "no_regex"
             }, {
                 defaultToken: "string"
             }
         ]
     };
-
-
     if (!options || !options.noES6) {
         this.$rules.no_regex.unshift({
-            regex: "[{}]", onMatch: function(val, state, stack) {
+            regex: "[{}]", onMatch: function (val, state, stack) {
                 this.next = val == "{" ? this.nextState : "";
                 if (val == "{" && stack.length) {
                     stack.unshift("start", state);
@@ -563,40 +704,60 @@ var JavaScriptHighlightRules = function(options) {
             },
             nextState: "start"
         }, {
-            token : "string.quasi.start",
-            regex : /`/,
-            push  : [{
-                token : "constant.language.escape",
-                regex : escapedRe
-            }, {
-                token : "paren.quasi.start",
-                regex : /\${/,
-                push  : "start"
-            }, {
-                token : "string.quasi.end",
-                regex : /`/,
-                next  : "pop"
-            }, {
-                defaultToken: "string.quasi"
-            }]
+            token: "string.quasi.start",
+            regex: /`/,
+            push: [{
+                    token: "constant.language.escape",
+                    regex: escapedRe
+                }, {
+                    token: "paren.quasi.start",
+                    regex: /\${/,
+                    push: "start"
+                }, {
+                    token: "string.quasi.end",
+                    regex: /`/,
+                    next: "pop"
+                }, {
+                    defaultToken: "string.quasi"
+                }]
+        }, {
+            token: ["variable.parameter", "text"],
+            regex: "(" + identifierRe + ")(\\s*)(?=\\=>)"
+        }, {
+            token: "paren.lparen",
+            regex: "(\\()(?=.+\\s*=>)",
+            next: "function_arguments"
+        }, {
+            token: "variable.language",
+            regex: "(?:(?:(?:Weak)?(?:Set|Map))|Promise)\\b"
         });
-
+        this.$rules["function_arguments"].unshift({
+            token: "keyword.operator",
+            regex: "=",
+            next: "default_parameter"
+        }, {
+            token: "keyword.operator",
+            regex: "\\.{3}"
+        });
+        this.$rules["property"].unshift({
+            token: "support.function",
+            regex: "(findIndex|repeat|startsWith|endsWith|includes|isSafeInteger|trunc|cbrt|log2|log10|sign|then|catch|"
+                + "finally|resolve|reject|race|any|all|allSettled|keys|entries|isInteger)\\b(?=\\()"
+        }, {
+            token: "constant.language",
+            regex: "(?:MAX_SAFE_INTEGER|MIN_SAFE_INTEGER|EPSILON)\\b"
+        });
         if (!options || options.jsx != false)
             JSX.call(this);
     }
-
-    this.embedRules(DocCommentHighlightRules, "doc-",
-        [ DocCommentHighlightRules.getEndRule("no_regex") ]);
-
+    this.embedRules(DocCommentHighlightRules, "doc-", [DocCommentHighlightRules.getEndRule("no_regex")]);
     this.normalizeRules();
 };
-
 oop.inherits(JavaScriptHighlightRules, TextHighlightRules);
-
 function JSX() {
     var tagRegex = identifierRe.replace("\\d", "\\d\\-");
     var jsxTag = {
-        onMatch : function(val, state, stack) {
+        onMatch: function (val, state, stack) {
             var offset = val.charAt(1) == "/" ? 2 : 1;
             if (offset == 1) {
                 if (state != this.nextState)
@@ -604,7 +765,8 @@ function JSX() {
                 else
                     stack.unshift(this.next);
                 stack[2]++;
-            } else if (offset == 2) {
+            }
+            else if (offset == 2) {
                 if (state == this.nextState) {
                     stack[1]--;
                     if (!stack[1] || stack[1] < 0) {
@@ -614,14 +776,14 @@ function JSX() {
                 }
             }
             return [{
-                type: "meta.tag.punctuation." + (offset == 1 ? "" : "end-") + "tag-open.xml",
-                value: val.slice(0, offset)
-            }, {
-                type: "meta.tag.tag-name.xml",
-                value: val.substr(offset)
-            }];
+                    type: "meta.tag.punctuation." + (offset == 1 ? "" : "end-") + "tag-open.xml",
+                    value: val.slice(0, offset)
+                }, {
+                    type: "meta.tag.tag-name.xml",
+                    value: val.substr(offset)
+                }];
         },
-        regex : "</?" + tagRegex + "",
+        regex: "</?" + tagRegex + "",
         next: "jsxAttributes",
         nextState: "jsx"
     };
@@ -634,394 +796,359 @@ function JSX() {
     this.$rules.jsx = [
         jsxJsRule,
         jsxTag,
-        {include : "reference"},
-        {defaultToken: "string"}
+        { include: "reference" },
+        { defaultToken: "string" }
     ];
     this.$rules.jsxAttributes = [{
-        token : "meta.tag.punctuation.tag-close.xml",
-        regex : "/?>",
-        onMatch : function(value, currentState, stack) {
-            if (currentState == stack[0])
-                stack.shift();
-            if (value.length == 2) {
-                if (stack[0] == this.nextState)
-                    stack[1]--;
-                if (!stack[1] || stack[1] < 0) {
-                    stack.splice(0, 2);
+            token: "meta.tag.punctuation.tag-close.xml",
+            regex: "/?>",
+            onMatch: function (value, currentState, stack) {
+                if (currentState == stack[0])
+                    stack.shift();
+                if (value.length == 2) {
+                    if (stack[0] == this.nextState)
+                        stack[1]--;
+                    if (!stack[1] || stack[1] < 0) {
+                        stack.splice(0, 2);
+                    }
                 }
-            }
-            this.next = stack[0] || "start";
-            return [{type: this.token, value: value}];
+                this.next = stack[0] || "start";
+                return [{ type: this.token, value: value }];
+            },
+            nextState: "jsx"
         },
-        nextState: "jsx"
-    },
-    jsxJsRule,
-    comments("jsxAttributes"),
-    {
-        token : "entity.other.attribute-name.xml",
-        regex : tagRegex
-    }, {
-        token : "keyword.operator.attribute-equals.xml",
-        regex : "="
-    }, {
-        token : "text.tag-whitespace.xml",
-        regex : "\\s+"
-    }, {
-        token : "string.attribute-value.xml",
-        regex : "'",
-        stateName : "jsx_attr_q",
-        push : [
-            {token : "string.attribute-value.xml", regex: "'", next: "pop"},
-            {include : "reference"},
-            {defaultToken : "string.attribute-value.xml"}
-        ]
-    }, {
-        token : "string.attribute-value.xml",
-        regex : '"',
-        stateName : "jsx_attr_qq",
-        push : [
-            {token : "string.attribute-value.xml", regex: '"', next: "pop"},
-            {include : "reference"},
-            {defaultToken : "string.attribute-value.xml"}
-        ]
-    },
-    jsxTag
+        jsxJsRule,
+        comments("jsxAttributes"),
+        {
+            token: "entity.other.attribute-name.xml",
+            regex: tagRegex
+        }, {
+            token: "keyword.operator.attribute-equals.xml",
+            regex: "="
+        }, {
+            token: "text.tag-whitespace.xml",
+            regex: "\\s+"
+        }, {
+            token: "string.attribute-value.xml",
+            regex: "'",
+            stateName: "jsx_attr_q",
+            push: [
+                { token: "string.attribute-value.xml", regex: "'", next: "pop" },
+                { include: "reference" },
+                { defaultToken: "string.attribute-value.xml" }
+            ]
+        }, {
+            token: "string.attribute-value.xml",
+            regex: '"',
+            stateName: "jsx_attr_qq",
+            push: [
+                { token: "string.attribute-value.xml", regex: '"', next: "pop" },
+                { include: "reference" },
+                { defaultToken: "string.attribute-value.xml" }
+            ]
+        },
+        jsxTag
     ];
     this.$rules.reference = [{
-        token : "constant.language.escape.reference.xml",
-        regex : "(?:&#[0-9]+;)|(?:&#x[0-9a-fA-F]+;)|(?:&[a-zA-Z0-9_:\\.-]+;)"
-    }];
+            token: "constant.language.escape.reference.xml",
+            regex: "(?:&#[0-9]+;)|(?:&#x[0-9a-fA-F]+;)|(?:&[a-zA-Z0-9_:\\.-]+;)"
+        }];
 }
-
 function comments(next) {
     return [
         {
-            token : "comment", // multi line comment
-            regex : /\/\*/,
+            token: "comment", // multi line comment
+            regex: /\/\*/,
             next: [
                 DocCommentHighlightRules.getTagRule(),
-                {token : "comment", regex : "\\*\\/", next : next || "pop"},
-                {defaultToken : "comment", caseInsensitive: true}
+                { token: "comment", regex: "\\*\\/", next: next || "pop" },
+                { defaultToken: "comment", caseInsensitive: true }
             ]
         }, {
-            token : "comment",
-            regex : "\\/\\/",
+            token: "comment",
+            regex: "\\/\\/",
             next: [
                 DocCommentHighlightRules.getTagRule(),
-                {token : "comment", regex : "$|^", next : next || "pop"},
-                {defaultToken : "comment", caseInsensitive: true}
+                { token: "comment", regex: "$|^", next: next || "pop" },
+                { defaultToken: "comment", caseInsensitive: true }
             ]
         }
     ];
 }
 exports.JavaScriptHighlightRules = JavaScriptHighlightRules;
+
 });
 
-ace.define("ace/mode/xml_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/xml_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
-
-var XmlHighlightRules = function(normalize) {
+var XmlHighlightRules = function (normalize) {
     var tagRegex = "[_:a-zA-Z\xc0-\uffff][-_:.a-zA-Z0-9\xc0-\uffff]*";
-
     this.$rules = {
-        start : [
-            {token : "string.cdata.xml", regex : "<\\!\\[CDATA\\[", next : "cdata"},
+        start: [
+            { token: "string.cdata.xml", regex: "<\\!\\[CDATA\\[", next: "cdata" },
             {
-                token : ["punctuation.instruction.xml", "keyword.instruction.xml"],
-                regex : "(<\\?)(" + tagRegex + ")", next : "processing_instruction"
+                token: ["punctuation.instruction.xml", "keyword.instruction.xml"],
+                regex: "(<\\?)(" + tagRegex + ")", next: "processing_instruction"
             },
-            {token : "comment.start.xml", regex : "<\\!--", next : "comment"},
+            { token: "comment.start.xml", regex: "<\\!--", next: "comment" },
             {
-                token : ["xml-pe.doctype.xml", "xml-pe.doctype.xml"],
-                regex : "(<\\!)(DOCTYPE)(?=[\\s])", next : "doctype", caseInsensitive: true
+                token: ["xml-pe.doctype.xml", "xml-pe.doctype.xml"],
+                regex: "(<\\!)(DOCTYPE)(?=[\\s])", next: "doctype", caseInsensitive: true
             },
-            {include : "tag"},
-            {token : "text.end-tag-open.xml", regex: "</"},
-            {token : "text.tag-open.xml", regex: "<"},
-            {include : "reference"},
-            {defaultToken : "text.xml"}
+            { include: "tag" },
+            { token: "text.end-tag-open.xml", regex: "</" },
+            { token: "text.tag-open.xml", regex: "<" },
+            { include: "reference" },
+            { defaultToken: "text.xml" }
         ],
-
-        processing_instruction : [{
-            token : "entity.other.attribute-name.decl-attribute-name.xml",
-            regex : tagRegex
-        }, {
-            token : "keyword.operator.decl-attribute-equals.xml",
-            regex : "="
-        }, {
-            include: "whitespace"
-        }, {
-            include: "string"
-        }, {
-            token : "punctuation.xml-decl.xml",
-            regex : "\\?>",
-            next : "start"
-        }],
-
-        doctype : [
-            {include : "whitespace"},
-            {include : "string"},
-            {token : "xml-pe.doctype.xml", regex : ">", next : "start"},
-            {token : "xml-pe.xml", regex : "[-_a-zA-Z0-9:]+"},
-            {token : "punctuation.int-subset", regex : "\\[", push : "int_subset"}
+        processing_instruction: [{
+                token: "entity.other.attribute-name.decl-attribute-name.xml",
+                regex: tagRegex
+            }, {
+                token: "keyword.operator.decl-attribute-equals.xml",
+                regex: "="
+            }, {
+                include: "whitespace"
+            }, {
+                include: "string"
+            }, {
+                token: "punctuation.xml-decl.xml",
+                regex: "\\?>",
+                next: "start"
+            }],
+        doctype: [
+            { include: "whitespace" },
+            { include: "string" },
+            { token: "xml-pe.doctype.xml", regex: ">", next: "start" },
+            { token: "xml-pe.xml", regex: "[-_a-zA-Z0-9:]+" },
+            { token: "punctuation.int-subset", regex: "\\[", push: "int_subset" }
         ],
-
-        int_subset : [{
-            token : "text.xml",
-            regex : "\\s+"
-        }, {
-            token: "punctuation.int-subset.xml",
-            regex: "]",
-            next: "pop"
-        }, {
-            token : ["punctuation.markup-decl.xml", "keyword.markup-decl.xml"],
-            regex : "(<\\!)(" + tagRegex + ")",
-            push : [{
-                token : "text",
-                regex : "\\s+"
-            },
-            {
-                token : "punctuation.markup-decl.xml",
-                regex : ">",
-                next : "pop"
-            },
-            {include : "string"}]
-        }],
-
-        cdata : [
-            {token : "string.cdata.xml", regex : "\\]\\]>", next : "start"},
-            {token : "text.xml", regex : "\\s+"},
-            {token : "text.xml", regex : "(?:[^\\]]|\\](?!\\]>))+"}
+        int_subset: [{
+                token: "text.xml",
+                regex: "\\s+"
+            }, {
+                token: "punctuation.int-subset.xml",
+                regex: "]",
+                next: "pop"
+            }, {
+                token: ["punctuation.markup-decl.xml", "keyword.markup-decl.xml"],
+                regex: "(<\\!)(" + tagRegex + ")",
+                push: [{
+                        token: "text",
+                        regex: "\\s+"
+                    },
+                    {
+                        token: "punctuation.markup-decl.xml",
+                        regex: ">",
+                        next: "pop"
+                    },
+                    { include: "string" }]
+            }],
+        cdata: [
+            { token: "string.cdata.xml", regex: "\\]\\]>", next: "start" },
+            { token: "text.xml", regex: "\\s+" },
+            { token: "text.xml", regex: "(?:[^\\]]|\\](?!\\]>))+" }
         ],
-
-        comment : [
-            {token : "comment.end.xml", regex : "-->", next : "start"},
-            {defaultToken : "comment.xml"}
+        comment: [
+            { token: "comment.end.xml", regex: "-->", next: "start" },
+            { defaultToken: "comment.xml" }
         ],
-
-        reference : [{
-            token : "constant.language.escape.reference.xml",
-            regex : "(?:&#[0-9]+;)|(?:&#x[0-9a-fA-F]+;)|(?:&[a-zA-Z0-9_:\\.-]+;)"
-        }],
-
-        attr_reference : [{
-            token : "constant.language.escape.reference.attribute-value.xml",
-            regex : "(?:&#[0-9]+;)|(?:&#x[0-9a-fA-F]+;)|(?:&[a-zA-Z0-9_:\\.-]+;)"
-        }],
-
-        tag : [{
-            token : ["meta.tag.punctuation.tag-open.xml", "meta.tag.punctuation.end-tag-open.xml", "meta.tag.tag-name.xml"],
-            regex : "(?:(<)|(</))((?:" + tagRegex + ":)?" + tagRegex + ")",
-            next: [
-                {include : "attributes"},
-                {token : "meta.tag.punctuation.tag-close.xml", regex : "/?>", next : "start"}
-            ]
-        }],
-
-        tag_whitespace : [
-            {token : "text.tag-whitespace.xml", regex : "\\s+"}
+        reference: [{
+                token: "constant.language.escape.reference.xml",
+                regex: "(?:&#[0-9]+;)|(?:&#x[0-9a-fA-F]+;)|(?:&[a-zA-Z0-9_:\\.-]+;)"
+            }],
+        attr_reference: [{
+                token: "constant.language.escape.reference.attribute-value.xml",
+                regex: "(?:&#[0-9]+;)|(?:&#x[0-9a-fA-F]+;)|(?:&[a-zA-Z0-9_:\\.-]+;)"
+            }],
+        tag: [{
+                token: ["meta.tag.punctuation.tag-open.xml", "meta.tag.punctuation.end-tag-open.xml", "meta.tag.tag-name.xml"],
+                regex: "(?:(<)|(</))((?:" + tagRegex + ":)?" + tagRegex + ")",
+                next: [
+                    { include: "attributes" },
+                    { token: "meta.tag.punctuation.tag-close.xml", regex: "/?>", next: "start" }
+                ]
+            }],
+        tag_whitespace: [
+            { token: "text.tag-whitespace.xml", regex: "\\s+" }
         ],
-        whitespace : [
-            {token : "text.whitespace.xml", regex : "\\s+"}
+        whitespace: [
+            { token: "text.whitespace.xml", regex: "\\s+" }
         ],
         string: [{
-            token : "string.xml",
-            regex : "'",
-            push : [
-                {token : "string.xml", regex: "'", next: "pop"},
-                {defaultToken : "string.xml"}
-            ]
-        }, {
-            token : "string.xml",
-            regex : '"',
-            push : [
-                {token : "string.xml", regex: '"', next: "pop"},
-                {defaultToken : "string.xml"}
-            ]
-        }],
-
+                token: "string.xml",
+                regex: "'",
+                push: [
+                    { token: "string.xml", regex: "'", next: "pop" },
+                    { defaultToken: "string.xml" }
+                ]
+            }, {
+                token: "string.xml",
+                regex: '"',
+                push: [
+                    { token: "string.xml", regex: '"', next: "pop" },
+                    { defaultToken: "string.xml" }
+                ]
+            }],
         attributes: [{
-            token : "entity.other.attribute-name.xml",
-            regex : tagRegex
-        }, {
-            token : "keyword.operator.attribute-equals.xml",
-            regex : "="
-        }, {
-            include: "tag_whitespace"
-        }, {
-            include: "attribute_value"
-        }],
-
+                token: "entity.other.attribute-name.xml",
+                regex: tagRegex
+            }, {
+                token: "keyword.operator.attribute-equals.xml",
+                regex: "="
+            }, {
+                include: "tag_whitespace"
+            }, {
+                include: "attribute_value"
+            }],
         attribute_value: [{
-            token : "string.attribute-value.xml",
-            regex : "'",
-            push : [
-                {token : "string.attribute-value.xml", regex: "'", next: "pop"},
-                {include : "attr_reference"},
-                {defaultToken : "string.attribute-value.xml"}
-            ]
-        }, {
-            token : "string.attribute-value.xml",
-            regex : '"',
-            push : [
-                {token : "string.attribute-value.xml", regex: '"', next: "pop"},
-                {include : "attr_reference"},
-                {defaultToken : "string.attribute-value.xml"}
-            ]
-        }]
+                token: "string.attribute-value.xml",
+                regex: "'",
+                push: [
+                    { token: "string.attribute-value.xml", regex: "'", next: "pop" },
+                    { include: "attr_reference" },
+                    { defaultToken: "string.attribute-value.xml" }
+                ]
+            }, {
+                token: "string.attribute-value.xml",
+                regex: '"',
+                push: [
+                    { token: "string.attribute-value.xml", regex: '"', next: "pop" },
+                    { include: "attr_reference" },
+                    { defaultToken: "string.attribute-value.xml" }
+                ]
+            }]
     };
-
     if (this.constructor === XmlHighlightRules)
         this.normalizeRules();
 };
-
-
-(function() {
-
-    this.embedTagRules = function(HighlightRules, prefix, tag){
+(function () {
+    this.embedTagRules = function (HighlightRules, prefix, tag) {
         this.$rules.tag.unshift({
-            token : ["meta.tag.punctuation.tag-open.xml", "meta.tag." + tag + ".tag-name.xml"],
-            regex : "(<)(" + tag + "(?=\\s|>|$))",
+            token: ["meta.tag.punctuation.tag-open.xml", "meta.tag." + tag + ".tag-name.xml"],
+            regex: "(<)(" + tag + "(?=\\s|>|$))",
             next: [
-                {include : "attributes"},
-                {token : "meta.tag.punctuation.tag-close.xml", regex : "/?>", next : prefix + "start"}
+                { include: "attributes" },
+                { token: "meta.tag.punctuation.tag-close.xml", regex: "/?>", next: prefix + "start" }
             ]
         });
-
         this.$rules[tag + "-end"] = [
-            {include : "attributes"},
-            {token : "meta.tag.punctuation.tag-close.xml", regex : "/?>",  next: "start",
-                onMatch : function(value, currentState, stack) {
+            { include: "attributes" },
+            { token: "meta.tag.punctuation.tag-close.xml", regex: "/?>", next: "start",
+                onMatch: function (value, currentState, stack) {
                     stack.splice(0);
                     return this.token;
-            }}
+                } }
         ];
-
         this.embedRules(HighlightRules, prefix, [{
-            token: ["meta.tag.punctuation.end-tag-open.xml", "meta.tag." + tag + ".tag-name.xml"],
-            regex : "(</)(" + tag + "(?=\\s|>|$))",
-            next: tag + "-end"
-        }, {
-            token: "string.cdata.xml",
-            regex : "<\\!\\[CDATA\\["
-        }, {
-            token: "string.cdata.xml",
-            regex : "\\]\\]>"
-        }]);
+                token: ["meta.tag.punctuation.end-tag-open.xml", "meta.tag." + tag + ".tag-name.xml"],
+                regex: "(</)(" + tag + "(?=\\s|>|$))",
+                next: tag + "-end"
+            }, {
+                token: "string.cdata.xml",
+                regex: "<\\!\\[CDATA\\["
+            }, {
+                token: "string.cdata.xml",
+                regex: "\\]\\]>"
+            }]);
     };
-
 }).call(TextHighlightRules.prototype);
-
 oop.inherits(XmlHighlightRules, TextHighlightRules);
-
 exports.XmlHighlightRules = XmlHighlightRules;
+
 });
 
-ace.define("ace/mode/html_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/css_highlight_rules","ace/mode/javascript_highlight_rules","ace/mode/xml_highlight_rules"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/html_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/css_highlight_rules","ace/mode/javascript_highlight_rules","ace/mode/xml_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var CssHighlightRules = require("./css_highlight_rules").CssHighlightRules;
 var JavaScriptHighlightRules = require("./javascript_highlight_rules").JavaScriptHighlightRules;
 var XmlHighlightRules = require("./xml_highlight_rules").XmlHighlightRules;
-
 var tagMap = lang.createMap({
-    a           : 'anchor',
-    button 	    : 'form',
-    form        : 'form',
-    img         : 'image',
-    input       : 'form',
-    label       : 'form',
-    option      : 'form',
-    script      : 'script',
-    select      : 'form',
-    textarea    : 'form',
-    style       : 'style',
-    table       : 'table',
-    tbody       : 'table',
-    td          : 'table',
-    tfoot       : 'table',
-    th          : 'table',
-    tr          : 'table'
+    a: 'anchor',
+    button: 'form',
+    form: 'form',
+    img: 'image',
+    input: 'form',
+    label: 'form',
+    option: 'form',
+    script: 'script',
+    select: 'form',
+    textarea: 'form',
+    style: 'style',
+    table: 'table',
+    tbody: 'table',
+    td: 'table',
+    tfoot: 'table',
+    th: 'table',
+    tr: 'table'
 });
-
-var HtmlHighlightRules = function() {
+var HtmlHighlightRules = function () {
     XmlHighlightRules.call(this);
-
     this.addRules({
         attributes: [{
-            include : "tag_whitespace"
-        }, {
-            token : "entity.other.attribute-name.xml",
-            regex : "[-_a-zA-Z0-9:.]+"
-        }, {
-            token : "keyword.operator.attribute-equals.xml",
-            regex : "=",
-            push : [{
                 include: "tag_whitespace"
             }, {
-                token : "string.unquoted.attribute-value.html",
-                regex : "[^<>='\"`\\s]+",
-                next : "pop"
+                token: "entity.other.attribute-name.xml",
+                regex: "[-_a-zA-Z0-9:.]+"
             }, {
-                token : "empty",
-                regex : "",
-                next : "pop"
-            }]
-        }, {
-            include : "attribute_value"
-        }],
+                token: "keyword.operator.attribute-equals.xml",
+                regex: "=",
+                push: [{
+                        include: "tag_whitespace"
+                    }, {
+                        token: "string.unquoted.attribute-value.html",
+                        regex: "[^<>='\"`\\s]+",
+                        next: "pop"
+                    }, {
+                        token: "empty",
+                        regex: "",
+                        next: "pop"
+                    }]
+            }, {
+                include: "attribute_value"
+            }],
         tag: [{
-            token : function(start, tag) {
-                var group = tagMap[tag];
-                return ["meta.tag.punctuation." + (start == "<" ? "" : "end-") + "tag-open.xml",
-                    "meta.tag" + (group ? "." + group : "") + ".tag-name.xml"];
-            },
-            regex : "(</?)([-_a-zA-Z0-9:.]+)",
-            next: "tag_stuff"
-        }],
+                token: function (start, tag) {
+                    var group = tagMap[tag];
+                    return ["meta.tag.punctuation." + (start == "<" ? "" : "end-") + "tag-open.xml",
+                        "meta.tag" + (group ? "." + group : "") + ".tag-name.xml"];
+                },
+                regex: "(</?)([-_a-zA-Z0-9:.]+)",
+                next: "tag_stuff"
+            }],
         tag_stuff: [
-            {include : "attributes"},
-            {token : "meta.tag.punctuation.tag-close.xml", regex : "/?>", next : "start"}
+            { include: "attributes" },
+            { token: "meta.tag.punctuation.tag-close.xml", regex: "/?>", next: "start" }
         ]
     });
-
     this.embedTagRules(CssHighlightRules, "css-", "style");
-    this.embedTagRules(new JavaScriptHighlightRules({jsx: false}).getRules(), "js-", "script");
-
+    this.embedTagRules(new JavaScriptHighlightRules({ jsx: false }).getRules(), "js-", "script");
     if (this.constructor === HtmlHighlightRules)
         this.normalizeRules();
 };
-
 oop.inherits(HtmlHighlightRules, XmlHighlightRules);
-
 exports.HtmlHighlightRules = HtmlHighlightRules;
+
 });
 
-ace.define("ace/mode/php_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/doc_comment_highlight_rules","ace/mode/text_highlight_rules","ace/mode/html_highlight_rules"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/php_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/doc_comment_highlight_rules","ace/mode/text_highlight_rules","ace/mode/html_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var HtmlHighlightRules = require("./html_highlight_rules").HtmlHighlightRules;
-
-var PhpLangHighlightRules = function() {
+var PhpLangHighlightRules = function () {
     var docComment = DocCommentHighlightRules;
-    var builtinFunctions = lang.arrayToMap(
-'abs|acos|acosh|addcslashes|addslashes|aggregate|aggregate_info|aggregate_methods|aggregate_methods_by_list|aggregate_methods_by_regexp|\
+    var builtinFunctions = lang.arrayToMap('abs|acos|acosh|addcslashes|addslashes|aggregate|aggregate_info|aggregate_methods|aggregate_methods_by_list|aggregate_methods_by_regexp|\
 aggregate_properties|aggregate_properties_by_list|aggregate_properties_by_regexp|aggregation_info|amqpconnection|amqpexchange|amqpqueue|\
 apache_child_terminate|apache_get_modules|apache_get_version|apache_getenv|apache_lookup_uri|apache_note|apache_request_headers|\
 apache_reset_timeout|apache_response_headers|apache_setenv|apc_add|apc_bin_dump|apc_bin_dumpfile|apc_bin_load|apc_bin_loadfile|\
 apc_cache_info|apc_cas|apc_clear_cache|apc_compile_file|apc_dec|apc_define_constants|apc_delete|apc_delete_file|apc_exists|apc_fetch|\
 apc_inc|apc_load_constants|apc_sma_info|apc_store|apciterator|apd_breakpoint|apd_callstack|apd_clunk|apd_continue|apd_croak|\
 apd_dump_function_table|apd_dump_persistent_resources|apd_dump_regular_resources|apd_echo|apd_get_active_symbols|apd_set_pprof_trace|\
-apd_set_session|apd_set_session_trace|apd_set_session_trace_socket|appenditerator|array|array_change_key_case|array_chunk|array_combine|\
+apd_set_session|apd_set_session_trace|apd_set_session_trace_socket|appenditerator|array|array_change_key_case|array_chunk|array_column|array_combine|\
 array_count_values|array_diff|array_diff_assoc|array_diff_key|array_diff_uassoc|array_diff_ukey|array_fill|array_fill_keys|array_filter|\
 array_flip|array_intersect|array_intersect_assoc|array_intersect_key|array_intersect_uassoc|array_intersect_ukey|array_key_exists|\
 array_keys|array_map|array_merge|array_merge_recursive|array_multisort|array_pad|array_pop|array_product|array_push|array_rand|\
@@ -1818,27 +1945,15 @@ ziparchive_deletename|ziparchive_extractto|ziparchive_getarchivecomment|ziparchi
 ziparchive_getfromindex|ziparchive_getfromname|ziparchive_getnameindex|ziparchive_getstatusstring|ziparchive_getstream|\
 ziparchive_locatename|ziparchive_open|ziparchive_renameindex|ziparchive_renamename|ziparchive_setCommentName|ziparchive_setarchivecomment|\
 ziparchive_setcommentindex|ziparchive_statindex|ziparchive_statname|ziparchive_unchangeall|ziparchive_unchangearchive|\
-ziparchive_unchangeindex|ziparchive_unchangename|zlib_get_coding_type'.split('|')
-    );
-    var keywords = lang.arrayToMap(
-'abstract|and|array|as|break|callable|case|catch|class|clone|const|continue|declare|default|do|else|elseif|enddeclare|endfor|endforeach|\
+ziparchive_unchangeindex|ziparchive_unchangename|zlib_get_coding_type'.split('|'));
+    var keywords = lang.arrayToMap('abstract|and|array|as|break|callable|case|catch|class|clone|const|continue|declare|default|do|else|elseif|enddeclare|endfor|endforeach|\
 endif|endswitch|endwhile|extends|final|finally|for|foreach|function|global|goto|if|implements|instanceof|insteadof|interface|namespace|new|or|private|protected|\
-public|static|switch|throw|trait|try|use|var|while|xor|yield'.split('|')
-    );
-    var languageConstructs = lang.arrayToMap(
-        ('__halt_compiler|die|echo|empty|exit|eval|include|include_once|isset|list|require|require_once|return|print|unset').split('|')
-    );
-
-    var builtinConstants = lang.arrayToMap(
-        ('true|TRUE|false|FALSE|null|NULL|__CLASS__|__DIR__|__FILE__|__LINE__|__METHOD__|__FUNCTION__|__NAMESPACE__|__TRAIT__').split('|')
-    );
-
-    var builtinVariables = lang.arrayToMap(
-'$GLOBALS|$_SERVER|$_GET|$_POST|$_FILES|$_REQUEST|$_SESSION|$_ENV|$_COOKIE|$php_errormsg|$HTTP_RAW_POST_DATA|\
-$http_response_header|$argc|$argv'.split('|')
-    );
-    var builtinFunctionsDeprecated = lang.arrayToMap(
-'key_exists|cairo_matrix_create_scale|cairo_matrix_create_translate|call_user_method|call_user_method_array|com_addref|com_get|\
+public|static|switch|throw|trait|try|use|var|while|xor|yield'.split('|'));
+    var languageConstructs = lang.arrayToMap(('__halt_compiler|die|echo|empty|exit|eval|include|include_once|isset|list|require|require_once|return|print|unset').split('|'));
+    var builtinConstants = lang.arrayToMap(('true|TRUE|false|FALSE|null|NULL|__CLASS__|__DIR__|__FILE__|__LINE__|__METHOD__|__FUNCTION__|__NAMESPACE__|__TRAIT__').split('|'));
+    var builtinVariables = lang.arrayToMap('$GLOBALS|$_SERVER|$_GET|$_POST|$_FILES|$_REQUEST|$_SESSION|$_ENV|$_COOKIE|$php_errormsg|$HTTP_RAW_POST_DATA|\
+$http_response_header|$argc|$argv'.split('|'));
+    var builtinFunctionsDeprecated = lang.arrayToMap('key_exists|cairo_matrix_create_scale|cairo_matrix_create_translate|call_user_method|call_user_method_array|com_addref|com_get|\
 com_invoke|com_isenum|com_load|com_release|com_set|connection_timeout|cubrid_load_from_glo|cubrid_new_glo|cubrid_save_to_glo|\
 cubrid_send_glo|define_syslog_variables|dl|ereg|ereg_replace|eregi|eregi_replace|hw_documentattributes|hw_documentbodytag|\
 hw_documentsize|hw_outputdocument|imagedashedline|maxdb_bind_param|maxdb_bind_result|maxdb_client_encoding|maxdb_close_long_data|\
@@ -1864,76 +1979,70 @@ PDF_set_text_matrix|PDF_set_text_rendering|PDF_set_text_rise|PDF_set_word_spacin
 PDF_setpolydash|PDF_setrgbcolor_fill|PDF_setrgbcolor_stroke|PDF_setrgbcolor|PDF_show_boxed|php_check_syntax|px_set_tablename|\
 px_set_targetencoding|runkit_sandbox_output_handler|session_is_registered|session_register|session_unregister\
 set_magic_quotes_runtime|magic_quotes_runtime|set_socket_blocking|socket_set_blocking|set_socket_timeout|socket_set_timeout|split|spliti|\
-sql_regcase'.split('|')
-    );
-
-    var keywordsDeprecated = lang.arrayToMap(
-        ('cfunction|old_function').split('|')
-    );
-
+sql_regcase'.split('|'));
+    var keywordsDeprecated = lang.arrayToMap(('cfunction|old_function').split('|'));
     var futureReserved = lang.arrayToMap([]);
-
     this.$rules = {
-        "start" : [
+        "start": [
             {
-                token : "comment",
-                regex : /(?:#|\/\/)(?:[^?]|\?[^>])*/
+                token: "comment",
+                regex: /(?:#|\/\/)(?:[^?]|\?[^>])*/
             },
             docComment.getStartRule("doc-start"),
             {
-                token : "comment", // multi line comment
-                regex : "\\/\\*",
-                next : "comment"
+                token: "comment", // multi line comment
+                regex: "\\/\\*",
+                next: "comment"
             }, {
-                token : "string.regexp",
-                regex : "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/][gimy]*\\s*(?=[).,;]|$)"
+                token: "string.regexp",
+                regex: "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/][gimy]*\\s*(?=[).,;]|$)"
             }, {
-                token : "string", // " string start
-                regex : '"',
-                next : "qqstring"
+                token: "string", // " string start
+                regex: '"',
+                next: "qqstring"
             }, {
-                token : "string", // ' string start
-                regex : "'",
-                next : "qstring"
+                token: "string", // ' string start
+                regex: "'",
+                next: "qstring"
             }, {
-                token : "constant.numeric", // hex
-                regex : "0[xX][0-9a-fA-F]+\\b"
+                token: "constant.numeric", // hex
+                regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token : "constant.numeric", // float
-                regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
+                token: "constant.numeric", // float
+                regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token : "constant.language", // constants
-                regex : "\\b(?:DEFAULT_INCLUDE_PATH|E_(?:ALL|CO(?:MPILE_(?:ERROR|WARNING)|RE_(?:ERROR|WARNING))|" +
-                        "ERROR|NOTICE|PARSE|STRICT|USER_(?:ERROR|NOTICE|WARNING)|WARNING)|P(?:EAR_(?:EXTENSION_DIR|INSTALL_DIR)|" +
-                        "HP_(?:BINDIR|CONFIG_FILE_(?:PATH|SCAN_DIR)|DATADIR|E(?:OL|XTENSION_DIR)|INT_(?:MAX|SIZE)|" +
-                        "L(?:IBDIR|OCALSTATEDIR)|O(?:S|UTPUT_HANDLER_(?:CONT|END|START))|PREFIX|S(?:API|HLIB_SUFFIX|YSCONFDIR)|" +
-                        "VERSION))|__COMPILER_HALT_OFFSET__)\\b"
+                token: "constant.language", // constants
+                regex: "\\b(?:DEFAULT_INCLUDE_PATH|E_(?:ALL|CO(?:MPILE_(?:ERROR|WARNING)|RE_(?:ERROR|WARNING))|" +
+                    "ERROR|NOTICE|PARSE|STRICT|USER_(?:ERROR|NOTICE|WARNING)|WARNING)|P(?:EAR_(?:EXTENSION_DIR|INSTALL_DIR)|" +
+                    "HP_(?:BINDIR|CONFIG_FILE_(?:PATH|SCAN_DIR)|DATADIR|E(?:OL|XTENSION_DIR)|INT_(?:MAX|SIZE)|" +
+                    "L(?:IBDIR|OCALSTATEDIR)|O(?:S|UTPUT_HANDLER_(?:CONT|END|START))|PREFIX|S(?:API|HLIB_SUFFIX|YSCONFDIR)|" +
+                    "VERSION))|__COMPILER_HALT_OFFSET__)\\b"
             }, {
-                token : ["keyword", "text", "support.class"],
-                regex : "\\b(new)(\\s+)(\\w+)"
+                token: ["keyword", "text", "support.class"],
+                regex: "\\b(new)(\\s+)(\\w+)"
             }, {
-                token : ["support.class", "keyword.operator"],
-                regex : "\\b(\\w+)(::)"
+                token: ["support.class", "keyword.operator"],
+                regex: "\\b(\\w+)(::)"
             }, {
-                token : "constant.language", // constants
-                regex : "\\b(?:A(?:B(?:DAY_(?:1|2|3|4|5|6|7)|MON_(?:1(?:0|1|2|)|2|3|4|5|6|7|8|9))|LT_DIGITS|M_STR|" +
-                        "SSERT_(?:ACTIVE|BAIL|CALLBACK|QUIET_EVAL|WARNING))|C(?:ASE_(?:LOWER|UPPER)|HAR_MAX|" +
-                        "O(?:DESET|NNECTION_(?:ABORTED|NORMAL|TIMEOUT)|UNT_(?:NORMAL|RECURSIVE))|" +
-                        "R(?:EDITS_(?:ALL|DOCS|FULLPAGE|G(?:ENERAL|ROUP)|MODULES|QA|SAPI)|NCYSTR|" +
-                        "YPT_(?:BLOWFISH|EXT_DES|MD5|S(?:ALT_LENGTH|TD_DES)))|URRENCY_SYMBOL)|D(?:AY_(?:1|2|3|4|5|6|7)|" +
-                        "ECIMAL_POINT|IRECTORY_SEPARATOR|_(?:FMT|T_FMT))|E(?:NT_(?:COMPAT|NOQUOTES|QUOTES)|RA(?:_(?:D_(?:FMT|T_FMT)|" +
-                        "T_FMT|YEAR)|)|XTR_(?:IF_EXISTS|OVERWRITE|PREFIX_(?:ALL|I(?:F_EXISTS|NVALID)|SAME)|SKIP))|FRAC_DIGITS|GROUPING|" +
-                        "HTML_(?:ENTITIES|SPECIALCHARS)|IN(?:FO_(?:ALL|C(?:ONFIGURATION|REDITS)|ENVIRONMENT|GENERAL|LICENSE|MODULES|VARIABLES)|" +
-                        "I_(?:ALL|PERDIR|SYSTEM|USER)|T_(?:CURR_SYMBOL|FRAC_DIGITS))|L(?:C_(?:ALL|C(?:OLLATE|TYPE)|M(?:ESSAGES|ONETARY)|NUMERIC|TIME)|" +
-                        "O(?:CK_(?:EX|NB|SH|UN)|G_(?:A(?:LERT|UTH(?:PRIV|))|C(?:ONS|R(?:IT|ON))|D(?:AEMON|EBUG)|E(?:MERG|RR)|INFO|KERN|" +
-                        "L(?:OCAL(?:0|1|2|3|4|5|6|7)|PR)|MAIL|N(?:DELAY|EWS|O(?:TICE|WAIT))|ODELAY|P(?:ERROR|ID)|SYSLOG|U(?:SER|UCP)|WARNING)))|" +
-                        "M(?:ON_(?:1(?:0|1|2|)|2|3|4|5|6|7|8|9|DECIMAL_POINT|GROUPING|THOUSANDS_SEP)|_(?:1_PI|2_(?:PI|SQRTPI)|E|L(?:N(?:10|2)|" +
-                        "OG(?:10E|2E))|PI(?:_(?:2|4)|)|SQRT(?:1_2|2)))|N(?:EGATIVE_SIGN|O(?:EXPR|STR)|_(?:CS_PRECEDES|S(?:EP_BY_SPACE|IGN_POSN)))|" +
-                        "P(?:ATH(?:INFO_(?:BASENAME|DIRNAME|EXTENSION)|_SEPARATOR)|M_STR|OSITIVE_SIGN|_(?:CS_PRECEDES|S(?:EP_BY_SPACE|IGN_POSN)))|" +
-                        "RADIXCHAR|S(?:EEK_(?:CUR|END|SET)|ORT_(?:ASC|DESC|NUMERIC|REGULAR|STRING)|TR_PAD_(?:BOTH|LEFT|RIGHT))|" +
-                        "T(?:HOUS(?:ANDS_SEP|EP)|_FMT(?:_AMPM|))|YES(?:EXPR|STR)|STD(?:IN|OUT|ERR))\\b"
+                token: "constant.language", // constants
+                regex: "\\b(?:A(?:B(?:DAY_(?:1|2|3|4|5|6|7)|MON_(?:1(?:0|1|2|)|2|3|4|5|6|7|8|9))|LT_DIGITS|M_STR|" +
+                    "SSERT_(?:ACTIVE|BAIL|CALLBACK|QUIET_EVAL|WARNING))|C(?:ASE_(?:LOWER|UPPER)|HAR_MAX|" +
+                    "O(?:DESET|NNECTION_(?:ABORTED|NORMAL|TIMEOUT)|UNT_(?:NORMAL|RECURSIVE))|" +
+                    "R(?:EDITS_(?:ALL|DOCS|FULLPAGE|G(?:ENERAL|ROUP)|MODULES|QA|SAPI)|NCYSTR|" +
+                    "YPT_(?:BLOWFISH|EXT_DES|MD5|S(?:ALT_LENGTH|TD_DES)))|URRENCY_SYMBOL)|D(?:AY_(?:1|2|3|4|5|6|7)|" +
+                    "ECIMAL_POINT|IRECTORY_SEPARATOR|_(?:FMT|T_FMT))|E(?:NT_(?:COMPAT|NOQUOTES|QUOTES)|RA(?:_(?:D_(?:FMT|T_FMT)|" +
+                    "T_FMT|YEAR)|)|XTR_(?:IF_EXISTS|OVERWRITE|PREFIX_(?:ALL|I(?:F_EXISTS|NVALID)|SAME)|SKIP))|FRAC_DIGITS|GROUPING|" +
+                    "HTML_(?:ENTITIES|SPECIALCHARS)|IN(?:FO_(?:ALL|C(?:ONFIGURATION|REDITS)|ENVIRONMENT|GENERAL|LICENSE|MODULES|VARIABLES)|" +
+                    "I_(?:ALL|PERDIR|SYSTEM|USER)|T_(?:CURR_SYMBOL|FRAC_DIGITS))|L(?:C_(?:ALL|C(?:OLLATE|TYPE)|M(?:ESSAGES|ONETARY)|NUMERIC|TIME)|" +
+                    "O(?:CK_(?:EX|NB|SH|UN)|G_(?:A(?:LERT|UTH(?:PRIV|))|C(?:ONS|R(?:IT|ON))|D(?:AEMON|EBUG)|E(?:MERG|RR)|INFO|KERN|" +
+                    "L(?:OCAL(?:0|1|2|3|4|5|6|7)|PR)|MAIL|N(?:DELAY|EWS|O(?:TICE|WAIT))|ODELAY|P(?:ERROR|ID)|SYSLOG|U(?:SER|UCP)|WARNING)))|" +
+                    "M(?:ON_(?:1(?:0|1|2|)|2|3|4|5|6|7|8|9|DECIMAL_POINT|GROUPING|THOUSANDS_SEP)|_(?:1_PI|2_(?:PI|SQRTPI)|E|L(?:N(?:10|2)|" +
+                    "OG(?:10E|2E))|PI(?:_(?:2|4)|)|SQRT(?:1_2|2)))|N(?:EGATIVE_SIGN|O(?:EXPR|STR)|_(?:CS_PRECEDES|S(?:EP_BY_SPACE|IGN_POSN)))|" +
+                    "P(?:ATH(?:INFO_(?:BASENAME|DIRNAME|EXTENSION)|_SEPARATOR)|M_STR|OSITIVE_SIGN|_(?:CS_PRECEDES|S(?:EP_BY_SPACE|IGN_POSN)))|" +
+                    "RADIXCHAR|S(?:EEK_(?:CUR|END|SET)|ORT_(?:ASC|DESC|NUMERIC|REGULAR|STRING)|TR_PAD_(?:BOTH|LEFT|RIGHT))|" +
+                    "T(?:HOUS(?:ANDS_SEP|EP)|_FMT(?:_AMPM|))|YES(?:EXPR|STR)|STD(?:IN|OUT|ERR))\\b"
             }, {
-                token : function(value) {
+                token: function (value) {
                     if (keywords.hasOwnProperty(value))
                         return "keyword";
                     else if (builtinConstants.hasOwnProperty(value))
@@ -1946,168 +2055,177 @@ sql_regcase'.split('|')
                         return "support.function";
                     else if (value == "debugger")
                         return "invalid.deprecated";
-                    else
-                        if(value.match(/^(\$[a-zA-Z_\x7f-\uffff][a-zA-Z0-9_\x7f-\uffff]*|self|parent)$/))
-                            return "variable";
-                        return "identifier";
+                    else if (value.match(/^(\$[a-zA-Z_\x7f-\uffff][a-zA-Z0-9_\x7f-\uffff]*|self|parent)$/))
+                        return "variable";
+                    return "identifier";
                 },
-                regex : /[a-zA-Z_$\x7f-\uffff][a-zA-Z0-9_\x7f-\uffff]*/
+                regex: /[a-zA-Z_$\x7f-\uffff][a-zA-Z0-9_\x7f-\uffff]*/
             }, {
-                onMatch : function(value, currentSate, state) {
+                onMatch: function (value, currentSate, state) {
                     value = value.substr(3);
                     if (value[0] == "'" || value[0] == '"')
                         value = value.slice(1, -1);
                     state.unshift(this.next, value);
                     return "markup.list";
                 },
-                regex : /<<<(?:\w+|'\w+'|"\w+")$/,
+                regex: /<<<(?:\w+|'\w+'|"\w+")$/,
                 next: "heredoc"
             }, {
-                token : "keyword.operator",
-                regex : "::|!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|===|==|!=|!==|<=|>=|=>|<<=|>>=|>>>=|<>|<|>|\\.=|=|!|&&|\\|\\||\\?\\:|\\*=|/=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|instanceof|new|delete|typeof|void)"
+                token: "keyword.operator",
+                regex: "::|!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|===|==|!=|!==|<=|>=|=>|<<=|>>=|>>>=|<>|<|>|\\.=|=|!|&&|\\|\\||\\?\\:|\\*=|/=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|instanceof|new|delete|typeof|void)"
             }, {
-                token : "punctuation.operator",
-                regex : /[,;]/
+                token: "punctuation.operator",
+                regex: /[,;]/
             }, {
-                token : "paren.lparen",
-                regex : "[[({]"
+                token: "paren.lparen",
+                regex: "[[({]"
             }, {
-                token : "paren.rparen",
-                regex : "[\\])}]"
+                token: "paren.rparen",
+                regex: "[\\])}]"
             }, {
-                token : "text",
-                regex : "\\s+"
+                token: "text",
+                regex: "\\s+"
             }
         ],
-        "heredoc" : [
+        "heredoc": [
             {
-                onMatch : function(value, currentSate, stack) {
-                    if (stack[1] != value)
+                onMatch: function (value, currentState, stack) {
+                    if (stack[1] != value) {
+                        this.next = "";
                         return "string";
+                    }
                     stack.shift();
                     stack.shift();
+                    this.next = this.nextState;
                     return "markup.list";
                 },
-                regex : "^\\w+(?=;?$)",
-                next: "start"
+                regex: "^\\w+(?=;?$)",
+                nextState: "start"
             }, {
                 token: "string",
-                regex : ".*"
+                regex: ".*"
             }
         ],
-        "comment" : [
+        "comment": [
             {
-                token : "comment",
-                regex : "\\*\\/",
-                next : "start"
+                token: "comment",
+                regex: "\\*\\/",
+                next: "start"
             }, {
-                defaultToken : "comment"
+                defaultToken: "comment"
             }
         ],
-        "qqstring" : [
+        "qqstring": [
             {
-                token : "constant.language.escape",
-                regex : '\\\\(?:[nrtvef\\\\"$]|[0-7]{1,3}|x[0-9A-Fa-f]{1,2})'
+                token: "constant.language.escape",
+                regex: '\\\\(?:[nrtvef\\\\"$]|[0-7]{1,3}|x[0-9A-Fa-f]{1,2})'
             }, {
-                token : "variable",
-                regex : /\$[\w]+(?:\[[\w\]+]|[=\-]>\w+)?/
+                token: "variable",
+                regex: /\$[\w]+(?:\[[\w\]+]|[=\-]>\w+)?/
             }, {
-                token : "variable",
-                regex : /\$\{[^"\}]+\}?/           // this is wrong but ok for now
+                token: "variable",
+                regex: /\$\{[^"\}]+\}?/ // this is wrong but ok for now
             },
-            {token : "string", regex : '"', next : "start"},
-            {defaultToken : "string"}
+            { token: "string", regex: '"', next: "start" },
+            { defaultToken: "string" }
         ],
-        "qstring" : [
-            {token : "constant.language.escape", regex : /\\['\\]/},
-            {token : "string", regex : "'", next : "start"},
-            {defaultToken : "string"}
+        "qstring": [
+            { token: "constant.language.escape", regex: /\\['\\]/ },
+            { token: "string", regex: "'", next: "start" },
+            { defaultToken: "string" }
         ]
     };
-
-    this.embedRules(DocCommentHighlightRules, "doc-",
-        [ DocCommentHighlightRules.getEndRule("start") ]);
+    this.embedRules(DocCommentHighlightRules, "doc-", [DocCommentHighlightRules.getEndRule("start")]);
 };
-
 oop.inherits(PhpLangHighlightRules, TextHighlightRules);
-
-
-var PhpHighlightRules = function() {
+var PhpHighlightRules = function () {
     HtmlHighlightRules.call(this);
-
     var startRules = [
         {
-            token : "support.php_tag", // php open tag
-            regex : "<\\?(?:php|=)?",
-            push  : "php-start"
+            token: "support.php_tag", // php open tag
+            regex: "<\\?(?:php|=)?",
+            push: "php-start"
         }
     ];
-
     var endRules = [
         {
-            token : "support.php_tag", // php close tag
-            regex : "\\?>",
-            next  : "pop"
+            token: "support.php_tag", // php close tag
+            regex: "\\?>",
+            next: "pop"
         }
     ];
-
     for (var key in this.$rules)
         this.$rules[key].unshift.apply(this.$rules[key], startRules);
-
     this.embedRules(PhpLangHighlightRules, "php-", endRules, ["start"]);
-
     this.normalizeRules();
 };
-
 oop.inherits(PhpHighlightRules, HtmlHighlightRules);
-
 exports.PhpHighlightRules = PhpHighlightRules;
 exports.PhpLangHighlightRules = PhpLangHighlightRules;
+
 });
 
-ace.define("ace/mode/matching_brace_outdent",["require","exports","module","ace/range"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/matching_brace_outdent",["require","exports","module","ace/range"], function(require, exports, module){"use strict";
 var Range = require("../range").Range;
-
-var MatchingBraceOutdent = function() {};
-
-(function() {
-
-    this.checkOutdent = function(line, input) {
-        if (! /^\s+$/.test(line))
+var MatchingBraceOutdent = function () { };
+(function () {
+    this.checkOutdent = function (line, input) {
+        if (!/^\s+$/.test(line))
             return false;
-
         return /^\s*\}/.test(input);
     };
-
-    this.autoOutdent = function(doc, row) {
+    this.autoOutdent = function (doc, row) {
         var line = doc.getLine(row);
         var match = line.match(/^(\s*\})/);
-
-        if (!match) return 0;
-
+        if (!match)
+            return 0;
         var column = match[1].length;
-        var openBracePos = doc.findMatchingBracket({row: row, column: column});
-
-        if (!openBracePos || openBracePos.row == row) return 0;
-
+        var openBracePos = doc.findMatchingBracket({ row: row, column: column });
+        if (!openBracePos || openBracePos.row == row)
+            return 0;
         var indent = this.$getIndent(doc.getLine(openBracePos.row));
-        doc.replace(new Range(row, 0, row, column-1), indent);
+        doc.replace(new Range(row, 0, row, column - 1), indent);
     };
-
-    this.$getIndent = function(line) {
+    this.$getIndent = function (line) {
         return line.match(/^\s*/)[0];
     };
-
 }).call(MatchingBraceOutdent.prototype);
-
 exports.MatchingBraceOutdent = MatchingBraceOutdent;
+
 });
 
-ace.define("ace/mode/php_completions",["require","exports","module"], function(require, exports, module) {
+ace.define("ace/mode/php_completions",["require","exports","module"], function(require, exports, module){/**
+ * ***** BEGIN LICENSE BLOCK *****
+ * Distributed under the BSD license:
+ *
+ * Copyright (c) 2010, Ajax.org B.V.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Ajax.org B.V. nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL AJAX.ORG B.V. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ***** END LICENSE BLOCK *****
+ */
 "use strict";
-
 var functionMap = {
     "abs": [
         "int abs(int number)",
@@ -2138,15 +2256,15 @@ var functionMap = {
         "Escapes single quote, double quotes and backslash characters in a string with backslashes"
     ],
     "apache_child_terminate": [
-        "bool apache_child_terminate(void)",
+        "bool apache_child_terminate()",
         "Terminate apache process after this request"
     ],
     "apache_get_modules": [
-        "array apache_get_modules(void)",
+        "array apache_get_modules()",
         "Get a list of loaded Apache modules"
     ],
     "apache_get_version": [
-        "string apache_get_version(void)",
+        "string apache_get_version()",
         "Fetch Apache version"
     ],
     "apache_getenv": [
@@ -2178,7 +2296,7 @@ var functionMap = {
         "* fetch all headers that go out in case of an error or a subrequest"
     ],
     "apache_request_headers": [
-        "array apache_request_headers(void)",
+        "array apache_request_headers()",
         "Fetch all HTTP request headers"
     ],
     "apache_request_headers_in": [
@@ -2194,7 +2312,7 @@ var functionMap = {
         ""
     ],
     "apache_request_log_error": [
-        "boolean apache_request_log_error(string message, [long facility])",
+        "bool apache_request_log_error(string message, [long facility])",
         ""
     ],
     "apache_request_meets_conditions": [
@@ -2246,11 +2364,11 @@ var functionMap = {
         ""
     ],
     "apache_reset_timeout": [
-        "bool apache_reset_timeout(void)",
+        "bool apache_reset_timeout()",
         "Reset the Apache write timer"
     ],
     "apache_response_headers": [
-        "array apache_response_headers(void)",
+        "array apache_response_headers()",
         "Fetch all HTTP response headers"
     ],
     "apache_setenv": [
@@ -2336,6 +2454,14 @@ var functionMap = {
     "array_keys": [
         "array array_keys(array input [, mixed search_value[, bool strict]])",
         "Return just the keys from the input array, optionally only for the specified search_value"
+    ],
+    "array_key_first": [
+        "mixed array_key_first(array arr)",
+        "Returns the first key of arr if the array is not empty; NULL otherwise"
+    ],
+    "array_key_last": [
+        "mixed array_key_last(array arr)",
+        "Returns the last key of arr if the array is not empty; NULL otherwise"
     ],
     "array_map": [
         "array array_map(mixed callback, array input1 [, array input2 ,...])",
@@ -2694,7 +2820,7 @@ var functionMap = {
         "Change file mode"
     ],
     "chown": [
-        "bool chown (string filename, mixed user)",
+        "bool chown(string filename, mixed user)",
         "Change file owner"
     ],
     "chr": [
@@ -2722,7 +2848,7 @@ var functionMap = {
         "Return all classes and interfaces implemented by SPL"
     ],
     "class_parents": [
-        "array class_parents(object instance [, boolean autoload = true])",
+        "array class_parents(object instance [, bool autoload = true])",
         "Return an array containing the names of all parent classes"
     ],
     "clearstatcache": [
@@ -2734,7 +2860,7 @@ var functionMap = {
         "Close directory connection identified by the dir_handle"
     ],
     "closelog": [
-        "bool closelog(void)",
+        "bool closelog()",
         "Close connection to system logger"
     ],
     "collator_asort": [
@@ -2826,11 +2952,11 @@ var functionMap = {
         "Return a string to confirm that the module is compiled in"
     ],
     "connection_aborted": [
-        "int connection_aborted(void)",
+        "int connection_aborted()",
         "Returns true if client disconnected"
     ],
     "connection_status": [
-        "int connection_status(void)",
+        "int connection_status()",
         "Returns the connection status bitfield"
     ],
     "constant": [
@@ -2875,7 +3001,7 @@ var functionMap = {
     ],
     "create_function": [
         "string create_function(string args, string code)",
-        "Creates an anonymous function, and returns its name (funny, eh?)"
+        "Creates an anonymous function, and returns its name"
     ],
     "crypt": [
         "string crypt(string str [, string salt])",
@@ -2974,7 +3100,7 @@ var functionMap = {
         "Get information about the current transfers"
     ],
     "curl_multi_init": [
-        "resource curl_multi_init(void)",
+        "resource curl_multi_init()",
         "Returns a new cURL multi handle"
     ],
     "curl_multi_remove_handle": [
@@ -3170,7 +3296,7 @@ var functionMap = {
         "* Set formatter pattern."
     ],
     "datefmt_set_timezone_id": [
-        "boolean datefmt_set_timezone_id( IntlDateFormatter $mf,$timezone_id)",
+        "bool datefmt_set_timezone_id( IntlDateFormatter $mf,$timezone_id)",
         "* Set formatter timezone_id."
     ],
     "dba_close": [
@@ -3238,7 +3364,7 @@ var functionMap = {
         "Return the translation of msgid for domain_name and category, or msgid unaltered if a translation does not exist"
     ],
     "dcngettext": [
-        "string dcngettext (string domain, string msgid1, string msgid2, int n, int category)",
+        "string dcngettext(string domain, string msgid1, string msgid2, int n, int category)",
         "Plural version of dcgettext()"
     ],
     "debug_backtrace": [
@@ -3246,44 +3372,231 @@ var functionMap = {
         "Return backtrace as array"
     ],
     "debug_print_backtrace": [
-        "void debug_print_backtrace(void) */",
-        "ZEND_FUNCTION(debug_print_backtrace) {  zend_execute_data *ptr, *skip;  int lineno;  char *function_name;  char *filename;  char *class_name = NULL;  char *call_type;  char *include_filename = NULL;  zval *arg_array = NULL;  int indent = 0;   if (zend_parse_parameters_none() == FAILURE) {   return;  }   ptr = EG(current_execute_data);",
+        "void debug_print_backtrace()",
+        "Prints a PHP backtrace"
+    ],
+    "debug_zval_dump": [
+        "void debug_zval_dump(mixed var)",
+        "Dumps a string representation of an internal Zend value to output"
+    ],
+    "decbin": [
+        "string decbin(int decimal_number)",
+        "Returns a string containing a binary representation of the number"
+    ],
+    "dechex": [
+        "string dechex(int decimal_number)",
+        "Returns a string containing a hexadecimal representation of the given number"
+    ],
+    "decoct": [
+        "string decoct(int decimal_number)",
+        "Returns a string containing an octal representation of the given number"
+    ],
+    "define": [
+        "bool define(string constant_name, mixed value, bool case_insensitive=false)",
+        "Define a new constant"
+    ],
+    "define_syslog_variables": [
+        "void define_syslog_variables()",
+        "Initializes all syslog-related variables"
+    ],
+    "defined": [
+        "bool defined(string constant_name)",
+        "Check whether a constant exists"
+    ],
+    "deg2rad": [
+        "float deg2rad(float number)",
+        "Converts the number in degrees to the radian equivalent"
+    ],
+    "dgettext": [
+        "string dgettext(string domain_name, string msgid)",
+        "Return the translation of msgid for domain_name, or msgid unaltered if a translation does not exist"
+    ],
+    "die": [
+        "void die([mixed status])",
+        "Output a message and terminate the current script"
+    ],
+    "dir": [
+        "object dir(string directory[, resource context])",
+        "Directory class with properties, handle and class and methods read, rewind and close"
+    ],
+    "dirname": [
+        "string dirname(string path)",
+        "Returns the directory name component of the path"
+    ],
+    "disk_free_space": [
+        "float disk_free_space(string path)",
+        "Get free disk space for filesystem that path is on"
+    ],
+    "disk_total_space": [
+        "float disk_total_space(string path)",
+        "Get total disk space for filesystem that path is on"
+    ],
+    "display_disabled_function": [
+        "void display_disabled_function()",
+        "Dummy function which displays an error when a disabled function is called."
+    ],
+    "dl": [
+        "int dl(string extension_filename)",
+        "Load a PHP extension at runtime"
+    ],
+    "dngettext": [
+        "string dngettext(string domain, string msgid1, string msgid2, int count)",
+        "Plural version of dgettext()"
+    ],
+    "dns_check_record": [
+        "bool dns_check_record(string host [, string type])",
+        "Check DNS records corresponding to a given Internet host name or IP address"
+    ],
+    "dns_get_mx": [
+        "bool dns_get_mx(string hostname, array mxhosts [, array weight])",
+        "Get MX records corresponding to a given Internet host name"
+    ],
+    "dns_get_record": [
+        "array|false dns_get_record(string hostname [, int type[, array authns, array addtl]])",
+        "Get any Resource Record corresponding to a given Internet host name"
+    ],
+    "dom_attr_is_id": [
+        "bool dom_attr_is_id()",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Attr-isId Since: DOM Level 3"
+    ],
+    "dom_characterdata_append_data": [
+        "void dom_characterdata_append_data(string arg)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-32791A2F Since:"
+    ],
+    "dom_characterdata_delete_data": [
+        "void dom_characterdata_delete_data(int offset, int count)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-7C603781 Since:"
+    ],
+    "dom_characterdata_insert_data": [
+        "void dom_characterdata_insert_data(int offset, string arg)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-3EDB695F Since:"
+    ],
+    "dom_characterdata_replace_data": [
+        "void dom_characterdata_replace_data(int offset, int count, string arg)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-E5CBA7FB Since:"
+    ],
+    "dom_characterdata_substring_data": [
+        "string dom_characterdata_substring_data(int offset, int count)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-6531BCCF Since:"
+    ],
+    "dom_document_adopt_node": [
+        "DOMNode dom_document_adopt_node(DOMNode source)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Document3-adoptNode Since: DOM Level 3"
+    ],
+    "dom_document_create_attribute": [
+        "DOMAttr dom_document_create_attribute(string name)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1084891198 Since:"
+    ],
+    "dom_document_create_attribute_ns": [
+        "DOMAttr dom_document_create_attribute_ns(string namespaceURI, string qualifiedName)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-DocCrAttrNS Since: DOM Level 2"
+    ],
+    "dom_document_create_cdatasection": [
+        "DOMCdataSection dom_document_create_cdatasection(string data)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-D26C0AF8 Since:"
+    ],
+    "dom_document_create_comment": [
+        "DOMComment dom_document_create_comment(string data)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1334481328 Since:"
+    ],
+    "dom_document_create_document_fragment": [
+        "DOMDocumentFragment dom_document_create_document_fragment()",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-35CB04B5 Since:"
+    ],
+    "dom_document_create_element": [
+        "DOMElement dom_document_create_element(string tagName [, string value])",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-2141741547 Since:"
+    ],
+    "dom_document_create_element_ns": [
+        "DOMElement dom_document_create_element_ns(string namespaceURI, string qualifiedName [,string value])",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-DocCrElNS Since: DOM Level 2"
+    ],
+    "dom_document_create_entity_reference": [
+        "DOMEntityReference dom_document_create_entity_reference(string name)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-392B75AE Since:"
+    ],
+    "dom_document_create_processing_instruction": [
+        "DOMProcessingInstruction dom_document_create_processing_instruction(string target, string data)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-135944439 Since:"
+    ],
+    "dom_document_create_text_node": [
+        "DOMText dom_document_create_text_node(string data)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1975348127 Since:"
+    ],
+    "dom_document_get_element_by_id": [
+        "DOMElement dom_document_get_element_by_id(string elementId)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-getElBId Since: DOM Level 2"
+    ],
+    "dom_document_get_elements_by_tag_name": [
+        "DOMNodeList dom_document_get_elements_by_tag_name(string tagname)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-A6C9094 Since:"
+    ],
+    "dom_document_get_elements_by_tag_name_ns": [
+        "DOMNodeList dom_document_get_elements_by_tag_name_ns(string namespaceURI, string localName)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-getElBTNNS Since: DOM Level 2"
+    ],
+    "dom_document_import_node": [
+        "DOMNode dom_document_import_node(DOMNode importedNode, bool deep)",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Core-Document-importNode Since: DOM Level 2"
+    ],
+    "dom_document_load": [
+        "DOMNode dom_document_load(string source [, int options])",
+        "URL: http://www.w3.org/TR/DOM-Level-3-LS/load-save.html#LS-DocumentLS-load Since: DOM Level 3"
+    ],
+    "dom_document_load_html": [
+        "DOMNode dom_document_load_html(string source)",
+        "Since: DOM extended"
+    ],
+    "dom_document_load_html_file": [
+        "DOMNode dom_document_load_html_file(string source)",
+        "Since: DOM extended"
+    ],
+    "dom_document_loadxml": [
+        "DOMNode dom_document_loadxml(string source [, int options])",
+        "URL: http://www.w3.org/TR/DOM-Level-3-LS/load-save.html#LS-DocumentLS-loadXML Since: DOM Level 3"
+    ],
+    "dom_document_normalize_document": [
+        "void dom_document_normalize_document()",
+        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Document3-normalizeDocument Since: DOM Level 3"
+    ],
+    "dom_document_relaxNG_validate_file": [
+        "bool dom_document_relaxNG_validate_file(string filename); */",
         "PHP_FUNCTION(dom_document_relaxNG_validate_file) {  _dom_document_relaxNG_validate(INTERNAL_FUNCTION_PARAM_PASSTHRU, DOM_LOAD_FILE); } /* }}} end dom_document_relaxNG_validate_file"
     ],
     "dom_document_relaxNG_validate_xml": [
-        "boolean dom_document_relaxNG_validate_xml(string source); */",
+        "bool dom_document_relaxNG_validate_xml(string source); */",
         "PHP_FUNCTION(dom_document_relaxNG_validate_xml) {  _dom_document_relaxNG_validate(INTERNAL_FUNCTION_PARAM_PASSTHRU, DOM_LOAD_STRING); } /* }}} end dom_document_relaxNG_validate_xml"
     ],
     "dom_document_rename_node": [
-        "DOMNode dom_document_rename_node(node n, string namespaceURI, string qualifiedName);",
+        "DOMNode dom_document_rename_node(node n, string namespaceURI, string qualifiedName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Document3-renameNode Since: DOM Level 3"
     ],
     "dom_document_save": [
-        "int dom_document_save(string file);",
+        "int dom_document_save(string file)",
         "Convenience method to save to file"
     ],
     "dom_document_save_html": [
-        "string dom_document_save_html();",
+        "string dom_document_save_html()",
         "Convenience method to output as html"
     ],
     "dom_document_save_html_file": [
-        "int dom_document_save_html_file(string file);",
+        "int dom_document_save_html_file(string file)",
         "Convenience method to save to file as html"
     ],
     "dom_document_savexml": [
-        "string dom_document_savexml([node n]);",
+        "string dom_document_savexml([node n])",
         "URL: http://www.w3.org/TR/DOM-Level-3-LS/load-save.html#LS-DocumentLS-saveXML Since: DOM Level 3"
     ],
     "dom_document_schema_validate": [
-        "boolean dom_document_schema_validate(string source); */",
+        "bool dom_document_schema_validate(string source); */",
         "PHP_FUNCTION(dom_document_schema_validate_xml) {  _dom_document_schema_validate(INTERNAL_FUNCTION_PARAM_PASSTHRU, DOM_LOAD_STRING); } /* }}} end dom_document_schema_validate"
     ],
     "dom_document_schema_validate_file": [
-        "boolean dom_document_schema_validate_file(string filename); */",
+        "bool dom_document_schema_validate_file(string filename); */",
         "PHP_FUNCTION(dom_document_schema_validate_file) {  _dom_document_schema_validate(INTERNAL_FUNCTION_PARAM_PASSTHRU, DOM_LOAD_FILE); } /* }}} end dom_document_schema_validate_file"
     ],
     "dom_document_validate": [
-        "boolean dom_document_validate();",
+        "bool dom_document_validate()",
         "Since: DOM extended"
     ],
     "dom_document_xinclude": [
@@ -3291,123 +3604,123 @@ var functionMap = {
         "Substitutues xincludes in a DomDocument"
     ],
     "dom_domconfiguration_can_set_parameter": [
-        "boolean dom_domconfiguration_can_set_parameter(string name, domuserdata value);",
+        "bool dom_domconfiguration_can_set_parameter(string name, domuserdata value)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#DOMConfiguration-canSetParameter Since:"
     ],
     "dom_domconfiguration_get_parameter": [
-        "domdomuserdata dom_domconfiguration_get_parameter(string name);",
+        "domdomuserdata dom_domconfiguration_get_parameter(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#DOMConfiguration-getParameter Since:"
     ],
     "dom_domconfiguration_set_parameter": [
-        "dom_void dom_domconfiguration_set_parameter(string name, domuserdata value);",
+        "dom_void dom_domconfiguration_set_parameter(string name, domuserdata value)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#DOMConfiguration-property Since:"
     ],
     "dom_domerrorhandler_handle_error": [
-        "dom_boolean dom_domerrorhandler_handle_error(domerror error);",
+        "dom_bool dom_domerrorhandler_handle_error(domerror error)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-ERRORS-DOMErrorHandler-handleError Since:"
     ],
     "dom_domimplementation_create_document": [
-        "DOMDocument dom_domimplementation_create_document(string namespaceURI, string qualifiedName, DOMDocumentType doctype);",
+        "DOMDocument dom_domimplementation_create_document(string namespaceURI, string qualifiedName, DOMDocumentType doctype)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Level-2-Core-DOM-createDocument Since: DOM Level 2"
     ],
     "dom_domimplementation_create_document_type": [
-        "DOMDocumentType dom_domimplementation_create_document_type(string qualifiedName, string publicId, string systemId);",
+        "DOMDocumentType dom_domimplementation_create_document_type(string qualifiedName, string publicId, string systemId)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Level-2-Core-DOM-createDocType Since: DOM Level 2"
     ],
     "dom_domimplementation_get_feature": [
-        "DOMNode dom_domimplementation_get_feature(string feature, string version);",
+        "DOMNode dom_domimplementation_get_feature(string feature, string version)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#DOMImplementation3-getFeature Since: DOM Level 3"
     ],
     "dom_domimplementation_has_feature": [
-        "boolean dom_domimplementation_has_feature(string feature, string version);",
+        "bool dom_domimplementation_has_feature(string feature, string version)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-5CED94D7 Since:"
     ],
     "dom_domimplementationlist_item": [
-        "domdomimplementation dom_domimplementationlist_item(int index);",
+        "domdomimplementation dom_domimplementationlist_item(int index)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#DOMImplementationList-item Since:"
     ],
     "dom_domimplementationsource_get_domimplementation": [
-        "domdomimplementation dom_domimplementationsource_get_domimplementation(string features);",
+        "domdomimplementation dom_domimplementationsource_get_domimplementation(string features)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-getDOMImpl Since:"
     ],
     "dom_domimplementationsource_get_domimplementations": [
-        "domimplementationlist dom_domimplementationsource_get_domimplementations(string features);",
+        "domimplementationlist dom_domimplementationsource_get_domimplementations(string features)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-getDOMImpls Since:"
     ],
     "dom_domstringlist_item": [
-        "domstring dom_domstringlist_item(int index);",
+        "domstring dom_domstringlist_item(int index)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#DOMStringList-item Since:"
     ],
     "dom_element_get_attribute": [
-        "string dom_element_get_attribute(string name);",
+        "string dom_element_get_attribute(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-666EE0F9 Since:"
     ],
     "dom_element_get_attribute_node": [
-        "DOMAttr dom_element_get_attribute_node(string name);",
+        "DOMAttr dom_element_get_attribute_node(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-217A91B8 Since:"
     ],
     "dom_element_get_attribute_node_ns": [
-        "DOMAttr dom_element_get_attribute_node_ns(string namespaceURI, string localName);",
+        "DOMAttr dom_element_get_attribute_node_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElGetAtNodeNS Since: DOM Level 2"
     ],
     "dom_element_get_attribute_ns": [
-        "string dom_element_get_attribute_ns(string namespaceURI, string localName);",
+        "string dom_element_get_attribute_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElGetAttrNS Since: DOM Level 2"
     ],
     "dom_element_get_elements_by_tag_name": [
-        "DOMNodeList dom_element_get_elements_by_tag_name(string name);",
+        "DOMNodeList dom_element_get_elements_by_tag_name(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1938918D Since:"
     ],
     "dom_element_get_elements_by_tag_name_ns": [
-        "DOMNodeList dom_element_get_elements_by_tag_name_ns(string namespaceURI, string localName);",
+        "DOMNodeList dom_element_get_elements_by_tag_name_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-A6C90942 Since: DOM Level 2"
     ],
     "dom_element_has_attribute": [
-        "boolean dom_element_has_attribute(string name);",
+        "bool dom_element_has_attribute(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElHasAttr Since: DOM Level 2"
     ],
     "dom_element_has_attribute_ns": [
-        "boolean dom_element_has_attribute_ns(string namespaceURI, string localName);",
+        "bool dom_element_has_attribute_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElHasAttrNS Since: DOM Level 2"
     ],
     "dom_element_remove_attribute": [
-        "void dom_element_remove_attribute(string name);",
+        "void dom_element_remove_attribute(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-6D6AC0F9 Since:"
     ],
     "dom_element_remove_attribute_node": [
-        "DOMAttr dom_element_remove_attribute_node(DOMAttr oldAttr);",
+        "DOMAttr dom_element_remove_attribute_node(DOMAttr oldAttr)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-D589198 Since:"
     ],
     "dom_element_remove_attribute_ns": [
-        "void dom_element_remove_attribute_ns(string namespaceURI, string localName);",
+        "void dom_element_remove_attribute_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElRemAtNS Since: DOM Level 2"
     ],
     "dom_element_set_attribute": [
-        "void dom_element_set_attribute(string name, string value);",
+        "void dom_element_set_attribute(string name, string value)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-F68F082 Since:"
     ],
     "dom_element_set_attribute_node": [
-        "DOMAttr dom_element_set_attribute_node(DOMAttr newAttr);",
+        "DOMAttr dom_element_set_attribute_node(DOMAttr newAttr)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-887236154 Since:"
     ],
     "dom_element_set_attribute_node_ns": [
-        "DOMAttr dom_element_set_attribute_node_ns(DOMAttr newAttr);",
+        "DOMAttr dom_element_set_attribute_node_ns(DOMAttr newAttr)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElSetAtNodeNS Since: DOM Level 2"
     ],
     "dom_element_set_attribute_ns": [
-        "void dom_element_set_attribute_ns(string namespaceURI, string qualifiedName, string value);",
+        "void dom_element_set_attribute_ns(string namespaceURI, string qualifiedName, string value)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElSetAttrNS Since: DOM Level 2"
     ],
     "dom_element_set_id_attribute": [
-        "void dom_element_set_id_attribute(string name, boolean isId);",
+        "void dom_element_set_id_attribute(string name, bool isId)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElSetIdAttr Since: DOM Level 3"
     ],
     "dom_element_set_id_attribute_node": [
-        "void dom_element_set_id_attribute_node(attr idAttr, boolean isId);",
+        "void dom_element_set_id_attribute_node(attr idAttr, bool isId)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElSetIdAttrNode Since: DOM Level 3"
     ],
     "dom_element_set_id_attribute_ns": [
-        "void dom_element_set_id_attribute_ns(string namespaceURI, string localName, boolean isId);",
+        "void dom_element_set_id_attribute_ns(string namespaceURI, string localName, bool isId)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-ElSetIdAttrNS Since: DOM Level 3"
     ],
     "dom_import_simplexml": [
@@ -3415,156 +3728,156 @@ var functionMap = {
         "Get a simplexml_element object from dom to allow for processing"
     ],
     "dom_namednodemap_get_named_item": [
-        "DOMNode dom_namednodemap_get_named_item(string name);",
+        "DOMNode dom_namednodemap_get_named_item(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1074577549 Since:"
     ],
     "dom_namednodemap_get_named_item_ns": [
-        "DOMNode dom_namednodemap_get_named_item_ns(string namespaceURI, string localName);",
+        "DOMNode dom_namednodemap_get_named_item_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-getNamedItemNS Since: DOM Level 2"
     ],
     "dom_namednodemap_item": [
-        "DOMNode dom_namednodemap_item(int index);",
+        "DOMNode dom_namednodemap_item(int index)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-349467F9 Since:"
     ],
     "dom_namednodemap_remove_named_item": [
-        "DOMNode dom_namednodemap_remove_named_item(string name);",
+        "DOMNode dom_namednodemap_remove_named_item(string name)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-D58B193 Since:"
     ],
     "dom_namednodemap_remove_named_item_ns": [
-        "DOMNode dom_namednodemap_remove_named_item_ns(string namespaceURI, string localName);",
+        "DOMNode dom_namednodemap_remove_named_item_ns(string namespaceURI, string localName)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-removeNamedItemNS Since: DOM Level 2"
     ],
     "dom_namednodemap_set_named_item": [
-        "DOMNode dom_namednodemap_set_named_item(DOMNode arg);",
+        "DOMNode dom_namednodemap_set_named_item(DOMNode arg)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1025163788 Since:"
     ],
     "dom_namednodemap_set_named_item_ns": [
-        "DOMNode dom_namednodemap_set_named_item_ns(DOMNode arg);",
+        "DOMNode dom_namednodemap_set_named_item_ns(DOMNode arg)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-setNamedItemNS Since: DOM Level 2"
     ],
     "dom_namelist_get_name": [
-        "string dom_namelist_get_name(int index);",
+        "string dom_namelist_get_name(int index)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#NameList-getName Since:"
     ],
     "dom_namelist_get_namespace_uri": [
-        "string dom_namelist_get_namespace_uri(int index);",
+        "string dom_namelist_get_namespace_uri(int index)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#NameList-getNamespaceURI Since:"
     ],
     "dom_node_append_child": [
-        "DomNode dom_node_append_child(DomNode newChild);",
+        "DomNode dom_node_append_child(DomNode newChild)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-184E7107 Since:"
     ],
     "dom_node_clone_node": [
-        "DomNode dom_node_clone_node(boolean deep);",
+        "DomNode dom_node_clone_node(bool deep)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-3A0ED0A4 Since:"
     ],
     "dom_node_compare_document_position": [
-        "short dom_node_compare_document_position(DomNode other);",
+        "short dom_node_compare_document_position(DomNode other)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-compareDocumentPosition Since: DOM Level 3"
     ],
     "dom_node_get_feature": [
-        "DomNode dom_node_get_feature(string feature, string version);",
+        "DomNode dom_node_get_feature(string feature, string version)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-getFeature Since: DOM Level 3"
     ],
     "dom_node_get_user_data": [
-        "mixed dom_node_get_user_data(string key);",
+        "mixed dom_node_get_user_data(string key)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-getUserData Since: DOM Level 3"
     ],
     "dom_node_has_attributes": [
-        "boolean dom_node_has_attributes();",
+        "bool dom_node_has_attributes()",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-NodeHasAttrs Since: DOM Level 2"
     ],
     "dom_node_has_child_nodes": [
-        "boolean dom_node_has_child_nodes();",
+        "bool dom_node_has_child_nodes()",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-810594187 Since:"
     ],
     "dom_node_insert_before": [
-        "domnode dom_node_insert_before(DomNode newChild, DomNode refChild);",
+        "domnode dom_node_insert_before(DomNode newChild, DomNode refChild)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-952280727 Since:"
     ],
     "dom_node_is_default_namespace": [
-        "boolean dom_node_is_default_namespace(string namespaceURI);",
+        "bool dom_node_is_default_namespace(string namespaceURI)",
         "URL: http://www.w3.org/TR/DOM-Level-3-Core/core.html#Node3-isDefaultNamespace Since: DOM Level 3"
     ],
     "dom_node_is_equal_node": [
-        "boolean dom_node_is_equal_node(DomNode arg);",
+        "bool dom_node_is_equal_node(DomNode arg)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-isEqualNode Since: DOM Level 3"
     ],
     "dom_node_is_same_node": [
-        "boolean dom_node_is_same_node(DomNode other);",
+        "bool dom_node_is_same_node(DomNode other)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-isSameNode Since: DOM Level 3"
     ],
     "dom_node_is_supported": [
-        "boolean dom_node_is_supported(string feature, string version);",
+        "bool dom_node_is_supported(string feature, string version)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Level-2-Core-Node-supports Since: DOM Level 2"
     ],
     "dom_node_lookup_namespace_uri": [
-        "string dom_node_lookup_namespace_uri(string prefix);",
+        "string dom_node_lookup_namespace_uri(string prefix)",
         "URL: http://www.w3.org/TR/DOM-Level-3-Core/core.html#Node3-lookupNamespaceURI Since: DOM Level 3"
     ],
     "dom_node_lookup_prefix": [
-        "string dom_node_lookup_prefix(string namespaceURI);",
+        "string dom_node_lookup_prefix(string namespaceURI)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-lookupNamespacePrefix Since: DOM Level 3"
     ],
     "dom_node_normalize": [
-        "void dom_node_normalize();",
+        "void dom_node_normalize()",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-normalize Since:"
     ],
     "dom_node_remove_child": [
-        "DomNode dom_node_remove_child(DomNode oldChild);",
+        "DomNode dom_node_remove_child(DomNode oldChild)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-1734834066 Since:"
     ],
     "dom_node_replace_child": [
-        "DomNode dom_node_replace_child(DomNode newChild, DomNode oldChild);",
+        "DomNode dom_node_replace_child(DomNode newChild, DomNode oldChild)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-785887307 Since:"
     ],
     "dom_node_set_user_data": [
-        "mixed dom_node_set_user_data(string key, mixed data, userdatahandler handler);",
+        "mixed dom_node_set_user_data(string key, mixed data, userdatahandler handler)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Node3-setUserData Since: DOM Level 3"
     ],
     "dom_nodelist_item": [
-        "DOMNode dom_nodelist_item(int index);",
+        "DOMNode dom_nodelist_item(int index)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-844377136 Since:"
     ],
     "dom_string_extend_find_offset16": [
-        "int dom_string_extend_find_offset16(int offset32);",
+        "int dom_string_extend_find_offset16(int offset32)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#i18n-methods-StringExtend-findOffset16 Since:"
     ],
     "dom_string_extend_find_offset32": [
-        "int dom_string_extend_find_offset32(int offset16);",
+        "int dom_string_extend_find_offset32(int offset16)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#i18n-methods-StringExtend-findOffset32 Since:"
     ],
     "dom_text_is_whitespace_in_element_content": [
-        "boolean dom_text_is_whitespace_in_element_content();",
+        "bool dom_text_is_whitespace_in_element_content()",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Text3-isWhitespaceInElementContent Since: DOM Level 3"
     ],
     "dom_text_replace_whole_text": [
-        "DOMText dom_text_replace_whole_text(string content);",
+        "DOMText dom_text_replace_whole_text(string content)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Text3-replaceWholeText Since: DOM Level 3"
     ],
     "dom_text_split_text": [
-        "DOMText dom_text_split_text(int offset);",
+        "DOMText dom_text_split_text(int offset)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-38853C1D Since:"
     ],
     "dom_userdatahandler_handle": [
-        "dom_void dom_userdatahandler_handle(short operation, string key, domobject data, node src, node dst);",
+        "dom_void dom_userdatahandler_handle(short operation, string key, domobject data, node src, node dst)",
         "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-handleUserDataEvent Since:"
     ],
     "dom_xpath_evaluate": [
-        "mixed dom_xpath_evaluate(string expr [,DOMNode context]); */",
-        "PHP_FUNCTION(dom_xpath_evaluate) {  php_xpath_eval(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_DOM_XPATH_EVALUATE); } /* }}} end dom_xpath_evaluate"
+        "mixed dom_xpath_evaluate(string expr [,DOMNode context])",
+        ""
     ],
     "dom_xpath_query": [
-        "DOMNodeList dom_xpath_query(string expr [,DOMNode context]); */",
-        "PHP_FUNCTION(dom_xpath_query) {  php_xpath_eval(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_DOM_XPATH_QUERY); } /* }}} end dom_xpath_query"
+        "DOMNodeList dom_xpath_query(string expr [,DOMNode context])",
+        ""
     ],
     "dom_xpath_register_ns": [
-        "boolean dom_xpath_register_ns(string prefix, string uri); */",
-        "PHP_FUNCTION(dom_xpath_register_ns) {  zval *id;  xmlXPathContextPtr ctxp;  int prefix_len, ns_uri_len;  dom_xpath_object *intern;  unsigned char *prefix, *ns_uri;   if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), \"Oss\", &id, dom_xpath_class_entry, &prefix, &prefix_len, &ns_uri, &ns_uri_len) == FAILURE) {   return;  }   intern = (dom_xpath_object *)zend_object_store_get_object(id TSRMLS_CC);   ctxp = (xmlXPathContextPtr) intern->ptr;  if (ctxp == NULL) {   php_error_docref(NULL TSRMLS_CC, E_WARNING, \"Invalid XPath Context\");   RETURN_FALSE;  }   if (xmlXPathRegisterNs(ctxp, prefix, ns_uri) != 0) {   RETURN_FALSE  }  RETURN_TRUE; } /* }}}"
+        "bool dom_xpath_register_ns(string prefix, string uri)",
+        ""
     ],
     "dom_xpath_register_php_functions": [
-        "void dom_xpath_register_php_functions() */",
-        "PHP_FUNCTION(dom_xpath_register_php_functions) {  zval *id;  dom_xpath_object *intern;  zval *array_value, **entry, *new_string;  int  name_len = 0;  char *name;   DOM_GET_THIS(id);    if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, \"a\",  &array_value) == SUCCESS) {   intern = (dom_xpath_object *)zend_object_store_get_object(id TSRMLS_CC);   zend_hash_internal_pointer_reset(Z_ARRVAL_P(array_value));    while (zend_hash_get_current_data(Z_ARRVAL_P(array_value), (void **)&entry) == SUCCESS) {    SEPARATE_ZVAL(entry);    convert_to_string_ex(entry);     MAKE_STD_ZVAL(new_string);    ZVAL_LONG(new_string,1);       zend_hash_update(intern->registered_phpfunctions, Z_STRVAL_PP(entry), Z_STRLEN_PP(entry) + 1, &new_string, sizeof(zval*), NULL);    zend_hash_move_forward(Z_ARRVAL_P(array_value));   }   intern->registerPhpFunctions = 2;   RETURN_TRUE;   } else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, \"s\",  &name, &name_len) == SUCCESS) {   intern = (dom_xpath_object *)zend_object_store_get_object(id TSRMLS_CC);      MAKE_STD_ZVAL(new_string);   ZVAL_LONG(new_string,1);   zend_hash_update(intern->registered_phpfunctions, name, name_len + 1, &new_string, sizeof(zval*), NULL);   intern->registerPhpFunctions = 2;     } else {   intern = (dom_xpath_object *)zend_object_store_get_object(id TSRMLS_CC);   intern->registerPhpFunctions = 1;  }   } /* }}} end dom_xpath_register_php_functions"
+        "void dom_xpath_register_php_functions()",
+        ""
     ],
     "each": [
         "array each(array arr)",
@@ -3583,7 +3896,7 @@ var functionMap = {
         "Output one or more strings"
     ],
     "empty": [
-        "bool empty( mixed var )",
+        "bool empty(mixed var)",
         "Determine whether a variable is empty"
     ],
     "enchant_broker_describe": [
@@ -3595,7 +3908,7 @@ var functionMap = {
         "Whether a dictionary exists or not. Using non-empty tag"
     ],
     "enchant_broker_free": [
-        "boolean enchant_broker_free(resource broker)",
+        "bool enchant_broker_free(resource broker)",
         "Destroys the broker object and its dictionnaries"
     ],
     "enchant_broker_free_dict": [
@@ -3891,7 +4204,7 @@ var functionMap = {
         "Returns the next lowest integer value from the number"
     ],
     "flush": [
-        "void flush(void)",
+        "void flush()",
         "Flush the output buffer"
     ],
     "fmod": [
@@ -4099,7 +4412,7 @@ var functionMap = {
         "Get an array of the arguments that were passed to the function"
     ],
     "func_num_args": [
-        "int func_num_args(void)",
+        "int func_num_args()",
         "Get the number of arguments that were passed to the function"
     ],
     "function ": ["", ""],
@@ -4113,19 +4426,19 @@ var functionMap = {
         "Binary-safe file write"
     ],
     "gc_collect_cycles": [
-        "int gc_collect_cycles(void)",
+        "int gc_collect_cycles()",
         "Forces collection of any existing garbage cycles.    Returns number of freed zvals"
     ],
     "gc_disable": [
-        "void gc_disable(void)",
+        "void gc_disable()",
         "Deactivates the circular reference collector"
     ],
     "gc_enable": [
-        "void gc_enable(void)",
+        "void gc_enable()",
         "Activates the circular reference collector"
     ],
     "gc_enabled": [
-        "void gc_enabled(void)",
+        "void gc_enabled()",
         "Returns status of the circular reference collector"
     ],
     "gd_info": [
@@ -4134,7 +4447,7 @@ var functionMap = {
     ],
     "getKeywords": [
         "static array getKeywords(string $locale) {",
-        "* return an associative array containing keyword-value  * pairs for this locale. The keys are keys to the array (doh!)  * }}}"
+        "* return an associative array containing keyword-value  * pairs for this locale. The keys are keys to the array  * }}}"
     ],
     "get_browser": [
         "mixed get_browser([string browser_name [, bool return_array]])",
@@ -4161,7 +4474,7 @@ var functionMap = {
         "Returns an array of default properties of the class."
     ],
     "get_current_user": [
-        "string get_current_user(void)",
+        "string get_current_user()",
         "Get the name of the owner of the current PHP script"
     ],
     "get_declared_classes": [
@@ -4177,11 +4490,11 @@ var functionMap = {
         "Return an array containing the names and values of all defined constants"
     ],
     "get_defined_functions": [
-        "array get_defined_functions(void)",
+        "array get_defined_functions()",
         "Returns an array of all defined functions"
     ],
     "get_defined_vars": [
-        "array get_defined_vars(void)",
+        "array get_defined_vars()",
         "Returns an associative array of names and values of all currently defined variable names (variables in the current scope)"
     ],
     "get_display_language": [
@@ -4217,7 +4530,7 @@ var functionMap = {
         "Get the current include_path configuration option"
     ],
     "get_included_files": [
-        "array get_included_files(void)",
+        "array get_included_files()",
         "Returns an array with the file names that were include_once()'d"
     ],
     "get_loaded_extensions": [
@@ -4225,11 +4538,11 @@ var functionMap = {
         "Return an array containing names of loaded extensions"
     ],
     "get_magic_quotes_gpc": [
-        "int get_magic_quotes_gpc(void)",
+        "int get_magic_quotes_gpc()",
         "Get the current active configuration setting of magic_quotes_gpc"
     ],
     "get_magic_quotes_runtime": [
-        "int get_magic_quotes_runtime(void)",
+        "int get_magic_quotes_runtime()",
         "Get the current active configuration setting of magic_quotes_runtime"
     ],
     "get_meta_tags": [
@@ -4249,11 +4562,11 @@ var functionMap = {
         "Get the resource type name for a given resource"
     ],
     "getallheaders": [
-        "array getallheaders(void)",
+        "array getallheaders()",
         ""
     ],
     "getcwd": [
-        "mixed getcwd(void)",
+        "mixed getcwd()",
         "Gets the current directory"
     ],
     "getdate": [
@@ -4285,23 +4598,23 @@ var functionMap = {
         "Get the size of an image as 4-element array"
     ],
     "getlastmod": [
-        "int getlastmod(void)",
+        "int getlastmod()",
         "Get time of last page modification"
     ],
     "getmygid": [
-        "int getmygid(void)",
+        "int getmygid()",
         "Get PHP script owner's GID"
     ],
     "getmyinode": [
-        "int getmyinode(void)",
+        "int getmyinode()",
         "Get the inode of the current script being parsed"
     ],
     "getmypid": [
-        "int getmypid(void)",
+        "int getmypid()",
         "Get current process ID"
     ],
     "getmyuid": [
-        "int getmyuid(void)",
+        "int getmyuid()",
         "Get PHP script owner's UID"
     ],
     "getopt": [
@@ -4317,7 +4630,7 @@ var functionMap = {
         "Returns protocol name associated with protocol number proto"
     ],
     "getrandmax": [
-        "int getrandmax(void)",
+        "int getrandmax()",
         "Returns the maximum value a random number can have"
     ],
     "getrusage": [
@@ -4593,7 +4906,7 @@ var functionMap = {
         "Generate a hash of a given input string Returns lowercase hexits by default"
     ],
     "hash_algos": [
-        "array hash_algos(void)",
+        "array hash_algos()",
         "Return a list of registered hashing algorithms"
     ],
     "hash_copy": [
@@ -4641,7 +4954,7 @@ var functionMap = {
         "Removes an HTTP header previously set using header()"
     ],
     "headers_list": [
-        "array headers_list(void)",
+        "array headers_list()",
         "Return list of headers to be sent / already sent"
     ],
     "headers_sent": [
@@ -4769,11 +5082,11 @@ var functionMap = {
         "Drop an InterBase database"
     ],
     "ibase_errcode": [
-        "int ibase_errcode(void)",
+        "int ibase_errcode()",
         "Return error code"
     ],
     "ibase_errmsg": [
-        "string ibase_errmsg(void)",
+        "string ibase_errmsg()",
         "Return error message"
     ],
     "ibase_execute": [
@@ -5242,7 +5555,7 @@ var functionMap = {
     ],
     "imagepsextendfont": [
         "bool imagepsextendfont(resource font_index, float extend)",
-        "Extend or or condense (if extend < 1) a font"
+        "Extend or or condense if (extend < 1) a font"
     ],
     "imagepsfreefont": [
         "bool imagepsfreefont(resource font_index)",
@@ -5321,7 +5634,7 @@ var functionMap = {
         "Write text to the image using a TrueType font"
     ],
     "imagetypes": [
-        "int imagetypes(void)",
+        "int imagetypes()",
         "Return the types of images supported in a bitfield - 1=GIF, 2=JPEG, 4=PNG, 8=WBMP, 16=XPM"
     ],
     "imagewbmp": [
@@ -5337,7 +5650,7 @@ var functionMap = {
         "Convert an 8-bit string to a quoted-printable string"
     ],
     "imap_alerts": [
-        "array imap_alerts(void)",
+        "array imap_alerts()",
         "Returns an array of all IMAP alerts that have been generated since the last page load or since the last imap_alerts() call, whichever came last. The alert stack is cleared after imap_alerts() is called."
     ],
     "imap_append": [
@@ -5385,7 +5698,7 @@ var functionMap = {
         "Delete a mailbox"
     ],
     "imap_errors": [
-        "array imap_errors(void)",
+        "array imap_errors()",
         "Returns an array of all IMAP errors generated since the last page load, or since the last imap_errors() call, whichever came last. The error stack is cleared after imap_errors() is called."
     ],
     "imap_expunge": [
@@ -5441,7 +5754,7 @@ var functionMap = {
         "Returns headers for all messages in a mailbox"
     ],
     "imap_last_error": [
-        "string imap_last_error(void)",
+        "string imap_last_error()",
         "Returns the last error that was generated by an IMAP function. The error stack is NOT cleared after this call."
     ],
     "imap_list": [
@@ -5692,6 +6005,10 @@ var functionMap = {
         "bool is_callable(mixed var [, bool syntax_only [, string callable_name]])",
         "Returns true if var is callable."
     ],
+    "is_countable": [
+        "bool is_countable(mixed var)",
+        "Returns true if var is countable, false otherwise"
+    ],
     "is_dir": [
         "bool is_dir(string filename)",
         "Returns true if file is directory"
@@ -5773,15 +6090,15 @@ var functionMap = {
         "Determine whether a variable is set"
     ],
     "iterator_apply": [
-        "int iterator_apply(Traversable it, mixed function [, mixed params])",
+        "int iterator_apply(Traversable iterator, callable function [, array args = null)",
         "Calls a function for every element in an iterator"
     ],
     "iterator_count": [
-        "int iterator_count(Traversable it)",
+        "int iterator_count(Traversable iterator)",
         "Count the elements in an iterator"
     ],
     "iterator_to_array": [
-        "array iterator_to_array(Traversable it [, bool use_keys = true])",
+        "array iterator_to_array(Traversable iterator [, bool use_keys = true])",
         "Copy the iterator into an array"
     ],
     "jddayofweek": [
@@ -5817,11 +6134,11 @@ var functionMap = {
         "Converts a jewish calendar date to a julian day count"
     ],
     "join": [
-        "string join(array src, string glue)",
-        "An alias for implode"
+        "string join([string glue,] array pieces)",
+        "Returns a string containing a string representation of all the arrayelements in the same order, with the glue string between each element"
     ],
     "jpeg2wbmp": [
-        "bool jpeg2wbmp (string f_org, string f_dest, int d_height, int d_width, int threshold)",
+        "bool jpeg2wbmp(string f_org, string f_dest, int d_height, int d_width, int threshold)",
         "Convert JPEG image to WBMP image"
     ],
     "json_decode": [
@@ -5989,7 +6306,7 @@ var functionMap = {
         "Read an entry"
     ],
     "ldap_rename": [
-        "bool ldap_rename(resource link, string dn, string newrdn, string newparent, bool deleteoldrdn);",
+        "bool ldap_rename(resource link, string dn, string newrdn, string newparent, bool deleteoldrdn)",
         "Modify the name of an entry"
     ],
     "ldap_sasl_bind": [
@@ -6037,7 +6354,7 @@ var functionMap = {
         "Clear last error from libxml"
     ],
     "libxml_disable_entity_loader": [
-        "bool libxml_disable_entity_loader([boolean disable])",
+        "bool libxml_disable_entity_loader([bool disable])",
         "Disable/Enable ability to load external entities"
     ],
     "libxml_get_errors": [
@@ -6053,7 +6370,7 @@ var functionMap = {
         "Set the streams context for the next libxml document load or write"
     ],
     "libxml_use_internal_errors": [
-        "bool libxml_use_internal_errors([boolean use_errors])",
+        "bool libxml_use_internal_errors([bool use_errors])",
         "Disable libxml errors and allow user to fetch error information as needed"
     ],
     "link": [
@@ -6065,11 +6382,11 @@ var functionMap = {
         "Returns the st_dev field of the UNIX C stat structure describing the link"
     ],
     "litespeed_request_headers": [
-        "array litespeed_request_headers(void)",
+        "array litespeed_request_headers()",
         "Fetch all HTTP request headers"
     ],
     "litespeed_response_headers": [
-        "array litespeed_response_headers(void)",
+        "array litespeed_response_headers()",
         "Fetch all HTTP response headers"
     ],
     "locale_accept_from_http": [
@@ -6081,7 +6398,7 @@ var functionMap = {
         "* @param string $locale The locale string to canonicalize"
     ],
     "locale_filter_matches": [
-        "boolean locale_filter_matches(string $langtag, string $locale[, bool $canonicalize])",
+        "bool locale_filter_matches(string $langtag, string $locale[, bool $canonicalize])",
         "* Checks if a $langtag filter matches with $locale according to RFC 4647's basic filtering algorithm"
     ],
     "locale_get_all_variants": [
@@ -6094,7 +6411,7 @@ var functionMap = {
     ],
     "locale_get_keywords": [
         "static array locale_get_keywords(string $locale) {",
-        "* return an associative array containing keyword-value  * pairs for this locale. The keys are keys to the array (doh!)"
+        "* return an associative array containing keyword-value  * pairs for this locale. The keys are keys to the array"
     ],
     "locale_get_primary_language": [
         "static string locale_get_primary_language($locale)",
@@ -6117,7 +6434,7 @@ var functionMap = {
         "Set default locale"
     ],
     "localeconv": [
-        "array localeconv(void)",
+        "array localeconv()",
         "Returns numeric formatting information based on the current locale"
     ],
     "localtime": [
@@ -6221,11 +6538,11 @@ var functionMap = {
         "Regular expression search for multibyte string"
     ],
     "mb_ereg_search_getpos": [
-        "int mb_ereg_search_getpos(void)",
+        "int mb_ereg_search_getpos()",
         "Get search start position"
     ],
     "mb_ereg_search_getregs": [
-        "array mb_ereg_search_getregs(void)",
+        "array mb_ereg_search_getregs()",
         "Get matched substring of the last time"
     ],
     "mb_ereg_search_init": [
@@ -6545,7 +6862,7 @@ var functionMap = {
         "Hash data with hash"
     ],
     "mhash_count": [
-        "int mhash_count(void)",
+        "int mhash_count()",
         "Gets the number of available hashes"
     ],
     "mhash_get_block_size": [
@@ -6721,7 +7038,7 @@ var functionMap = {
         "Free a MS-SQL statement index"
     ],
     "mssql_get_last_message": [
-        "string mssql_get_last_message(void)",
+        "string mssql_get_last_message()",
         "Gets the last message from the MS-SQL server"
     ],
     "mssql_guid_string": [
@@ -6773,7 +7090,7 @@ var functionMap = {
         "Select a MS-SQL database"
     ],
     "mt_getrandmax": [
-        "int mt_getrandmax(void)",
+        "int mt_getrandmax()",
         "Returns the maximum value a random number from Mersenne Twister can have"
     ],
     "mt_rand": [
@@ -6881,7 +7198,7 @@ var functionMap = {
         "Free result memory"
     ],
     "mysql_get_client_info": [
-        "string mysql_get_client_info(void)",
+        "string mysql_get_client_info()",
         "Returns a string that represents the client library version"
     ],
     "mysql_get_host_info": [
@@ -6977,7 +7294,7 @@ var functionMap = {
         "Turn auto commit on or of"
     ],
     "mysqli_cache_stats": [
-        "array mysqli_cache_stats(void)",
+        "array mysqli_cache_stats()",
         "Returns statistics about the zval cache"
     ],
     "mysqli_change_user": [
@@ -7001,11 +7318,11 @@ var functionMap = {
         "Open a connection to a mysql server"
     ],
     "mysqli_connect_errno": [
-        "int mysqli_connect_errno(void)",
+        "int mysqli_connect_errno()",
         "Returns the numerical value of the error message from last connect command"
     ],
     "mysqli_connect_error": [
-        "string mysqli_connect_error(void)",
+        "string mysqli_connect_error()",
         "Returns the text of the error message from previous MySQL operation"
     ],
     "mysqli_data_seek": [
@@ -7021,7 +7338,7 @@ var functionMap = {
         ""
     ],
     "mysqli_embedded_server_end": [
-        "void mysqli_embedded_server_end(void)",
+        "void mysqli_embedded_server_end()",
         ""
     ],
     "mysqli_embedded_server_start": [
@@ -7037,39 +7354,39 @@ var functionMap = {
         "Returns the text of the error message from previous MySQL operation"
     ],
     "mysqli_fetch_all": [
-        "mixed mysqli_fetch_all (object result [,int resulttype])",
+        "mixed mysqli_fetch_all(object result [,int resulttype])",
         "Fetches all result rows as an associative array, a numeric array, or both"
     ],
     "mysqli_fetch_array": [
-        "mixed mysqli_fetch_array (object result [,int resulttype])",
+        "mixed mysqli_fetch_array(object result [,int resulttype])",
         "Fetch a result row as an associative array, a numeric array, or both"
     ],
     "mysqli_fetch_assoc": [
-        "mixed mysqli_fetch_assoc (object result)",
+        "mixed mysqli_fetch_assoc(object result)",
         "Fetch a result row as an associative array"
     ],
     "mysqli_fetch_field": [
-        "mixed mysqli_fetch_field (object result)",
+        "mixed mysqli_fetch_field(object result)",
         "Get column information from a result and return as an object"
     ],
     "mysqli_fetch_field_direct": [
-        "mixed mysqli_fetch_field_direct (object result, int offset)",
+        "mixed mysqli_fetch_field_direct(object result, int offset)",
         "Fetch meta-data for a single field"
     ],
     "mysqli_fetch_fields": [
-        "mixed mysqli_fetch_fields (object result)",
+        "mixed mysqli_fetch_fields(object result)",
         "Return array of objects containing field meta-data"
     ],
     "mysqli_fetch_lengths": [
-        "mixed mysqli_fetch_lengths (object result)",
+        "mixed mysqli_fetch_lengths(object result)",
         "Get the length of each output in a result"
     ],
     "mysqli_fetch_object": [
-        "mixed mysqli_fetch_object (object result [, string class_name [, NULL|array ctor_params]])",
+        "mixed mysqli_fetch_object(object result [, string class_name [, NULL|array ctor_params]])",
         "Fetch a result row as an object"
     ],
     "mysqli_fetch_row": [
-        "array mysqli_fetch_row (object result)",
+        "array mysqli_fetch_row(object result)",
         "Get a result row as an enumerated array"
     ],
     "mysqli_field_count": [
@@ -7093,23 +7410,23 @@ var functionMap = {
         "returns a character set object"
     ],
     "mysqli_get_client_info": [
-        "string mysqli_get_client_info(void)",
+        "string mysqli_get_client_info()",
         "Get MySQL client info"
     ],
     "mysqli_get_client_stats": [
-        "array mysqli_get_client_stats(void)",
+        "array mysqli_get_client_stats()",
         "Returns statistics about the zval cache"
     ],
     "mysqli_get_client_version": [
-        "int mysqli_get_client_version(void)",
+        "int mysqli_get_client_version()",
         "Get MySQL client info"
     ],
     "mysqli_get_connection_stats": [
-        "array mysqli_get_connection_stats(void)",
+        "array mysqli_get_connection_stats()",
         "Returns statistics about the zval cache"
     ],
     "mysqli_get_host_info": [
-        "string mysqli_get_host_info (object link)",
+        "string mysqli_get_host_info(object link)",
         "Get MySQL host info"
     ],
     "mysqli_get_proto_info": [
@@ -7125,15 +7442,15 @@ var functionMap = {
         "Return the MySQL version for the server referenced by the given link"
     ],
     "mysqli_get_warnings": [
-        "object mysqli_get_warnings(object link) */",
-        "PHP_FUNCTION(mysqli_get_warnings) {  MY_MYSQL   *mysql;  zval    *mysql_link;  MYSQLI_RESOURCE  *mysqli_resource;  MYSQLI_WARNING  *w;   if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), \"O\", &mysql_link, mysqli_link_class_entry) == FAILURE) {   return;  }  MYSQLI_FETCH_RESOURCE(mysql, MY_MYSQL*, &mysql_link, \"mysqli_link\", MYSQLI_STATUS_VALID);   if (mysql_warning_count(mysql->mysql)) {   w = php_get_warnings(mysql->mysql TSRMLS_CC);   } else {   RETURN_FALSE;  }  mysqli_resource = (MYSQLI_RESOURCE *)ecalloc (1, sizeof(MYSQLI_RESOURCE));  mysqli_resource->ptr = mysqli_resource->info = (void *)w;  mysqli_resource->status = MYSQLI_STATUS_VALID;  MYSQLI_RETURN_RESOURCE(mysqli_resource, mysqli_warning_class_entry);  } /* }}}"
+        "object mysqli_get_warnings(object link)",
+        ""
     ],
     "mysqli_info": [
         "string mysqli_info(object link)",
         "Get information about the most recent query"
     ],
     "mysqli_init": [
-        "resource mysqli_init(void)",
+        "resource mysqli_init()",
         "Initialize mysqli and return a resource for use with mysql_real_connect"
     ],
     "mysqli_insert_id": [
@@ -7185,8 +7502,8 @@ var functionMap = {
         "Prepare a SQL statement for execution"
     ],
     "mysqli_query": [
-        "mixed mysqli_query(object link, string query [,int resultmode]) */",
-        "PHP_FUNCTION(mysqli_query) {  MY_MYSQL   *mysql;  zval    *mysql_link;  MYSQLI_RESOURCE  *mysqli_resource;  MYSQL_RES    *result;  char    *query = NULL;  unsigned int   query_len;  unsigned long   resultmode = MYSQLI_STORE_RESULT;   if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), \"Os|l\", &mysql_link, mysqli_link_class_entry, &query, &query_len, &resultmode) == FAILURE) {   return;  }   if (!query_len) {   php_error_docref(NULL TSRMLS_CC, E_WARNING, \"Empty query\");   RETURN_FALSE;  }  if ((resultmode & ~MYSQLI_ASYNC) != MYSQLI_USE_RESULT && (resultmode & ~MYSQLI_ASYNC) != MYSQLI_STORE_RESULT) {   php_error_docref(NULL TSRMLS_CC, E_WARNING, \"Invalid value for resultmode\");   RETURN_FALSE;  }   MYSQLI_FETCH_RESOURCE(mysql, MY_MYSQL*, &mysql_link, \"mysqli_link\", MYSQLI_STATUS_VALID);   MYSQLI_DISABLE_MQ;   #ifdef MYSQLI_USE_MYSQLND  if (resultmode & MYSQLI_ASYNC) {   if (mysqli_async_query(mysql->mysql, query, query_len)) {    MYSQLI_REPORT_MYSQL_ERROR(mysql->mysql);    RETURN_FALSE;   }   mysql->async_result_fetch_type = resultmode & ~MYSQLI_ASYNC;   RETURN_TRUE;  } #endif   if (mysql_real_query(mysql->mysql, query, query_len)) {   MYSQLI_REPORT_MYSQL_ERROR(mysql->mysql);   RETURN_FALSE;  }   if (!mysql_field_count(mysql->mysql)) {   /* no result set - not a SELECT"
+        "mixed mysqli_query(object link, string query [,int resultmode])",
+        ""
     ],
     "mysqli_real_connect": [
         "bool mysqli_real_connect(object link [,string hostname [,string username [,string passwd [,string dbname [,int port [,string socket [,int flags]]]]]]])",
@@ -7301,8 +7618,8 @@ var functionMap = {
         "Buffer result set on client"
     ],
     "mysqli_stmt_get_warnings": [
-        "object mysqli_stmt_get_warnings(object link) */",
-        "PHP_FUNCTION(mysqli_stmt_get_warnings) {  MY_STMT    *stmt;  zval    *stmt_link;  MYSQLI_RESOURCE  *mysqli_resource;  MYSQLI_WARNING  *w;   if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), \"O\", &stmt_link, mysqli_stmt_class_entry) == FAILURE) {   return;  }  MYSQLI_FETCH_RESOURCE(stmt, MY_STMT*, &stmt_link, \"mysqli_stmt\", MYSQLI_STATUS_VALID);   if (mysqli_stmt_warning_count(stmt->stmt)) {   w = php_get_warnings(mysqli_stmt_get_connection(stmt->stmt) TSRMLS_CC);   } else {   RETURN_FALSE;  }  mysqli_resource = (MYSQLI_RESOURCE *)ecalloc (1, sizeof(MYSQLI_RESOURCE));  mysqli_resource->ptr = mysqli_resource->info = (void *)w;  mysqli_resource->status = MYSQLI_STATUS_VALID;  MYSQLI_RETURN_RESOURCE(mysqli_resource, mysqli_warning_class_entry); } /* }}}"
+        "object mysqli_stmt_get_warnings(object link)",
+        ""
     ],
     "mysqli_stmt_init": [
         "mixed mysqli_stmt_init(object link)",
@@ -7357,7 +7674,7 @@ var functionMap = {
         "Return the current thread ID"
     ],
     "mysqli_thread_safe": [
-        "bool mysqli_thread_safe(void)",
+        "bool mysqli_thread_safe()",
         "Return whether thread safety is given or not"
     ],
     "mysqli_use_result": [
@@ -7365,7 +7682,7 @@ var functionMap = {
         "Directly retrieve query results - do not buffer results on client side"
     ],
     "mysqli_warning_count": [
-        "int mysqli_warning_count (object link)",
+        "int mysqli_warning_count(object link)",
         "Return number of warnings from the last query for the given link"
     ],
     "natcasesort": [
@@ -7401,11 +7718,11 @@ var functionMap = {
         "* Normalize a string."
     ],
     "nsapi_request_headers": [
-        "array nsapi_request_headers(void)",
+        "array nsapi_request_headers()",
         "Get all headers from the request"
     ],
     "nsapi_response_headers": [
-        "array nsapi_response_headers(void)",
+        "array nsapi_response_headers()",
         "Get all headers from the response"
     ],
     "nsapi_virtual": [
@@ -7485,39 +7802,39 @@ var functionMap = {
         "* Get formatter attribute value."
     ],
     "ob_clean": [
-        "bool ob_clean(void)",
+        "bool ob_clean()",
         "Clean (delete) the current output buffer"
     ],
     "ob_end_clean": [
-        "bool ob_end_clean(void)",
+        "bool ob_end_clean()",
         "Clean the output buffer, and delete current output buffer"
     ],
     "ob_end_flush": [
-        "bool ob_end_flush(void)",
+        "bool ob_end_flush()",
         "Flush (send) the output buffer, and delete current output buffer"
     ],
     "ob_flush": [
-        "bool ob_flush(void)",
+        "bool ob_flush()",
         "Flush (send) contents of the output buffer. The last buffer content is sent to next buffer"
     ],
     "ob_get_clean": [
-        "bool ob_get_clean(void)",
+        "bool ob_get_clean()",
         "Get current buffer contents and delete current output buffer"
     ],
     "ob_get_contents": [
-        "string ob_get_contents(void)",
+        "string ob_get_contents()",
         "Return the contents of the output buffer"
     ],
     "ob_get_flush": [
-        "bool ob_get_flush(void)",
+        "bool ob_get_flush()",
         "Get current buffer contents, flush (send) the output buffer, and delete current output buffer"
     ],
     "ob_get_length": [
-        "int ob_get_length(void)",
+        "int ob_get_length()",
         "Return the length of the output buffer"
     ],
     "ob_get_level": [
-        "int ob_get_level(void)",
+        "int ob_get_level()",
         "Return the nesting level of the output buffer"
     ],
     "ob_get_status": [
@@ -7837,7 +8154,7 @@ var functionMap = {
         "Returns current state of buffering for a LOB"
     ],
     "ocisetbufferinglob": [
-        "bool ocisetbufferinglob( boolean flag )",
+        "bool ocisetbufferinglob( bool flag )",
         "Enables/disables buffering for a LOB"
     ],
     "octdec": [
@@ -7857,7 +8174,7 @@ var functionMap = {
         "Close an ODBC connection"
     ],
     "odbc_close_all": [
-        "void odbc_close_all(void)",
+        "void odbc_close_all()",
         "Close all ODBC connections"
     ],
     "odbc_columnprivileges": [
@@ -8065,7 +8382,7 @@ var functionMap = {
         "Encrypts given data with given method and key, returns raw or base64 encoded string"
     ],
     "openssl_error_string": [
-        "mixed openssl_error_string(void)",
+        "mixed openssl_error_string()",
         "Returns a description of the last error, and alters the index of the error messages. Returns false when the are no more messages"
     ],
     "openssl_get_cipher_methods": [
@@ -8205,7 +8522,7 @@ var functionMap = {
         "Add URL rewriter values"
     ],
     "output_reset_rewrite_vars": [
-        "bool output_reset_rewrite_vars(void)",
+        "bool output_reset_rewrite_vars()",
         "Reset(clear) URL rewriter values"
     ],
     "pack": [
@@ -8257,7 +8574,7 @@ var functionMap = {
         "Executes specified program in current process space as defined by exec(2)"
     ],
     "pcntl_fork": [
-        "int pcntl_fork(void)",
+        "int pcntl_fork()",
         "Forks the currently running process following the same behavior as the UNIX fork() system call"
     ],
     "pcntl_getpriority": [
@@ -8374,7 +8691,7 @@ var functionMap = {
     ],
     "pg_delete": [
         "mixed pg_delete(resource db, string table, array ids[, int options])",
-        "Delete records has ids (id=>value)"
+        "Delete records has ids (id => value)"
     ],
     "pg_end_copy": [
         "bool pg_end_copy([resource connection])",
@@ -8474,7 +8791,7 @@ var functionMap = {
     ],
     "pg_insert": [
         "mixed pg_insert(resource db, string table, array values[, int options])",
-        "Insert values (filed=>value) to table"
+        "Insert values (filed => value) to table"
     ],
     "pg_last_error": [
         "string pg_last_error([resource connection])",
@@ -8598,7 +8915,7 @@ var functionMap = {
     ],
     "pg_select": [
         "mixed pg_select(resource db, string table, array ids[, int options])",
-        "Select records that has ids (id=>value)"
+        "Select records that has ids (id => value)"
     ],
     "pg_send_execute": [
         "bool pg_send_execute(resource connection, string stmtname, array params)",
@@ -8646,34 +8963,34 @@ var functionMap = {
     ],
     "pg_update": [
         "mixed pg_update(resource db, string table, array fields, array ids[, int options])",
-        "Update table using values (field=>value) and ids (id=>value)"
+        "Update table using values (field => value) and ids (id => value)"
     ],
     "pg_version": [
         "array pg_version([resource connection])",
         "Returns an array with client, protocol and server version (when available)"
     ],
     "php_egg_logo_guid": [
-        "string php_egg_logo_guid(void)",
+        "string php_egg_logo_guid()",
         "Return the special ID used to request the PHP logo in phpinfo screens"
     ],
     "php_ini_loaded_file": [
-        "string php_ini_loaded_file(void)",
+        "string php_ini_loaded_file()",
         "Return the actual loaded ini filename"
     ],
     "php_ini_scanned_files": [
-        "string php_ini_scanned_files(void)",
+        "string php_ini_scanned_files()",
         "Return comma-separated string of .ini files parsed from the additional ini dir"
     ],
     "php_logo_guid": [
-        "string php_logo_guid(void)",
+        "string php_logo_guid()",
         "Return the special ID used to request the PHP logo in phpinfo screens"
     ],
     "php_real_logo_guid": [
-        "string php_real_logo_guid(void)",
+        "string php_real_logo_guid()",
         "Return the special ID used to request the PHP logo in phpinfo screens"
     ],
     "php_sapi_name": [
-        "string php_sapi_name(void)",
+        "string php_sapi_name()",
         "Return the current SAPI module name"
     ],
     "php_snmpv3": [
@@ -8685,7 +9002,7 @@ var functionMap = {
         "Return source with stripped comments and whitespace"
     ],
     "php_uname": [
-        "string php_uname(void)",
+        "string php_uname()",
         "Return information about the system PHP was built on"
     ],
     "phpcredits": [
@@ -8701,11 +9018,11 @@ var functionMap = {
         "Return the current PHP version"
     ],
     "pi": [
-        "float pi(void)",
+        "float pi()",
         "Returns an approximation of pi"
     ],
     "png2wbmp": [
-        "bool png2wbmp (string f_org, string f_dest, int d_height, int d_width, int threshold)",
+        "bool png2wbmp(string f_org, string f_dest, int d_height, int d_width, int threshold)",
         "Convert PNG image to WBMP image"
     ],
     "popen": [
@@ -8717,27 +9034,27 @@ var functionMap = {
         "Determine accessibility of a file (POSIX.1 5.6.3)"
     ],
     "posix_ctermid": [
-        "string posix_ctermid(void)",
+        "string posix_ctermid()",
         "Generate terminal path name (POSIX.1, 4.7.1)"
     ],
     "posix_get_last_error": [
-        "int posix_get_last_error(void)",
+        "int posix_get_last_error()",
         "Retrieve the error number set by the last posix function which failed."
     ],
     "posix_getcwd": [
-        "string posix_getcwd(void)",
+        "string posix_getcwd()",
         "Get working directory pathname (POSIX.1, 5.2.2)"
     ],
     "posix_getegid": [
-        "int posix_getegid(void)",
+        "int posix_getegid()",
         "Get the current effective group id (POSIX.1, 4.2.1)"
     ],
     "posix_geteuid": [
-        "int posix_geteuid(void)",
+        "int posix_geteuid()",
         "Get the current effective user id (POSIX.1, 4.2.1)"
     ],
     "posix_getgid": [
-        "int posix_getgid(void)",
+        "int posix_getgid()",
         "Get the current group id (POSIX.1, 4.2.1)"
     ],
     "posix_getgrgid": [
@@ -8749,27 +9066,27 @@ var functionMap = {
         "Group database access (POSIX.1, 9.2.1)"
     ],
     "posix_getgroups": [
-        "array posix_getgroups(void)",
+        "array posix_getgroups()",
         "Get supplementary group id's (POSIX.1, 4.2.3)"
     ],
     "posix_getlogin": [
-        "string posix_getlogin(void)",
+        "string posix_getlogin()",
         "Get user name (POSIX.1, 4.2.4)"
     ],
     "posix_getpgid": [
-        "int posix_getpgid(void)",
+        "int posix_getpgid()",
         "Get the process group id of the specified process (This is not a POSIX function, but a SVR4ism, so we compile conditionally)"
     ],
     "posix_getpgrp": [
-        "int posix_getpgrp(void)",
+        "int posix_getpgrp()",
         "Get current process group id (POSIX.1, 4.3.1)"
     ],
     "posix_getpid": [
-        "int posix_getpid(void)",
+        "int posix_getpid()",
         "Get the current process id (POSIX.1, 4.1.1)"
     ],
     "posix_getppid": [
-        "int posix_getppid(void)",
+        "int posix_getppid()",
         "Get the parent process id (POSIX.1, 4.1.1)"
     ],
     "posix_getpwnam": [
@@ -8781,15 +9098,15 @@ var functionMap = {
         "User database access (POSIX.1, 9.2.2)"
     ],
     "posix_getrlimit": [
-        "array posix_getrlimit(void)",
+        "array posix_getrlimit()",
         "Get system resource consumption limits (This is not a POSIX function, but a BSDism and a SVR4ism. We compile conditionally)"
     ],
     "posix_getsid": [
-        "int posix_getsid(void)",
+        "int posix_getsid()",
         "Get process group id of session leader (This is not a POSIX function, but a SVR4ism, so be compile conditionally)"
     ],
     "posix_getuid": [
-        "int posix_getuid(void)",
+        "int posix_getuid()",
         "Get the current user id (POSIX.1, 4.2.1)"
     ],
     "posix_initgroups": [
@@ -8829,7 +9146,7 @@ var functionMap = {
         "Set process group id for job control (POSIX.1, 4.3.3)"
     ],
     "posix_setsid": [
-        "int posix_setsid(void)",
+        "int posix_setsid()",
         "Create session and set process group id (POSIX.1, 4.3.2)"
     ],
     "posix_setuid": [
@@ -8841,7 +9158,7 @@ var functionMap = {
         "Retrieve the system error message associated with the given errno."
     ],
     "posix_times": [
-        "array posix_times(void)",
+        "array posix_times()",
         "Get process times (POSIX.1, 4.5.2)"
     ],
     "posix_ttyname": [
@@ -8849,7 +9166,7 @@ var functionMap = {
         "Determine terminal device name (POSIX.1, 4.7.2)"
     ],
     "posix_uname": [
-        "array posix_uname(void)",
+        "array posix_uname()",
         "Get system name (POSIX.1, 4.4.1)"
     ],
     "pow": [
@@ -9017,8 +9334,8 @@ var functionMap = {
         "Convert a quoted-printable string to an 8 bit string"
     ],
     "quoted_printable_encode": [
-        "string quoted_printable_encode(string str) */",
-        "PHP_FUNCTION(quoted_printable_encode) {  char *str, *new_str;  int str_len;  size_t new_str_len;   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, \"s\", &str, &str_len) != SUCCESS) {   return;  }   if (!str_len) {   RETURN_EMPTY_STRING();  }   new_str = (char *)php_quot_print_encode((unsigned char *)str, (size_t)str_len, &new_str_len);  RETURN_STRINGL(new_str, new_str_len, 0); } /* }}}"
+        "string quoted_printable_encode(string str)",
+        ""
     ],
     "quotemeta": [
         "string quotemeta(string str)",
@@ -9077,7 +9394,7 @@ var functionMap = {
         "Informs the readline callback interface that a character is ready for input"
     ],
     "readline_clear_history": [
-        "bool readline_clear_history(void)",
+        "bool readline_clear_history()",
         "Clears the history"
     ],
     "readline_completion_function": [
@@ -9089,11 +9406,11 @@ var functionMap = {
         "Gets/sets various internal readline variables."
     ],
     "readline_list_history": [
-        "array readline_list_history(void)",
+        "array readline_list_history()",
         "Lists the history"
     ],
     "readline_on_new_line": [
-        "void readline_on_new_line(void)",
+        "void readline_on_new_line()",
         "Inform readline that the cursor has moved to a new line"
     ],
     "readline_read_history": [
@@ -9101,7 +9418,7 @@ var functionMap = {
         "Reads the history"
     ],
     "readline_redisplay": [
-        "void readline_redisplay(void)",
+        "void readline_redisplay()",
         "Ask readline to redraw the display"
     ],
     "readline_write_history": [
@@ -9157,11 +9474,11 @@ var functionMap = {
         "Set array argument's internal pointer to the first element and return it"
     ],
     "restore_error_handler": [
-        "void restore_error_handler(void)",
+        "void restore_error_handler()",
         "Restores the previously defined error handler function"
     ],
     "restore_exception_handler": [
-        "void restore_exception_handler(void)",
+        "void restore_exception_handler()",
         "Restores the previously defined exception handler function"
     ],
     "restore_include_path": [
@@ -9229,15 +9546,15 @@ var functionMap = {
         "Deserializes data and reinitializes the variables"
     ],
     "session_destroy": [
-        "bool session_destroy(void)",
+        "bool session_destroy()",
         "Destroy the current session and all data associated with it"
     ],
     "session_encode": [
-        "string session_encode(void)",
+        "string session_encode()",
         "Serializes the current setup and returns the serialized representation"
     ],
     "session_get_cookie_params": [
-        "array session_get_cookie_params(void)",
+        "array session_get_cookie_params()",
         "Return the session cookie parameters"
     ],
     "session_id": [
@@ -9277,7 +9594,7 @@ var functionMap = {
         "Sets user-level functions"
     ],
     "session_start": [
-        "bool session_start(void)",
+        "bool session_start()",
         "Begin session - reinitializes freezed variables, registers browsers etc"
     ],
     "session_unregister": [
@@ -9285,11 +9602,11 @@ var functionMap = {
         "Removes varname from the list of variables which are freezed at the session end"
     ],
     "session_unset": [
-        "void session_unset(void)",
+        "void session_unset()",
         "Unset all registered variables"
     ],
     "session_write_close": [
-        "void session_write_close(void)",
+        "void session_write_close()",
         "Write session data and end session"
     ],
     "set_error_handler": [
@@ -9369,27 +9686,27 @@ var functionMap = {
         "Removes variable from shared memory"
     ],
     "shmop_close": [
-        "void shmop_close (int shmid)",
+        "void shmop_close(int shmid)",
         "closes a shared memory segment"
     ],
     "shmop_delete": [
-        "bool shmop_delete (int shmid)",
+        "bool shmop_delete(int shmid)",
         "mark segment for deletion"
     ],
     "shmop_open": [
-        "int shmop_open (int key, string flags, int mode, int size)",
+        "int shmop_open(int key, string flags, int mode, int size)",
         "gets and attaches a shared memory segment"
     ],
     "shmop_read": [
-        "string shmop_read (int shmid, int start, int count)",
+        "string shmop_read(int shmid, int start, int count)",
         "reads from a shm segment"
     ],
     "shmop_size": [
-        "int shmop_size (int shmid)",
+        "int shmop_size(int shmid)",
         "returns the shm size"
     ],
     "shmop_write": [
-        "int shmop_write (int shmid, string data, int offset)",
+        "int shmop_write(int shmid, string data, int offset)",
         "writes to a shared memory segment"
     ],
     "shuffle": [
@@ -9501,7 +9818,7 @@ var functionMap = {
         "Fetch the value of a SNMP object"
     ],
     "snmp_get_quick_print": [
-        "bool snmp_get_quick_print(void)",
+        "bool snmp_get_quick_print()",
         "Return the current status of quick_print"
     ],
     "snmp_get_valueretrieval": [
@@ -9749,7 +10066,7 @@ var functionMap = {
         "Escapes a string for use as a query parameter."
     ],
     "sqlite_exec": [
-        "boolean sqlite_exec(string query, resource db[, string &error_message])",
+        "bool sqlite_exec(string query, resource db[, string &error_message])",
         "Executes a result-less query against a given database"
     ],
     "sqlite_factory": [
@@ -10001,7 +10318,7 @@ var functionMap = {
         "Reads all remaining bytes (or up to maxlen bytes) from a stream and returns them as a string."
     ],
     "stream_get_filters": [
-        "array stream_get_filters(void)",
+        "array stream_get_filters()",
         "Returns a list of registered filters"
     ],
     "stream_get_line": [
@@ -10265,7 +10582,7 @@ var functionMap = {
         "Free result memory"
     ],
     "sybase_get_last_message": [
-        "string sybase_get_last_message(void)",
+        "string sybase_get_last_message()",
         "Returns the last message from server (over min_message_severity)"
     ],
     "sybase_min_client_severity": [
@@ -10349,7 +10666,7 @@ var functionMap = {
         "Returns the Number of Tidy accessibility warnings encountered for specified document."
     ],
     "tidy_clean_repair": [
-        "boolean tidy_clean_repair()",
+        "bool tidy_clean_repair()",
         "Execute configured cleanup and repair operations on parsed markup"
     ],
     "tidy_config_count": [
@@ -10357,7 +10674,7 @@ var functionMap = {
         "Returns the Number of Tidy configuration errors encountered for specified document."
     ],
     "tidy_diagnose": [
-        "boolean tidy_diagnose()",
+        "bool tidy_diagnose()",
         "Run configured diagnostics on parsed and repaired markup."
     ],
     "tidy_error_count": [
@@ -10373,7 +10690,7 @@ var functionMap = {
         "Get current Tidy configuarion"
     ],
     "tidy_get_error_buffer": [
-        "string tidy_get_error_buffer([boolean detailed])",
+        "string tidy_get_error_buffer([bool detailed])",
         "Return warnings and errors which occured parsing the specified document"
     ],
     "tidy_get_head": [
@@ -10413,15 +10730,15 @@ var functionMap = {
         "Returns the value of the specified configuration option for the tidy document."
     ],
     "tidy_is_xhtml": [
-        "boolean tidy_is_xhtml()",
+        "bool tidy_is_xhtml()",
         "Indicates if the document is a XHTML document."
     ],
     "tidy_is_xml": [
-        "boolean tidy_is_xml()",
+        "bool tidy_is_xml()",
         "Indicates if the document is a generic (non HTML/XHTML) XML document."
     ],
     "tidy_parse_file": [
-        "boolean tidy_parse_file(string file [, mixed config_options [, string encoding [, bool use_include_path]]])",
+        "bool tidy_parse_file(string file [, mixed config_options [, string encoding [, bool use_include_path]]])",
         "Parse markup in file or URI"
     ],
     "tidy_parse_string": [
@@ -10429,11 +10746,11 @@ var functionMap = {
         "Parse a document stored in a string"
     ],
     "tidy_repair_file": [
-        "boolean tidy_repair_file(string filename [, mixed config_file [, string encoding [, bool use_include_path]]])",
+        "bool tidy_repair_file(string filename [, mixed config_file [, string encoding [, bool use_include_path]]])",
         "Repair a file using an optionally provided configuration file"
     ],
     "tidy_repair_string": [
-        "boolean tidy_repair_string(string data [, mixed config_file [, string encoding]])",
+        "bool tidy_repair_string(string data [, mixed config_file [, string encoding]])",
         "Repair a string using an optionally provided configuration file"
     ],
     "tidy_warning_count": [
@@ -10441,7 +10758,7 @@ var functionMap = {
         "Returns the Number of Tidy warnings encountered for specified document."
     ],
     "time": [
-        "int time(void)",
+        "int time()",
         "Return current UNIX timestamp"
     ],
     "time_nanosleep": [
@@ -10489,7 +10806,7 @@ var functionMap = {
         "Returns the Olson database version number."
     ],
     "tmpfile": [
-        "resource tmpfile(void)",
+        "resource tmpfile()",
         "Create a temporary file that will be deleted automatically after use"
     ],
     "token_get_all": [
@@ -10557,7 +10874,7 @@ var functionMap = {
         "Takes a string representation of variable and recreates it"
     ],
     "unset": [
-        "void unset (mixed var [, mixed var])",
+        "void unset(mixed var [, mixed var])",
         "Unset a given variable"
     ],
     "urldecode": [
@@ -10589,7 +10906,7 @@ var functionMap = {
         "Dumps a string representation of variable to output"
     ],
     "var_export": [
-        "mixed var_export(mixed var [, bool return])",
+        "string var_export(mixed var [, bool return])",
         "Outputs or returns a string representation of a variable"
     ],
     "variant_abs": [
@@ -10717,7 +11034,7 @@ var functionMap = {
         "Return a formatted string"
     ],
     "wddx_add_vars": [
-        "int wddx_add_vars(resource packet_id,  mixed var_names [, mixed ...])",
+        "int wddx_add_vars(resource packet_id, mixed var_names [, mixed ...])",
         "Serializes given variables and adds them to packet given by packet_id"
     ],
     "wddx_deserialize": [
@@ -10741,7 +11058,7 @@ var functionMap = {
         "Creates a new packet and serializes given variables into a struct"
     ],
     "wordwrap": [
-        "string wordwrap(string str [, int width [, string break [, boolean cut]]])",
+        "string wordwrap(string str [, int width [, string break [, bool cut]]])",
         "Wraps buffer to selected number of characters using string break char"
     ],
     "xml_error_string": [
@@ -10869,7 +11186,7 @@ var functionMap = {
         "Parses XML requests and call methods"
     ],
     "xmlrpc_server_create": [
-        "resource xmlrpc_server_create(void)",
+        "resource xmlrpc_server_create()",
         "Creates an xmlrpc server"
     ],
     "xmlrpc_server_destroy": [
@@ -11046,7 +11363,7 @@ var functionMap = {
     ],
     "xmlwriter_write_element_ns": [
         "bool xmlwriter_write_element_ns(resource xmlwriter, string prefix, string name, string uri[, string content])",
-        "Write full namesapced element tag - returns FALSE on error"
+        "Write full namespaced element tag - returns FALSE on error"
     ],
     "xmlwriter_write_pi": [
         "bool xmlwriter_write_pi(resource xmlwriter, string target, string content)",
@@ -11057,51 +11374,51 @@ var functionMap = {
         "Write text - returns FALSE on error"
     ],
     "xsl_xsltprocessor_get_parameter": [
-        "string xsl_xsltprocessor_get_parameter(string namespace, string name);",
+        "string xsl_xsltprocessor_get_parameter(string namespace, string name)",
         ""
     ],
     "xsl_xsltprocessor_has_exslt_support": [
-        "bool xsl_xsltprocessor_has_exslt_support();",
+        "bool xsl_xsltprocessor_has_exslt_support()",
         ""
     ],
     "xsl_xsltprocessor_import_stylesheet": [
-        "void xsl_xsltprocessor_import_stylesheet(domdocument doc);",
-        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html# Since:"
+        "void xsl_xsltprocessor_import_stylesheet(domdocument doc)",
+        ""
     ],
     "xsl_xsltprocessor_register_php_functions": [
-        "void xsl_xsltprocessor_register_php_functions([mixed $restrict]);",
+        "void xsl_xsltprocessor_register_php_functions([mixed $restrict])",
         ""
     ],
     "xsl_xsltprocessor_remove_parameter": [
-        "bool xsl_xsltprocessor_remove_parameter(string namespace, string name);",
+        "bool xsl_xsltprocessor_remove_parameter(string namespace, string name)",
         ""
     ],
     "xsl_xsltprocessor_set_parameter": [
-        "bool xsl_xsltprocessor_set_parameter(string namespace, mixed name [, string value]);",
+        "bool xsl_xsltprocessor_set_parameter(string namespace, mixed name [, string value])",
         ""
     ],
     "xsl_xsltprocessor_set_profiling": [
-        "bool xsl_xsltprocessor_set_profiling(string filename) */",
-        "PHP_FUNCTION(xsl_xsltprocessor_set_profiling) {  zval *id;  xsl_object *intern;  char *filename = NULL;  int filename_len;  DOM_GET_THIS(id);   if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, \"s!\", &filename, &filename_len) == SUCCESS) {   intern = (xsl_object *)zend_object_store_get_object(id TSRMLS_CC);   if (intern->profiling) {    efree(intern->profiling);   }   if (filename != NULL) {    intern->profiling = estrndup(filename,filename_len);   } else {    intern->profiling = NULL;   }   RETURN_TRUE;  } else {   WRONG_PARAM_COUNT;  } } /* }}} end xsl_xsltprocessor_set_profiling"
+        "bool xsl_xsltprocessor_set_profiling(string filename)",
+        ""
     ],
     "xsl_xsltprocessor_transform_to_doc": [
-        "domdocument xsl_xsltprocessor_transform_to_doc(domnode doc);",
-        "URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html# Since:"
+        "domdocument xsl_xsltprocessor_transform_to_doc(domnode doc)",
+        ""
     ],
     "xsl_xsltprocessor_transform_to_uri": [
-        "int xsl_xsltprocessor_transform_to_uri(domdocument doc, string uri);",
+        "int xsl_xsltprocessor_transform_to_uri(domdocument doc, string uri)",
         ""
     ],
     "xsl_xsltprocessor_transform_to_xml": [
-        "string xsl_xsltprocessor_transform_to_xml(domdocument doc);",
+        "string xsl_xsltprocessor_transform_to_xml(domdocument doc)",
         ""
     ],
     "zend_logo_guid": [
-        "string zend_logo_guid(void)",
+        "string zend_logo_guid()",
         "Return the special ID used to request the Zend logo in phpinfo screens"
     ],
     "zend_version": [
-        "string zend_version(void)",
+        "string zend_version()",
         "Get the version of the Zend Engine"
     ],
     "zip_close": [
@@ -11145,11 +11462,1022 @@ var functionMap = {
         "Returns the next file in the archive"
     ],
     "zlib_get_coding_type": [
-        "string zlib_get_coding_type(void)",
+        "string zlib_get_coding_type()",
         "Returns the coding type used for output compression"
+    ],
+    "array_column": [
+        "array_column(array $array, int|string|null $column_key, int|string|null $index_key = null): array",
+        "Return the values from a single column in the input array"
+    ],
+    "boolval": [
+        "boolval(mixed $value): bool",
+        "Get the boolean value of a variable"
+    ],
+    "bzclose": [
+        "bzclose(resource $bz): bool",
+        "Close a bzip2 file"
+    ],
+    "bzflush": [
+        "bzflush(resource $bz): bool",
+        "Do nothing"
+    ],
+    "bzwrite": [
+        "bzwrite(resource $bz, string $data, ?int $length = null): int|false",
+        "Binary safe bzip2 file write"
+    ],
+    "checkdnsrr": [
+        "checkdnsrr(string $hostname, string $type = &quot;MX&quot;): bool",
+        "Check DNS records corresponding to a given Internet host name or IP address"
+    ],
+    "chop": [
+        "chop()",
+        "Alias of rtrim()"
+    ],
+    "class_uses": [
+        "class_uses(object|string $object_or_class, bool $autoload = true): array|false",
+        ""
+    ],
+    "curl_escape": [
+        "curl_escape(CurlHandle $handle, string $string): string|false",
+        "URL encodes the given string"
+    ],
+    "curl_file_create": [
+        "curl_file_create()",
+        "Create a CURLFile object"
+    ],
+    "curl_multi_errno": [
+        "curl_multi_errno(CurlMultiHandle $multi_handle): int",
+        "Return the last multi curl error number"
+    ],
+    "curl_multi_setopt": [
+        "curl_multi_setopt(CurlMultiHandle $multi_handle, int $option, mixed $value): bool",
+        "Set an option for the cURL multi handle"
+    ],
+    "curl_multi_strerror": [
+        "curl_multi_strerror(int $error_code): ?string",
+        "Return string describing error code"
+    ],
+    "curl_pause": [
+        "curl_pause(CurlHandle $handle, int $flags): int",
+        "Pause and unpause a connection"
+    ],
+    "curl_reset": [
+        "curl_reset(CurlHandle $handle): void",
+        "Reset all options of a libcurl session handle"
+    ],
+    "curl_share_close": [
+        "curl_share_close(CurlShareHandle $share_handle): void",
+        "Close a cURL share handle"
+    ],
+    "curl_share_errno": [
+        "curl_share_errno(CurlShareHandle $share_handle): int",
+        "Return the last share curl error number"
+    ],
+    "curl_share_init": [
+        "curl_share_init(): CurlShareHandle",
+        "Initialize a cURL share handle"
+    ],
+    "curl_share_setopt": [
+        "curl_share_setopt(CurlShareHandle $share_handle, int $option, mixed $value): bool",
+        "Set an option for a cURL share handle"
+    ],
+    "curl_share_strerror": [
+        "curl_share_strerror(int $error_code): ?string",
+        "Return string describing the given error code"
+    ],
+    "curl_strerror": [
+        "curl_strerror(int $error_code): ?string",
+        "Return string describing the given error code"
+    ],
+    "curl_unescape": [
+        "curl_unescape(CurlHandle $handle, string $string): string|false",
+        "Decodes the given URL encoded string"
+    ],
+    "date_create_immutable_from_format": [
+        "date_create_immutable_from_format()",
+        "Alias of DateTimeImmutable::createFromFormat()"
+    ],
+    "date_create_immutable": [
+        "date_create_immutable()",
+        "Alias of DateTimeImmutable::__construct()"
+    ],
+    "deflate_add": [
+        "deflate_add(DeflateContext $context, string $data, int $flush_mode = ZLIB_SYNC_FLUSH): string|false",
+        "Incrementally deflate data"
+    ],
+    "deflate_init": [
+        "deflate_init(int $encoding, array $options = []): DeflateContext|false",
+        "Initialize an incremental deflate context"
+    ],
+    "delete": [
+        "delete()",
+        "See unlink()"
+    ],
+    "diskfreespace": [
+        "diskfreespace()",
+        "Alias of disk_free_space()"
+    ],
+    "doubleval": [
+        "doubleval()",
+        "Alias of floatval()"
+    ],
+    "enchant_dict_add": [
+        "enchant_dict_add(EnchantDictionary $dictionary, string $word): void",
+        "Add a word to personal word list"
+    ],
+    "enchant_dict_is_added": [
+        "enchant_dict_is_added(EnchantDictionary $dictionary, string $word): bool",
+        "Whether or not &#039;word&#039; exists in this spelling-session"
+    ],
+    "error_clear_last": [
+        "error_clear_last(): void",
+        "Clear the most recent error"
+    ],
+    "eval": [
+        "eval(string $code): mixed",
+        "Evaluate a string as PHP code"
+    ],
+    "expect_expectl": [
+        "expect_expectl(resource $expect, array $cases, array &$match = ?): int",
+        ""
+    ],
+    "expect_popen": [
+        "expect_popen(string $command): resource",
+        ""
+    ],
+    "fdiv": [
+        "fdiv(float $num1, float $num2): float",
+        "Divides two numbers, according to IEEE 754"
+    ],
+    "filter_id": [
+        "filter_id(string $name): int|false",
+        "Returns the filter ID belonging to a named filter"
+    ],
+    "filter_list": [
+        "filter_list(): array",
+        "Returns a list of all supported filters"
+    ],
+    "forward_static_call_array": [
+        "forward_static_call_array(callable $callback, array $args): mixed",
+        "Call a static method and pass the arguments as array"
+    ],
+    "fputs": [
+        "fputs()",
+        "Alias of fwrite()"
+    ],
+    "ftp_append": [
+        "ftp_append(FTP\\Connection $ftp, string $remote_filename, string $local_filename, int $mode = FTP_BINARY): bool",
+        "Append the contents of a file to another file on the FTP server"
+    ],
+    "ftp_mlsd": [
+        "ftp_mlsd(FTP\\Connection $ftp, string $directory): array|false",
+        "Returns a list of files in the given directory"
+    ],
+    "ftp_quit": [
+        "ftp_quit()",
+        "Alias of ftp_close()"
+    ],
+    "gc_mem_caches": [
+        "gc_mem_caches(): int",
+        ""
+    ],
+    "gc_status": [
+        "gc_status(): array",
+        "Gets information about the garbage collector"
+    ],
+    "get_debug_type": [
+        "get_debug_type(mixed $value): string",
+        "Gets the type name of a variable in a way that is suitable for debugging"
+    ],
+    "get_declared_traits": [
+        "get_declared_traits(): array",
+        "Returns an array of all declared traits"
+    ],
+    "get_required_files": [
+        "get_required_files()",
+        "Alias of get_included_files()"
+    ],
+    "get_resource_id": [
+        "get_resource_id(resource $resource): int",
+        ""
+    ],
+    "get_resources": [
+        "get_resources(?string $type = null): array",
+        "Returns active resources"
+    ],
+    "getimagesizefromstring": [
+        "getimagesizefromstring(string $string, array &$image_info = null): array|false",
+        "Get the size of an image from a string"
+    ],
+    "getmxrr": [
+        "getmxrr(string $hostname, array &$hosts, array &$weights = null): bool",
+        "Get MX records corresponding to a given Internet host name"
+    ],
+    "gmp_binomial": [
+        "gmp_binomial(GMP|int|string $n, int $k): GMP",
+        "Calculates binomial coefficient"
+    ],
+    "gmp_div": [
+        "gmp_div()",
+        "Alias of gmp_div_q()"
+    ],
+    "gmp_export": [
+        "gmp_export(GMP|int|string $num, int $word_size = 1, int $flags = GMP_MSW_FIRST | GMP_NATIVE_ENDIAN): string",
+        "Export to a binary string"
+    ],
+    "gmp_import": [
+        "gmp_import(string $data, int $word_size = 1, int $flags = GMP_MSW_FIRST | GMP_NATIVE_ENDIAN): GMP",
+        "Import from a binary string"
+    ],
+    "gmp_kronecker": [
+        "gmp_kronecker(GMP|int|string $num1, GMP|int|string $num2): int",
+        "Kronecker symbol"
+    ],
+    "gmp_lcm": [
+        "gmp_lcm(GMP|int|string $num1, GMP|int|string $num2): GMP",
+        "Calculate LCM"
+    ],
+    "gmp_perfect_power": [
+        "gmp_perfect_power(GMP|int|string $num): bool",
+        "Perfect power check"
+    ],
+    "gmp_random_bits": [
+        "gmp_random_bits(int $bits): GMP",
+        "Random number"
+    ],
+    "gmp_random_range": [
+        "gmp_random_range(GMP|int|string $min, GMP|int|string $max): GMP",
+        "Random number"
+    ],
+    "gmp_random_seed": [
+        "gmp_random_seed(GMP|int|string $seed): void",
+        "Sets the RNG seed"
+    ],
+    "gmp_root": [
+        "gmp_root(GMP|int|string $num, int $nth): GMP",
+        "Take the integer part of nth root"
+    ],
+    "gmp_rootrem": [
+        "gmp_rootrem(GMP|int|string $num, int $nth): array",
+        "Take the integer part and remainder of nth root"
+    ],
+    "gzclose": [
+        "gzclose(resource $stream): bool",
+        "Close an open gz-file pointer"
+    ],
+    "gzdecode": [
+        "gzdecode(string $data, int $max_length = 0): string|false",
+        "Decodes a gzip compressed string"
+    ],
+    "gzeof": [
+        "gzeof(resource $stream): bool",
+        "Test for EOF on a gz-file pointer"
+    ],
+    "gzgetc": [
+        "gzgetc(resource $stream): string|false",
+        "Get character from gz-file pointer"
+    ],
+    "gzgets": [
+        "gzgets(resource $stream, ?int $length = null): string|false",
+        "Get line from file pointer"
+    ],
+    "gzgetss": [
+        "gzgetss(resource $zp, int $length, string $allowable_tags = ?): string",
+        ""
+    ],
+    "gzpassthru": [
+        "gzpassthru(resource $stream): int",
+        ""
+    ],
+    "gzputs": [
+        "gzputs()",
+        "Alias of gzwrite()"
+    ],
+    "gzread": [
+        "gzread(resource $stream, int $length): string|false",
+        "Binary-safe gz-file read"
+    ],
+    "gzrewind": [
+        "gzrewind(resource $stream): bool",
+        "Rewind the position of a gz-file pointer"
+    ],
+    "gzseek": [
+        "gzseek(resource $stream, int $offset, int $whence = SEEK_SET): int",
+        "Seek on a gz-file pointer"
+    ],
+    "gztell": [
+        "gztell(resource $stream): int|false",
+        "Tell gz-file pointer read/write position"
+    ],
+    "gzwrite": [
+        "gzwrite(resource $stream, string $data, ?int $length = null): int|false",
+        "Binary-safe gz-file write"
+    ],
+    "halt_compiler": [
+        "__halt_compiler(): void",
+        ""
+    ],
+    "hash_equals": [
+        "hash_equals(string $known_string, string $user_string): bool",
+        "Timing attack safe string comparison"
+    ],
+    "hash_hkdf": [
+        "hash_hkdf(string $algo, string $key, int $length = 0, string $info = \"\", string $salt = \"\"): string",
+        "Generate a HKDF key derivation of a supplied key input"
+    ],
+    "hash_hmac_algos": [
+        "hash_hmac_algos(): array",
+        "Return a list of registered hashing algorithms suitable for hash_hmac"
+    ],
+    "hash_pbkdf2": [
+        "hash_pbkdf2(string $algo, string $password, string $salt, int $iterations, int $length = 0, bool $binary = false): string",
+        "Generate a PBKDF2 key derivation of a supplied password"
+    ],
+    "header_register_callback": [
+        "header_register_callback(callable $callback): bool",
+        "Call a header function"
+    ],
+    "hex2bin": [
+        "hex2bin(string $string): string|false",
+        "Decodes a hexadecimally encoded binary string"
+    ],
+    "hrtime": [
+        "hrtime(bool $as_number = false): array|int|float|false",
+        "Get the system&#039;s high resolution time"
+    ],
+    "http_response_code": [
+        "http_response_code(int $response_code = 0): int|bool",
+        "Get or Set the HTTP response code"
+    ],
+    "imageaffine": [
+        "imageaffine(GdImage $image, array $affine, ?array $clip = null): GdImage|false",
+        "Return an image containing the affine transformed src image, using an optional clipping area"
+    ],
+    "imageaffinematrixconcat": [
+        "imageaffinematrixconcat(array $matrix1, array $matrix2): array|false",
+        "Concatenate two affine transformation matrices"
+    ],
+    "imageaffinematrixget": [
+        "imageaffinematrixget(int $type, array|float $options): array|false",
+        "Get an affine transformation matrix"
+    ],
+    "imagebmp": [
+        "imagebmp(GdImage $image, resource|string|null $file = null, bool $compressed = true): bool",
+        "Output a BMP image to browser or file"
+    ],
+    "imagecreatefrombmp": [
+        "imagecreatefrombmp(string $filename): GdImage|false",
+        "Create a new image from file or URL"
+    ],
+    "imagecreatefromwebp": [
+        "imagecreatefromwebp(string $filename): GdImage|false",
+        "Create a new image from file or URL"
+    ],
+    "imagecrop": [
+        "imagecrop(GdImage $image, array $rectangle): GdImage|false",
+        "Crop an image to the given rectangle"
+    ],
+    "imagecropauto": [
+        "imagecropauto(GdImage $image, int $mode = IMG_CROP_DEFAULT, float $threshold = 0.5, int $color = -1): GdImage|false",
+        "Crop an image automatically using one of the available modes"
+    ],
+    "imageflip": [
+        "imageflip(GdImage $image, int $mode): bool",
+        "Flips an image using a given mode"
+    ],
+    "imagegetclip": [
+        "imagegetclip(GdImage $image): array",
+        "Get the clipping rectangle"
+    ],
+    "imagegetinterpolation": [
+        "imagegetinterpolation(GdImage $image): int",
+        "Get the interpolation method"
+    ],
+    "imageopenpolygon": [
+        "imageopenpolygon(GdImage $image, array $points, int $color): bool",
+        "Draws an open polygon"
+    ],
+    "imagepalettetotruecolor": [
+        "imagepalettetotruecolor(GdImage $image): bool",
+        "Converts a palette based image to true color"
+    ],
+    "imageresolution": [
+        "imageresolution(GdImage $image, ?int $resolution_x = null, ?int $resolution_y = null): array|bool",
+        "Get or set the resolution of the image"
+    ],
+    "imagescale": [
+        "imagescale(GdImage $image, int $width, int $height = -1, int $mode = IMG_BILINEAR_FIXED): GdImage|false",
+        "Scale an image using the given new width and height"
+    ],
+    "imagesetclip": [
+        "imagesetclip(GdImage $image, int $x1, int $y1, int $x2, int $y2): bool",
+        "Set the clipping rectangle"
+    ],
+    "imagesetinterpolation": [
+        "imagesetinterpolation(GdImage $image, int $method = IMG_BILINEAR_FIXED): bool",
+        "Set the interpolation method"
+    ],
+    "imagewebp": [
+        "imagewebp(GdImage $image, resource|string|null $file = null, int $quality = -1): bool",
+        "Output a WebP image to browser or file"
+    ],
+    "imap_create": [
+        "",
+        "Alias of imap_createmailbox()"
+    ],
+    "imap_fetchmime": [
+        "imap_fetchmime(IMAP\\Connection $imap, int $message_num, string $section, int $flags = 0): string|false",
+        "Fetch MIME headers for a particular section of the message"
+    ],
+    "imap_fetchtext": [
+        "imap_fetchtext()",
+        "Alias of imap_body()"
+    ],
+    "imap_header": [
+        "imap_header()",
+        "Alias of imap_headerinfo()"
+    ],
+    "imap_listmailbox": [
+        "imap_listmailbox()",
+        "Alias of imap_list()"
+    ],
+    "imap_listsubscribed": [
+        "imap_listsubscribed()",
+        "Alias of imap_lsub()"
+    ],
+    "imap_rename": [
+        "imap_rename()",
+        "Alias of imap_renamemailbox()"
+    ],
+    "imap_scan": [
+        "imap_scan()",
+        "Alias of imap_listscan()"
+    ],
+    "imap_scanmailbox": [
+        "imap_scanmailbox()",
+        "Alias of imap_listscan()"
+    ],
+    "ini_alter": [
+        "ini_alter()",
+        "Alias of ini_set()"
+    ],
+    "intdiv": [
+        "intdiv(int $num1, int $num2): int",
+        "Integer division"
+    ],
+    "is_double": [
+        "is_double()",
+        "Alias of is_float()"
+    ],
+    "is_int": [
+        "is_int(mixed $value): bool",
+        "Find whether the type of a variable is integer"
+    ],
+    "is_integer": [
+        "is_integer()",
+        "Alias of is_int()"
+    ],
+    "is_iterable": [
+        "is_iterable(mixed $value): bool",
+        ""
+    ],
+    "is_real": [
+        "is_real()",
+        "Alias of is_float()"
+    ],
+    "is_soap_fault": [
+        "is_soap_fault(mixed $object): bool",
+        "Checks if a SOAP call has failed"
+    ],
+    "is_tainted": [
+        "is_tainted(string $string): bool",
+        "Checks whether a string is tainted"
+    ],
+    "is_writeable": [
+        "is_writeable()",
+        "Alias of is_writable()"
+    ],
+    "json_last_error_msg": [
+        "json_last_error_msg(): string",
+        "Returns the error string of the last json_encode() or json_decode() call"
+    ],
+    "key_exists": [
+        "key_exists()",
+        "Alias of array_key_exists()"
+    ],
+    "lchown": [
+        "lchown(string $filename, string|int $user): bool",
+        "Changes user ownership of symlink"
+    ],
+    "libxml_set_external_entity_loader": [
+        "libxml_set_external_entity_loader(?callable $resolver_function): bool",
+        "Changes the default external entity loader"
+    ],
+    "mb_chr": [
+        "mb_chr(int $codepoint, ?string $encoding = null): string|false",
+        "Return character by Unicode code point value"
+    ],
+    "mb_ereg_replace_callback": [
+        "mb_ereg_replace_callback(string $pattern, callable $callback, string $string, ?string $options = null): string|false|null",
+        ""
+    ],
+    "mb_ord": [
+        "mb_ord(string $string, ?string $encoding = null): int|false",
+        "Get Unicode code point of character"
+    ],
+    "mb_scrub": [
+        "mb_scrub(string $string, ?string $encoding = null): string",
+        "Description"
+    ],
+    "mb_str_split": [
+        "mb_str_split(string $string, int $length = 1, ?string $encoding = null): array",
+        "Given a multibyte string, return an array of its characters"
+    ],
+    "memcache_debug": [
+        "memcache_debug(bool $on_off): bool",
+        "Turn debug output on/off"
+    ],
+    "mysql_db_name": [
+        "mysql_db_name(resource $result, int $row, mixed $field = NULL): string",
+        "Retrieves database name from the call to mysql_list_dbs()"
+    ],
+    "mysql_tablename": [
+        "mysql_tablename(resource $result, int $i): string|false",
+        "Get table name of field"
+    ],
+    "mysql_xdevapi_expression": [
+        "mysql_xdevapi\\expression(string $expression): object",
+        "Bind prepared statement variables as parameters"
+    ],
+    "mysql_xdevapi_getsession": [
+        "mysql_xdevapi\\getSession(string $uri): mysql_xdevapi\\Session",
+        "Connect to a MySQL server"
+    ],
+    "mysqli_escape_string": [
+        "mysqli_escape_string()",
+        "Alias of mysqli_real_escape_string()"
+    ],
+    "mysqli_execute": [
+        "mysqli_execute()",
+        "Alias for mysqli_stmt_execute()"
+    ],
+    "mysqli_get_links_stats": [
+        "mysqli_get_links_stats(): array",
+        "Return information about open and cached links"
+    ],
+    "mysqli_set_opt": [
+        "mysqli_set_opt()",
+        "Alias of mysqli_options()"
+    ],
+    "ob_tidyhandler": [
+        "ob_tidyhandler(string $input, int $mode = ?): string",
+        "ob_start callback function to repair the buffer"
+    ],
+    "odbc_do": [
+        "odbc_do()",
+        "Alias of odbc_exec()"
+    ],
+    "odbc_field_precision": [
+        "odbc_field_precision()",
+        "Alias of odbc_field_len()"
+    ],
+    "opcache_compile_file": [
+        "opcache_compile_file(string $filename): bool",
+        "Compiles and caches a PHP script without executing it"
+    ],
+    "opcache_get_configuration": [
+        "opcache_get_configuration(): array|false",
+        "Get configuration information about the cache"
+    ],
+    "opcache_get_status": [
+        "opcache_get_status(bool $include_scripts = true): array|false",
+        "Get status information about the cache"
+    ],
+    "opcache_invalidate": [
+        "opcache_invalidate(string $filename, bool $force = false): bool",
+        "Invalidates a cached script"
+    ],
+    "opcache_is_script_cached": [
+        "opcache_is_script_cached(string $filename): bool",
+        "Tells whether a script is cached in OPCache"
+    ],
+    "opcache_reset": [
+        "opcache_reset(): bool",
+        "Resets the contents of the opcode cache"
+    ],
+    "password_algos": [
+        "password_algos(): array",
+        "Get available password hashing algorithm IDs"
+    ],
+    "password_get_info": [
+        "password_get_info(string $hash): array",
+        "Returns information about the given hash"
+    ],
+    "password_hash": [
+        "password_hash(string $password, string|int|null $algo, array $options = []): string",
+        "Creates a password hash"
+    ],
+    "password_needs_rehash": [
+        "password_needs_rehash(string $hash, string|int|null $algo, array $options = []): bool",
+        "Checks if the given hash matches the given options"
+    ],
+    "password_verify": [
+        "password_verify(string $password, string $hash): bool",
+        "Verifies that a password matches a hash"
+    ],
+    "pcntl_async_signals": [
+        "pcntl_async_signals(?bool $enable = null): bool",
+        "Enable/disable asynchronous signal handling or return the old setting"
+    ],
+    "pcntl_errno": [
+        "pcntl_errno()",
+        "Alias of pcntl_get_last_error()"
+    ],
+    "pcntl_get_last_error": [
+        "pcntl_get_last_error(): int",
+        "Retrieve the error number set by the last pcntl function which failed"
+    ],
+    "pcntl_signal_get_handler": [
+        "pcntl_signal_get_handler(int $signal): callable|int",
+        "Get the current handler for specified signal"
+    ],
+    "pcntl_sigwaitinfo": [
+        "pcntl_sigwaitinfo(array $signals, array &$info = []): int|false",
+        "Waits for signals"
+    ],
+    "pcntl_strerror": [
+        "pcntl_strerror(int $error_code): string",
+        "Retrieve the system error message associated with the given errno"
+    ],
+    "pg_connect_poll": [
+        "pg_connect_poll(PgSql\\Connection $connection): int",
+        ""
+    ],
+    "pg_consume_input": [
+        "pg_consume_input(PgSql\\Connection $connection): bool",
+        "Reads input on the connection"
+    ],
+    "pg_escape_identifier": [
+        "pg_escape_identifier(PgSql\\Connection $connection = ?, string $data): string",
+        ""
+    ],
+    "pg_escape_literal": [
+        "pg_escape_literal(PgSql\\Connection $connection = ?, string $data): string",
+        ""
+    ],
+    "pg_flush": [
+        "pg_flush(PgSql\\Connection $connection): int|bool",
+        "Flush outbound query data on the connection"
+    ],
+    "pg_lo_truncate": [
+        "pg_lo_truncate(PgSql\\Lob $lob, int $size): bool",
+        ""
+    ],
+    "pg_socket": [
+        "pg_socket(PgSql\\Connection $connection): resource|false",
+        ""
+    ],
+    "pos": [
+        "pos()",
+        "Alias of current()"
+    ],
+    "posix_errno": [
+        "posix_errno()",
+        "Alias of posix_get_last_error()"
+    ],
+    "posix_setrlimit": [
+        "posix_setrlimit(int $resource, int $soft_limit, int $hard_limit): bool",
+        "Set system resource limits"
+    ],
+    "preg_last_error_msg": [
+        "preg_last_error_msg(): string",
+        "Returns the error message of the last PCRE regex execution"
+    ],
+    "preg_replace_callback_array": [
+        "preg_replace_callback_array(array $pattern, string|array $subject, int $limit = -1, int &$count = null, int $flags = 0): string|array|null",
+        "Perform a regular expression search and replace using callbacks"
+    ],
+    "ps_translate": [
+        "ps_translate(resource $psdoc, float $x, float $y): bool",
+        "Sets translation"
+    ],
+    "random_bytes": [
+        "random_bytes(int $length): string",
+        "Generates cryptographically secure pseudo-random bytes"
+    ],
+    "random_int": [
+        "random_int(int $min, int $max): int",
+        "Generates cryptographically secure pseudo-random integers"
+    ],
+    "read_exif_data": [
+        "read_exif_data()",
+        "Alias of exif_read_data()"
+    ],
+    "recode": [
+        "recode()",
+        "Alias of recode_string()"
+    ],
+    "session_abort": [
+        "session_abort(): bool",
+        "Discard session array changes and finish session"
+    ],
+    "session_commit": [
+        "session_commit()",
+        "Alias of session_write_close()"
+    ],
+    "session_create_id": [
+        "session_create_id(string $prefix = \"\"): string|false",
+        "Create new session id"
+    ],
+    "session_gc": [
+        "session_gc(): int|false",
+        "Perform session data garbage collection"
+    ],
+    "session_register_shutdown": [
+        "session_register_shutdown(): void",
+        "Session shutdown function"
+    ],
+    "session_reset": [
+        "session_reset(): bool",
+        "Re-initialize session array with original values"
+    ],
+    "session_status": [
+        "session_status(): int",
+        "Returns the current session status"
+    ],
+    "set_file_buffer": [
+        "set_file_buffer()",
+        "Alias of stream_set_write_buffer()"
+    ],
+    "show_source": [
+        "show_source()",
+        "Alias of highlight_file()"
+    ],
+    "sizeof": [
+        "sizeof()",
+        "Alias of count()"
+    ],
+    "snmp_set_oid_numeric_print": [
+        "snmp_set_oid_numeric_print(int $format): bool",
+        ""
+    ],
+    "snmpwalkoid": [
+        "snmpwalkoid(string $hostname, string $community, array|string $object_id, int $timeout = -1, int $retries = -1): array|false",
+        ""
+    ],
+    "socket_addrinfo_bind": [
+        "socket_addrinfo_bind(AddressInfo $address): Socket|false",
+        "Create and bind to a socket from a given addrinfo"
+    ],
+    "socket_addrinfo_connect": [
+        "socket_addrinfo_connect(AddressInfo $address): Socket|false",
+        "Create and connect to a socket from a given addrinfo"
+    ],
+    "socket_addrinfo_explain": [
+        "socket_addrinfo_explain(AddressInfo $address): array",
+        "Get information about addrinfo"
+    ],
+    "socket_addrinfo_lookup": [
+        "socket_addrinfo_lookup(string $host, ?string $service = null, array $hints = []): array|false",
+        "Get array with contents of getaddrinfo about the given hostname"
+    ],
+    "socket_cmsg_space": [
+        "socket_cmsg_space(int $level, int $type, int $num = 0): ?int",
+        "Calculate message buffer size"
+    ],
+    "socket_export_stream": [
+        "socket_export_stream(Socket $socket): resource|false",
+        "Export a socket into a stream that encapsulates a socket"
+    ],
+    "socket_get_status": [
+        "socket_get_status()",
+        "Alias of stream_get_meta_data()"
+    ],
+    "socket_getopt": [
+        "socket_getopt()",
+        "Alias of socket_get_option()"
+    ],
+    "socket_import_stream": [
+        "socket_import_stream(resource $stream): Socket|false",
+        "Import a stream"
+    ],
+    "socket_recvmsg": [
+        "socket_recvmsg(Socket $socket, array &$message, int $flags = 0): int|false",
+        "Read a message"
+    ],
+    "socket_sendmsg": [
+        "socket_sendmsg(Socket $socket, array $message, int $flags = 0): int|false",
+        "Send a message"
+    ],
+    "socket_set_blocking": [
+        "socket_set_blocking()",
+        "Alias of stream_set_blocking()"
+    ],
+    "socket_set_timeout": [
+        "socket_set_timeout()",
+        "Alias of stream_set_timeout()"
+    ],
+    "socket_setopt": [
+        "socket_setopt()",
+        "Alias of socket_set_option()"
+    ],
+    "socket_wsaprotocol_info_export": [
+        "socket_wsaprotocol_info_export(Socket $socket, int $process_id): string|false",
+        "Exports the WSAPROTOCOL_INFO Structure"
+    ],
+    "socket_wsaprotocol_info_import": [
+        "socket_wsaprotocol_info_import(string $info_id): Socket|false",
+        "Imports a Socket from another Process"
+    ],
+    "socket_wsaprotocol_info_release": [
+        "socket_wsaprotocol_info_release(string $info_id): bool",
+        "Releases an exported WSAPROTOCOL_INFO Structure"
+    ],
+    "spl_object_id": [
+        "spl_object_id(object $object): int",
+        ""
+    ],
+    "sqlsrv_begin_transaction": [
+        "sqlsrv_begin_transaction(resource $conn): bool",
+        "Begins a database transaction"
+    ],
+    "sqlsrv_cancel": [
+        "sqlsrv_cancel(resource $stmt): bool",
+        "Cancels a statement"
+    ],
+    "sqlsrv_client_info": [
+        "sqlsrv_client_info(resource $conn): array",
+        "Returns information about the client and specified connection"
+    ],
+    "sqlsrv_close": [
+        "sqlsrv_close(resource $conn): bool",
+        "Closes an open connection and releases resourses associated with the connection"
+    ],
+    "sqlsrv_commit": [
+        "sqlsrv_commit(resource $conn): bool",
+        "Commits a transaction that was begun with sqlsrv_begin_transaction()"
+    ],
+    "sqlsrv_configure": [
+        "sqlsrv_configure(string $setting, mixed $value): bool",
+        "Changes the driver error handling and logging configurations"
+    ],
+    "sqlsrv_connect": [
+        "sqlsrv_connect(string $serverName, array $connectionInfo = ?): resource",
+        "Opens a connection to a Microsoft SQL Server database"
+    ],
+    "sqlsrv_errors": [
+        "sqlsrv_errors(int $errorsOrWarnings = ?): mixed",
+        "Returns error and warning information about the last SQLSRV operation performed"
+    ],
+    "sqlsrv_execute": [
+        "sqlsrv_execute(resource $stmt): bool",
+        "Executes a statement prepared with sqlsrv_prepare()"
+    ],
+    "sqlsrv_fetch_array": [
+        "sqlsrv_fetch_array(resource $stmt, int $fetchType = ?, int $row = ?, int $offset = ?): array",
+        "Returns a row as an array"
+    ],
+    "sqlsrv_fetch_object": [
+        "sqlsrv_fetch_object(resource $stmt, string $className = ?, array $ctorParams = ?, int $row = ?, int $offset = ?): mixed",
+        "Retrieves the next row of data in a result set as an object"
+    ],
+    "sqlsrv_fetch": [
+        "sqlsrv_fetch(resource $stmt, int $row = ?, int $offset = ?): mixed",
+        "Makes the next row in a result set available for reading"
+    ],
+    "sqlsrv_field_metadata": [
+        "sqlsrv_field_metadata(resource $stmt): mixed",
+        ""
+    ],
+    "sqlsrv_free_stmt": [
+        "sqlsrv_free_stmt(resource $stmt): bool",
+        "Frees all resources for the specified statement"
+    ],
+    "sqlsrv_get_config": [
+        "sqlsrv_get_config(string $setting): mixed",
+        "Returns the value of the specified configuration setting"
+    ],
+    "sqlsrv_get_field": [
+        "sqlsrv_get_field(resource $stmt, int $fieldIndex, int $getAsType = ?): mixed",
+        "Gets field data from the currently selected row"
+    ],
+    "sqlsrv_has_rows": [
+        "sqlsrv_has_rows(resource $stmt): bool",
+        "Indicates whether the specified statement has rows"
+    ],
+    "sqlsrv_next_result": [
+        "sqlsrv_next_result(resource $stmt): mixed",
+        "Makes the next result of the specified statement active"
+    ],
+    "sqlsrv_num_fields": [
+        "sqlsrv_num_fields(resource $stmt): mixed",
+        "Retrieves the number of fields (columns) on a statement"
+    ],
+    "sqlsrv_num_rows": [
+        "sqlsrv_num_rows(resource $stmt): mixed",
+        "Retrieves the number of rows in a result set"
+    ],
+    "sqlsrv_prepare": [
+        "sqlsrv_prepare(resource $conn, string $sql, array $params = ?, array $options = ?): mixed",
+        "Prepares a query for execution"
+    ],
+    "sqlsrv_query": [
+        "sqlsrv_query(resource $conn, string $sql, array $params = ?, array $options = ?): mixed",
+        "Prepares and executes a query"
+    ],
+    "sqlsrv_rollback": [
+        "sqlsrv_rollback(resource $conn): bool",
+        ""
+    ],
+    "sqlsrv_rows_affected": [
+        "sqlsrv_rows_affected(resource $stmt): int|false",
+        ""
+    ],
+    "sqlsrv_send_stream_data": [
+        "sqlsrv_send_stream_data(resource $stmt): bool",
+        "Sends data from parameter streams to the server"
+    ],
+    "sqlsrv_server_info": [
+        "sqlsrv_server_info(resource $conn): array",
+        "Returns information about the server"
+    ],
+    "str_contains": [
+        "str_contains(string $haystack, string $needle): bool",
+        "Determine if a string contains a given substring"
+    ],
+    "str_ends_with": [
+        "str_ends_with(string $haystack, string $needle): bool",
+        "Checks if a string ends with a given substring"
+    ],
+    "str_starts_with": [
+        "str_starts_with(string $haystack, string $needle): bool",
+        "Checks if a string starts with a given substring"
+    ],
+    "stream_isatty": [
+        "stream_isatty(resource $stream): bool",
+        "Check if a stream is a TTY"
+    ],
+    "stream_notification_callback": [
+        "stream_notification_callback(int $notification_code, int $severity, string $message, int $message_code, int $bytes_transferred, int $bytes_max): void",
+        "A callback function for the notification context parameter"
+    ],
+    "stream_register_wrapper": [
+        "stream_register_wrapper()",
+        "Alias of stream_wrapper_register()"
+    ],
+    "stream_set_chunk_size": [
+        "stream_set_chunk_size(resource $stream, int $size): int",
+        "Set the stream chunk size"
+    ],
+    "stream_set_read_buffer": [
+        "stream_set_read_buffer(resource $stream, int $size): int",
+        "Set read file buffering on the given stream"
+    ],
+    "tcpwrap_check": [
+        "tcpwrap_check(string $daemon, string $address, string $user = ?, bool $nodns = false): bool",
+        "Performs a tcpwrap check"
+    ],
+    "trait_exists": [
+        "trait_exists(string $trait, bool $autoload = true): bool",
+        "Checks if the trait exists"
+    ],
+    "use_soap_error_handler": [
+        "use_soap_error_handler(bool $enable = true): bool",
+        "Set whether to use the SOAP error handler"
+    ],
+    "user_error": [
+        "user_error()",
+        "Alias of trigger_error()"
+    ],
+    "yaml_emit_file": [
+        "yaml_emit_file(string $filename, mixed $data, int $encoding = YAML_ANY_ENCODING, int $linebreak = YAML_ANY_BREAK, array $callbacks = null): bool",
+        "Send the YAML representation of a value to a file"
+    ],
+    "yaml_emit": [
+        "yaml_emit(mixed $data, int $encoding = YAML_ANY_ENCODING, int $linebreak = YAML_ANY_BREAK, array $callbacks = null): string",
+        "Returns the YAML representation of a value"
+    ],
+    "yaml_parse_file": [
+        "yaml_parse_file(string $filename, int $pos = 0, int &$ndocs = ?, array $callbacks = null): mixed",
+        "Parse a YAML stream from a file"
+    ],
+    "yaml_parse_url": [
+        "yaml_parse_url(string $url, int $pos = 0, int &$ndocs = ?, array $callbacks = null): mixed",
+        "Parse a Yaml stream from a URL"
+    ],
+    "yaml_parse": [
+        "yaml_parse(string $input, int $pos = 0, int &$ndocs = ?, array $callbacks = null): mixed",
+        "Parse a YAML stream"
+    ],
+    "zlib_decode": [
+        "zlib_decode(string $data, int $max_length = 0): string|false",
+        "Uncompress any raw/gzip/zlib encoded data"
+    ],
+    "zlib_encode": [
+        "zlib_encode(string $data, int $encoding, int $level = -1): string|false",
+        "Compress data with the specified encoding"
     ]
 };
-
 var variableMap = {
     "$_COOKIE": {
         type: "array"
@@ -11172,31 +12500,33 @@ var variableMap = {
     "$_SERVER": {
         type: "array",
         value: {
-            "DOCUMENT_ROOT":  1,
-            "GATEWAY_INTERFACE":  1,
-            "HTTP_ACCEPT":  1,
-            "HTTP_ACCEPT_CHARSET":  1,
-            "HTTP_ACCEPT_ENCODING":  1 ,
-            "HTTP_ACCEPT_LANGUAGE":  1,
-            "HTTP_CONNECTION":  1,
-            "HTTP_HOST":  1,
-            "HTTP_REFERER":  1,
-            "HTTP_USER_AGENT":  1,
-            "PATH_TRANSLATED":  1,
-            "PHP_SELF":  1,
-            "QUERY_STRING":  1,
-            "REMOTE_ADDR":  1,
-            "REMOTE_PORT":  1,
-            "REQUEST_METHOD":  1,
-            "REQUEST_URI":  1,
-            "SCRIPT_FILENAME":  1,
-            "SCRIPT_NAME":  1,
-            "SERVER_ADMIN":  1,
-            "SERVER_NAME":  1,
-            "SERVER_PORT":  1,
-            "SERVER_PROTOCOL":  1,
-            "SERVER_SIGNATURE":  1,
-            "SERVER_SOFTWARE":  1
+            "DOCUMENT_ROOT": 1,
+            "GATEWAY_INTERFACE": 1,
+            "HTTP_ACCEPT": 1,
+            "HTTP_ACCEPT_CHARSET": 1,
+            "HTTP_ACCEPT_ENCODING": 1,
+            "HTTP_ACCEPT_LANGUAGE": 1,
+            "HTTP_CONNECTION": 1,
+            "HTTP_HOST": 1,
+            "HTTP_REFERER": 1,
+            "HTTP_USER_AGENT": 1,
+            "PATH_TRANSLATED": 1,
+            "PHP_SELF": 1,
+            "QUERY_STRING": 1,
+            "REMOTE_ADDR": 1,
+            "REMOTE_PORT": 1,
+            "REQUEST_METHOD": 1,
+            "REQUEST_URI": 1,
+            "SCRIPT_FILENAME": 1,
+            "SCRIPT_NAME": 1,
+            "SERVER_ADMIN": 1,
+            "SERVER_NAME": 1,
+            "SERVER_PORT": 1,
+            "SERVER_PROTOCOL": 1,
+            "SERVER_SIGNATURE": 1,
+            "SERVER_SOFTWARE": 1,
+            "argv": 1,
+            "argc": 1
         }
     },
     "$_SESSION": {
@@ -11204,31 +12534,30 @@ var variableMap = {
     },
     "$GLOBALS": {
         type: "array"
+    },
+    '$argv': {
+        type: "array"
+    },
+    '$argc': {
+        type: "int"
     }
 };
-
 function is(token, type) {
     return token.type.lastIndexOf(type) > -1;
 }
-
-var PhpCompletions = function() {
-
+var PhpCompletions = function () {
 };
-
-(function() {
-
-    this.getCompletions = function(state, session, pos, prefix) {
+(function () {
+    this.getCompletions = function (state, session, pos, prefix) {
         var token = session.getTokenAt(pos.row, pos.column);
-
         if (!token)
             return [];
-        
-        if (token.type==='support.php_tag' && token.value==='<?')
+        if (token.type === 'support.php_tag' && token.value === '<?')
             return this.getTagCompletions(state, session, pos, prefix);
-        if (token.type==='identifier') {
+        if (token.type === 'identifier') {
             if (token.index > 0) {
                 var prevToken = session.getTokenAt(pos.row, token.start);
-                if (prevToken.type==='support.php_tag') {
+                if (prevToken.type === 'support.php_tag') {
                     return this.getTagCompletions(state, session, pos, prefix);
                 }
             }
@@ -11237,29 +12566,26 @@ var PhpCompletions = function() {
         if (is(token, "variable"))
             return this.getVariableCompletions(state, session, pos, prefix);
         var line = session.getLine(pos.row).substr(0, pos.column);
-        if (token.type==='string' && /(\$[\w]*)\[["']([^'"]*)$/i.test(line))
+        if (token.type === 'string' && /(\$[\w]*)\[["']([^'"]*)$/i.test(line))
             return this.getArrayKeyCompletions(state, session, pos, prefix);
-
         return [];
     };
-    
-    this.getTagCompletions = function(state, session, pos, prefix) {
+    this.getTagCompletions = function (state, session, pos, prefix) {
         return [{
-            caption: 'php',
-            value: 'php',
-            meta: "php tag",
-            score: 1000000
-        }, {
-            caption: '=',
-            value: '=',
-            meta: "php tag",
-            score: 1000000
-        }];
+                caption: 'php',
+                value: 'php',
+                meta: "php tag",
+                score: 1000000
+            }, {
+                caption: '=',
+                value: '=',
+                meta: "php tag",
+                score: 1000000
+            }];
     };
-
-    this.getFunctionCompletions = function(state, session, pos, prefix) {
+    this.getFunctionCompletions = function (state, session, pos, prefix) {
         var functions = Object.keys(functionMap);
-        return functions.map(function(func){
+        return functions.map(function (func) {
             return {
                 caption: func,
                 snippet: func + '($0)',
@@ -11269,10 +12595,9 @@ var PhpCompletions = function() {
             };
         });
     };
-
-    this.getVariableCompletions = function(state, session, pos, prefix) {
+    this.getVariableCompletions = function (state, session, pos, prefix) {
         var variables = Object.keys(variableMap);
-        return variables.map(function(variable){
+        return variables.map(function (variable) {
             return {
                 caption: variable,
                 value: variable,
@@ -11281,20 +12606,16 @@ var PhpCompletions = function() {
             };
         });
     };
-
-    this.getArrayKeyCompletions = function(state, session, pos, prefix) {
+    this.getArrayKeyCompletions = function (state, session, pos, prefix) {
         var line = session.getLine(pos.row).substr(0, pos.column);
         var variable = line.match(/(\$[\w]*)\[["']([^'"]*)$/i)[1];
-
         if (!variableMap[variable]) {
             return [];
         }
-
         var keys = [];
-        if (variableMap[variable].type==='array' && variableMap[variable].value)
+        if (variableMap[variable].type === 'array' && variableMap[variable].value)
             keys = Object.keys(variableMap[variable].value);
-
-        return keys.map(function(key) {
+        return keys.map(function (key) {
             return {
                 caption: key,
                 value: key,
@@ -11303,95 +12624,70 @@ var PhpCompletions = function() {
             };
         });
     };
-
 }).call(PhpCompletions.prototype);
-
 exports.PhpCompletions = PhpCompletions;
+
 });
 
-ace.define("ace/mode/folding/cstyle",["require","exports","module","ace/lib/oop","ace/range","ace/mode/folding/fold_mode"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/folding/cstyle",["require","exports","module","ace/lib/oop","ace/range","ace/mode/folding/fold_mode"], function(require, exports, module){"use strict";
 var oop = require("../../lib/oop");
 var Range = require("../../range").Range;
 var BaseFoldMode = require("./fold_mode").FoldMode;
-
-var FoldMode = exports.FoldMode = function(commentRegex) {
+var FoldMode = exports.FoldMode = function (commentRegex) {
     if (commentRegex) {
-        this.foldingStartMarker = new RegExp(
-            this.foldingStartMarker.source.replace(/\|[^|]*?$/, "|" + commentRegex.start)
-        );
-        this.foldingStopMarker = new RegExp(
-            this.foldingStopMarker.source.replace(/\|[^|]*?$/, "|" + commentRegex.end)
-        );
+        this.foldingStartMarker = new RegExp(this.foldingStartMarker.source.replace(/\|[^|]*?$/, "|" + commentRegex.start));
+        this.foldingStopMarker = new RegExp(this.foldingStopMarker.source.replace(/\|[^|]*?$/, "|" + commentRegex.end));
     }
 };
 oop.inherits(FoldMode, BaseFoldMode);
-
-(function() {
-    
+(function () {
     this.foldingStartMarker = /([\{\[\(])[^\}\]\)]*$|^\s*(\/\*)/;
     this.foldingStopMarker = /^[^\[\{\(]*([\}\]\)])|^[\s\*]*(\*\/)/;
-    this.singleLineBlockCommentRe= /^\s*(\/\*).*\*\/\s*$/;
+    this.singleLineBlockCommentRe = /^\s*(\/\*).*\*\/\s*$/;
     this.tripleStarBlockCommentRe = /^\s*(\/\*\*\*).*\*\/\s*$/;
     this.startRegionRe = /^\s*(\/\*|\/\/)#?region\b/;
     this._getFoldWidgetBase = this.getFoldWidget;
-    this.getFoldWidget = function(session, foldStyle, row) {
+    this.getFoldWidget = function (session, foldStyle, row) {
         var line = session.getLine(row);
-    
         if (this.singleLineBlockCommentRe.test(line)) {
             if (!this.startRegionRe.test(line) && !this.tripleStarBlockCommentRe.test(line))
                 return "";
         }
-    
         var fw = this._getFoldWidgetBase(session, foldStyle, row);
-    
         if (!fw && this.startRegionRe.test(line))
             return "start"; // lineCommentRegionStart
-    
         return fw;
     };
-
-    this.getFoldWidgetRange = function(session, foldStyle, row, forceMultiline) {
+    this.getFoldWidgetRange = function (session, foldStyle, row, forceMultiline) {
         var line = session.getLine(row);
-        
         if (this.startRegionRe.test(line))
             return this.getCommentRegionBlock(session, line, row);
-        
         var match = line.match(this.foldingStartMarker);
         if (match) {
             var i = match.index;
-
             if (match[1])
                 return this.openingBracketBlock(session, match[1], row, i);
-                
             var range = session.getCommentFoldRange(row, i + match[0].length, 1);
-            
             if (range && !range.isMultiLine()) {
                 if (forceMultiline) {
                     range = this.getSectionRange(session, row);
-                } else if (foldStyle != "all")
+                }
+                else if (foldStyle != "all")
                     range = null;
             }
-            
             return range;
         }
-
         if (foldStyle === "markbegin")
             return;
-
         var match = line.match(this.foldingStopMarker);
         if (match) {
             var i = match.index + match[0].length;
-
             if (match[1])
                 return this.closingBracketBlock(session, match[1], row, i);
-
             return session.getCommentFoldRange(row, i, -1);
         }
     };
-    
-    this.getSectionRange = function(session, row) {
+    this.getSectionRange = function (session, row) {
         var line = session.getLine(row);
         var startIndent = line.search(/\S/);
         var startRow = row;
@@ -11404,54 +12700,52 @@ oop.inherits(FoldMode, BaseFoldMode);
             var indent = line.search(/\S/);
             if (indent === -1)
                 continue;
-            if  (startIndent > indent)
+            if (startIndent > indent)
                 break;
             var subRange = this.getFoldWidgetRange(session, "all", row);
-            
             if (subRange) {
                 if (subRange.start.row <= startRow) {
                     break;
-                } else if (subRange.isMultiLine()) {
+                }
+                else if (subRange.isMultiLine()) {
                     row = subRange.end.row;
-                } else if (startIndent == indent) {
+                }
+                else if (startIndent == indent) {
                     break;
                 }
             }
             endRow = row;
         }
-        
         return new Range(startRow, startColumn, endRow, session.getLine(endRow).length);
     };
-    this.getCommentRegionBlock = function(session, line, row) {
+    this.getCommentRegionBlock = function (session, line, row) {
         var startColumn = line.search(/\s*$/);
         var maxRow = session.getLength();
         var startRow = row;
-        
         var re = /^\s*(?:\/\*|\/\/|--)#?(end)?region\b/;
         var depth = 1;
         while (++row < maxRow) {
             line = session.getLine(row);
             var m = re.exec(line);
-            if (!m) continue;
-            if (m[1]) depth--;
-            else depth++;
-
-            if (!depth) break;
+            if (!m)
+                continue;
+            if (m[1])
+                depth--;
+            else
+                depth++;
+            if (!depth)
+                break;
         }
-
         var endRow = row;
         if (endRow > startRow) {
             return new Range(startRow, startColumn, endRow, line.length);
         }
     };
-
 }).call(FoldMode.prototype);
 
 });
 
-ace.define("ace/mode/javascript",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/javascript_highlight_rules","ace/mode/matching_brace_outdent","ace/worker/worker_client","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/javascript",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/javascript_highlight_rules","ace/mode/matching_brace_outdent","ace/worker/worker_client","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var JavaScriptHighlightRules = require("./javascript_highlight_rules").JavaScriptHighlightRules;
@@ -11459,39 +12753,35 @@ var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutd
 var WorkerClient = require("../worker/worker_client").WorkerClient;
 var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
-
-var Mode = function() {
+var Mode = function () {
     this.HighlightRules = JavaScriptHighlightRules;
-    
     this.$outdent = new MatchingBraceOutdent();
     this.$behaviour = new CstyleBehaviour();
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
-
-(function() {
-
+(function () {
     this.lineCommentStart = "//";
-    this.blockComment = {start: "/*", end: "*/"};
-    this.$quotes = {'"': '"', "'": "'", "`": "`"};
-
-    this.getNextLineIndent = function(state, line, tab) {
+    this.blockComment = { start: "/*", end: "*/" };
+    this.$quotes = { '"': '"', "'": "'", "`": "`" };
+    this.$pairQuotesAfter = {
+        "`": /\w/
+    };
+    this.getNextLineIndent = function (state, line, tab) {
         var indent = this.$getIndent(line);
-
         var tokenizedLine = this.getTokenizer().getLineTokens(line, state);
         var tokens = tokenizedLine.tokens;
         var endState = tokenizedLine.state;
-
-        if (tokens.length && tokens[tokens.length-1].type == "comment") {
+        if (tokens.length && tokens[tokens.length - 1].type == "comment") {
             return indent;
         }
-
         if (state == "start" || state == "no_regex") {
             var match = line.match(/^.*(?:\bcase\b.*:|[\{\(\[])\s*$/);
             if (match) {
                 indent += tab;
             }
-        } else if (state == "doc-start") {
+        }
+        else if (state == "doc-start") {
             if (endState == "start" || endState == "no_regex") {
                 return "";
             }
@@ -11503,108 +12793,98 @@ oop.inherits(Mode, TextMode);
                 indent += "* ";
             }
         }
-
         return indent;
     };
-
-    this.checkOutdent = function(state, line, input) {
+    this.checkOutdent = function (state, line, input) {
         return this.$outdent.checkOutdent(line, input);
     };
-
-    this.autoOutdent = function(state, doc, row) {
+    this.autoOutdent = function (state, doc, row) {
         this.$outdent.autoOutdent(doc, row);
     };
-
-    this.createWorker = function(session) {
+    this.createWorker = function (session) {
         var worker = new WorkerClient(["ace"], "ace/mode/javascript_worker", "JavaScriptWorker");
         worker.attachToDocument(session.getDocument());
-
-        worker.on("annotate", function(results) {
+        worker.on("annotate", function (results) {
             session.setAnnotations(results.data);
         });
-
-        worker.on("terminate", function() {
+        worker.on("terminate", function () {
             session.clearAnnotations();
         });
-
         return worker;
     };
-
     this.$id = "ace/mode/javascript";
+    this.snippetFileId = "ace/snippets/javascript";
 }).call(Mode.prototype);
-
 exports.Mode = Mode;
+
 });
 
-ace.define("ace/mode/css_completions",["require","exports","module"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/css_completions",["require","exports","module"], function(require, exports, module){"use strict";
 var propertyMap = {
-    "background": {"#$0": 1},
-    "background-color": {"#$0": 1, "transparent": 1, "fixed": 1},
-    "background-image": {"url('/$0')": 1},
-    "background-repeat": {"repeat": 1, "repeat-x": 1, "repeat-y": 1, "no-repeat": 1, "inherit": 1},
-    "background-position": {"bottom":2, "center":2, "left":2, "right":2, "top":2, "inherit":2},
-    "background-attachment": {"scroll": 1, "fixed": 1},
-    "background-size": {"cover": 1, "contain": 1},
-    "background-clip": {"border-box": 1, "padding-box": 1, "content-box": 1},
-    "background-origin": {"border-box": 1, "padding-box": 1, "content-box": 1},
-    "border": {"solid $0": 1, "dashed $0": 1, "dotted $0": 1, "#$0": 1},
-    "border-color": {"#$0": 1},
-    "border-style": {"solid":2, "dashed":2, "dotted":2, "double":2, "groove":2, "hidden":2, "inherit":2, "inset":2, "none":2, "outset":2, "ridged":2},
-    "border-collapse": {"collapse": 1, "separate": 1},
-    "bottom": {"px": 1, "em": 1, "%": 1},
-    "clear": {"left": 1, "right": 1, "both": 1, "none": 1},
-    "color": {"#$0": 1, "rgb(#$00,0,0)": 1},
-    "cursor": {"default": 1, "pointer": 1, "move": 1, "text": 1, "wait": 1, "help": 1, "progress": 1, "n-resize": 1, "ne-resize": 1, "e-resize": 1, "se-resize": 1, "s-resize": 1, "sw-resize": 1, "w-resize": 1, "nw-resize": 1},
-    "display": {"none": 1, "block": 1, "inline": 1, "inline-block": 1, "table-cell": 1},
-    "empty-cells": {"show": 1, "hide": 1},
-    "float": {"left": 1, "right": 1, "none": 1},
-    "font-family": {"Arial":2,"Comic Sans MS":2,"Consolas":2,"Courier New":2,"Courier":2,"Georgia":2,"Monospace":2,"Sans-Serif":2, "Segoe UI":2,"Tahoma":2,"Times New Roman":2,"Trebuchet MS":2,"Verdana": 1},
-    "font-size": {"px": 1, "em": 1, "%": 1},
-    "font-weight": {"bold": 1, "normal": 1},
-    "font-style": {"italic": 1, "normal": 1},
-    "font-variant": {"normal": 1, "small-caps": 1},
-    "height": {"px": 1, "em": 1, "%": 1},
-    "left": {"px": 1, "em": 1, "%": 1},
-    "letter-spacing": {"normal": 1},
-    "line-height": {"normal": 1},
-    "list-style-type": {"none": 1, "disc": 1, "circle": 1, "square": 1, "decimal": 1, "decimal-leading-zero": 1, "lower-roman": 1, "upper-roman": 1, "lower-greek": 1, "lower-latin": 1, "upper-latin": 1, "georgian": 1, "lower-alpha": 1, "upper-alpha": 1},
-    "margin": {"px": 1, "em": 1, "%": 1},
-    "margin-right": {"px": 1, "em": 1, "%": 1},
-    "margin-left": {"px": 1, "em": 1, "%": 1},
-    "margin-top": {"px": 1, "em": 1, "%": 1},
-    "margin-bottom": {"px": 1, "em": 1, "%": 1},
-    "max-height": {"px": 1, "em": 1, "%": 1},
-    "max-width": {"px": 1, "em": 1, "%": 1},
-    "min-height": {"px": 1, "em": 1, "%": 1},
-    "min-width": {"px": 1, "em": 1, "%": 1},
-    "overflow": {"hidden": 1, "visible": 1, "auto": 1, "scroll": 1},
-    "overflow-x": {"hidden": 1, "visible": 1, "auto": 1, "scroll": 1},
-    "overflow-y": {"hidden": 1, "visible": 1, "auto": 1, "scroll": 1},
-    "padding": {"px": 1, "em": 1, "%": 1},
-    "padding-top": {"px": 1, "em": 1, "%": 1},
-    "padding-right": {"px": 1, "em": 1, "%": 1},
-    "padding-bottom": {"px": 1, "em": 1, "%": 1},
-    "padding-left": {"px": 1, "em": 1, "%": 1},
-    "page-break-after": {"auto": 1, "always": 1, "avoid": 1, "left": 1, "right": 1},
-    "page-break-before": {"auto": 1, "always": 1, "avoid": 1, "left": 1, "right": 1},
-    "position": {"absolute": 1, "relative": 1, "fixed": 1, "static": 1},
-    "right": {"px": 1, "em": 1, "%": 1},
-    "table-layout": {"fixed": 1, "auto": 1},
-    "text-decoration": {"none": 1, "underline": 1, "line-through": 1, "blink": 1},
-    "text-align": {"left": 1, "right": 1, "center": 1, "justify": 1},
-    "text-transform": {"capitalize": 1, "uppercase": 1, "lowercase": 1, "none": 1},
-    "top": {"px": 1, "em": 1, "%": 1},
-    "vertical-align": {"top": 1, "bottom": 1},
-    "visibility": {"hidden": 1, "visible": 1},
-    "white-space": {"nowrap": 1, "normal": 1, "pre": 1, "pre-line": 1, "pre-wrap": 1},
-    "width": {"px": 1, "em": 1, "%": 1},
-    "word-spacing": {"normal": 1},
-    "filter": {"alpha(opacity=$0100)": 1},
-
-    "text-shadow": {"$02px 2px 2px #777": 1},
-    "text-overflow": {"ellipsis-word": 1, "clip": 1, "ellipsis": 1},
+    "background": { "#$0": 1 },
+    "background-color": { "#$0": 1, "transparent": 1, "fixed": 1 },
+    "background-image": { "url('/$0')": 1 },
+    "background-repeat": { "repeat": 1, "repeat-x": 1, "repeat-y": 1, "no-repeat": 1, "inherit": 1 },
+    "background-position": { "bottom": 2, "center": 2, "left": 2, "right": 2, "top": 2, "inherit": 2 },
+    "background-attachment": { "scroll": 1, "fixed": 1 },
+    "background-size": { "cover": 1, "contain": 1 },
+    "background-clip": { "border-box": 1, "padding-box": 1, "content-box": 1 },
+    "background-origin": { "border-box": 1, "padding-box": 1, "content-box": 1 },
+    "border": { "solid $0": 1, "dashed $0": 1, "dotted $0": 1, "#$0": 1 },
+    "border-color": { "#$0": 1 },
+    "border-style": { "solid": 2, "dashed": 2, "dotted": 2, "double": 2, "groove": 2, "hidden": 2, "inherit": 2, "inset": 2, "none": 2, "outset": 2, "ridged": 2 },
+    "border-collapse": { "collapse": 1, "separate": 1 },
+    "bottom": { "px": 1, "em": 1, "%": 1 },
+    "clear": { "left": 1, "right": 1, "both": 1, "none": 1 },
+    "color": { "#$0": 1, "rgb(#$00,0,0)": 1 },
+    "cursor": { "default": 1, "pointer": 1, "move": 1, "text": 1, "wait": 1, "help": 1, "progress": 1, "n-resize": 1, "ne-resize": 1, "e-resize": 1, "se-resize": 1, "s-resize": 1, "sw-resize": 1, "w-resize": 1, "nw-resize": 1 },
+    "display": { "none": 1, "block": 1, "inline": 1, "inline-block": 1, "table-cell": 1 },
+    "empty-cells": { "show": 1, "hide": 1 },
+    "float": { "left": 1, "right": 1, "none": 1 },
+    "font-family": { "Arial": 2, "Comic Sans MS": 2, "Consolas": 2, "Courier New": 2, "Courier": 2, "Georgia": 2, "Monospace": 2, "Sans-Serif": 2, "Segoe UI": 2, "Tahoma": 2, "Times New Roman": 2, "Trebuchet MS": 2, "Verdana": 1 },
+    "font-size": { "px": 1, "em": 1, "%": 1 },
+    "font-weight": { "bold": 1, "normal": 1 },
+    "font-style": { "italic": 1, "normal": 1 },
+    "font-variant": { "normal": 1, "small-caps": 1 },
+    "height": { "px": 1, "em": 1, "%": 1 },
+    "left": { "px": 1, "em": 1, "%": 1 },
+    "letter-spacing": { "normal": 1 },
+    "line-height": { "normal": 1 },
+    "list-style-type": { "none": 1, "disc": 1, "circle": 1, "square": 1, "decimal": 1, "decimal-leading-zero": 1, "lower-roman": 1, "upper-roman": 1, "lower-greek": 1, "lower-latin": 1, "upper-latin": 1, "georgian": 1, "lower-alpha": 1, "upper-alpha": 1 },
+    "margin": { "px": 1, "em": 1, "%": 1 },
+    "margin-right": { "px": 1, "em": 1, "%": 1 },
+    "margin-left": { "px": 1, "em": 1, "%": 1 },
+    "margin-top": { "px": 1, "em": 1, "%": 1 },
+    "margin-bottom": { "px": 1, "em": 1, "%": 1 },
+    "max-height": { "px": 1, "em": 1, "%": 1 },
+    "max-width": { "px": 1, "em": 1, "%": 1 },
+    "min-height": { "px": 1, "em": 1, "%": 1 },
+    "min-width": { "px": 1, "em": 1, "%": 1 },
+    "overflow": { "hidden": 1, "visible": 1, "auto": 1, "scroll": 1 },
+    "overflow-x": { "hidden": 1, "visible": 1, "auto": 1, "scroll": 1 },
+    "overflow-y": { "hidden": 1, "visible": 1, "auto": 1, "scroll": 1 },
+    "padding": { "px": 1, "em": 1, "%": 1 },
+    "padding-top": { "px": 1, "em": 1, "%": 1 },
+    "padding-right": { "px": 1, "em": 1, "%": 1 },
+    "padding-bottom": { "px": 1, "em": 1, "%": 1 },
+    "padding-left": { "px": 1, "em": 1, "%": 1 },
+    "page-break-after": { "auto": 1, "always": 1, "avoid": 1, "left": 1, "right": 1 },
+    "page-break-before": { "auto": 1, "always": 1, "avoid": 1, "left": 1, "right": 1 },
+    "position": { "absolute": 1, "relative": 1, "fixed": 1, "static": 1 },
+    "right": { "px": 1, "em": 1, "%": 1 },
+    "table-layout": { "fixed": 1, "auto": 1 },
+    "text-decoration": { "none": 1, "underline": 1, "line-through": 1, "blink": 1 },
+    "text-align": { "left": 1, "right": 1, "center": 1, "justify": 1 },
+    "text-transform": { "capitalize": 1, "uppercase": 1, "lowercase": 1, "none": 1 },
+    "top": { "px": 1, "em": 1, "%": 1 },
+    "vertical-align": { "top": 1, "bottom": 1 },
+    "visibility": { "hidden": 1, "visible": 1 },
+    "white-space": { "nowrap": 1, "normal": 1, "pre": 1, "pre-line": 1, "pre-wrap": 1 },
+    "width": { "px": 1, "em": 1, "%": 1 },
+    "word-spacing": { "normal": 1 },
+    "filter": { "alpha(opacity=$0100)": 1 },
+    "text-shadow": { "$02px 2px 2px #777": 1 },
+    "text-overflow": { "ellipsis-word": 1, "clip": 1, "ellipsis": 1 },
     "-moz-border-radius": 1,
     "-moz-border-radius-topright": 1,
     "-moz-border-radius-bottomright": 1,
@@ -11617,81 +12897,71 @@ var propertyMap = {
     "-webkit-border-bottom-left-radius": 1,
     "-moz-box-shadow": 1,
     "-webkit-box-shadow": 1,
-    "transform": {"rotate($00deg)": 1, "skew($00deg)": 1},
-    "-moz-transform": {"rotate($00deg)": 1, "skew($00deg)": 1},
-    "-webkit-transform": {"rotate($00deg)": 1, "skew($00deg)": 1 }
+    "transform": { "rotate($00deg)": 1, "skew($00deg)": 1 },
+    "-moz-transform": { "rotate($00deg)": 1, "skew($00deg)": 1 },
+    "-webkit-transform": { "rotate($00deg)": 1, "skew($00deg)": 1 }
 };
-
-var CssCompletions = function() {
-
+var CssCompletions = function () {
 };
-
-(function() {
-
+(function () {
     this.completionsDefined = false;
-
-    this.defineCompletions = function() {
+    this.defineCompletions = function () {
         if (document) {
             var style = document.createElement('c').style;
-
             for (var i in style) {
                 if (typeof style[i] !== 'string')
                     continue;
-
-                var name = i.replace(/[A-Z]/g, function(x) {
+                var name = i.replace(/[A-Z]/g, function (x) {
                     return '-' + x.toLowerCase();
                 });
-
                 if (!propertyMap.hasOwnProperty(name))
                     propertyMap[name] = 1;
             }
         }
-
         this.completionsDefined = true;
     };
-
-    this.getCompletions = function(state, session, pos, prefix) {
+    this.getCompletions = function (state, session, pos, prefix) {
         if (!this.completionsDefined) {
             this.defineCompletions();
         }
-
-        if (state==='ruleset' || session.$mode.$id == "ace/mode/scss") {
+        if (state === 'ruleset' || session.$mode.$id == "ace/mode/scss") {
             var line = session.getLine(pos.row).substr(0, pos.column);
+            var inParens = /\([^)]*$/.test(line);
+            if (inParens) {
+                line = line.substr(line.lastIndexOf('(') + 1);
+            }
             if (/:[^;]+$/.test(line)) {
                 /([\w\-]+):[^:]*$/.test(line);
-
                 return this.getPropertyValueCompletions(state, session, pos, prefix);
-            } else {
-                return this.getPropertyCompletions(state, session, pos, prefix);
+            }
+            else {
+                return this.getPropertyCompletions(state, session, pos, prefix, inParens);
             }
         }
-
         return [];
     };
-
-    this.getPropertyCompletions = function(state, session, pos, prefix) {
+    this.getPropertyCompletions = function (state, session, pos, prefix, skipSemicolon) {
+        skipSemicolon = skipSemicolon || false;
         var properties = Object.keys(propertyMap);
-        return properties.map(function(property){
+        return properties.map(function (property) {
             return {
                 caption: property,
-                snippet: property + ': $0;',
+                snippet: property + ': $0' + (skipSemicolon ? '' : ';'),
                 meta: "property",
                 score: 1000000
             };
         });
     };
-
-    this.getPropertyValueCompletions = function(state, session, pos, prefix) {
+    this.getPropertyValueCompletions = function (state, session, pos, prefix) {
         var line = session.getLine(pos.row).substr(0, pos.column);
         var property = (/([\w\-]+):[^:]*$/.exec(line) || {})[1];
-
         if (!property)
             return [];
         var values = [];
         if (property in propertyMap && typeof propertyMap[property] === "object") {
             values = Object.keys(propertyMap[property]);
         }
-        return values.map(function(value){
+        return values.map(function (value) {
             return {
                 caption: value,
                 snippet: value,
@@ -11700,24 +12970,18 @@ var CssCompletions = function() {
             };
         });
     };
-
 }).call(CssCompletions.prototype);
-
 exports.CssCompletions = CssCompletions;
+
 });
 
-ace.define("ace/mode/behaviour/css",["require","exports","module","ace/lib/oop","ace/mode/behaviour","ace/mode/behaviour/cstyle","ace/token_iterator"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/behaviour/css",["require","exports","module","ace/lib/oop","ace/mode/behaviour","ace/mode/behaviour/cstyle","ace/token_iterator"], function(require, exports, module){"use strict";
 var oop = require("../../lib/oop");
 var Behaviour = require("../behaviour").Behaviour;
 var CstyleBehaviour = require("./cstyle").CstyleBehaviour;
 var TokenIterator = require("../../token_iterator").TokenIterator;
-
 var CssBehaviour = function () {
-
     this.inherit(CstyleBehaviour);
-
     this.add("colon", "insertion", function (state, action, editor, session, text) {
         if (text === ':' && editor.selection.isEmpty()) {
             var cursor = editor.getCursorPosition();
@@ -11731,20 +12995,19 @@ var CssBehaviour = function () {
                 var rightChar = line.substring(cursor.column, cursor.column + 1);
                 if (rightChar === ':') {
                     return {
-                       text: '',
-                       selection: [1, 1]
+                        text: '',
+                        selection: [1, 1]
                     };
                 }
                 if (/^(\s+[^;]|\s*$)/.test(line.substring(cursor.column))) {
                     return {
-                       text: ':;',
-                       selection: [1, 1]
+                        text: ':;',
+                        selection: [1, 1]
                     };
                 }
             }
         }
     });
-
     this.add("colon", "deletion", function (state, action, editor, session, range) {
         var selected = session.doc.getTextRange(range);
         if (!range.isMultiLine() && selected === ':') {
@@ -11758,13 +13021,12 @@ var CssBehaviour = function () {
                 var line = session.doc.getLine(range.start.row);
                 var rightChar = line.substring(range.end.column, range.end.column + 1);
                 if (rightChar === ';') {
-                    range.end.column ++;
+                    range.end.column++;
                     return range;
                 }
             }
         }
     });
-
     this.add("semicolon", "insertion", function (state, action, editor, session, text) {
         if (text === ';' && editor.selection.isEmpty()) {
             var cursor = editor.getCursorPosition();
@@ -11772,18 +13034,16 @@ var CssBehaviour = function () {
             var rightChar = line.substring(cursor.column, cursor.column + 1);
             if (rightChar === ';') {
                 return {
-                   text: '',
-                   selection: [1, 1]
+                    text: '',
+                    selection: [1, 1]
                 };
             }
         }
     });
-
     this.add("!important", "insertion", function (state, action, editor, session, text) {
         if (text === '!' && editor.selection.isEmpty()) {
             var cursor = editor.getCursorPosition();
             var line = session.doc.getLine(cursor.row);
-
             if (/^\s*(;|}|$)/.test(line.substring(cursor.column))) {
                 return {
                     text: '!important',
@@ -11792,16 +13052,13 @@ var CssBehaviour = function () {
             }
         }
     });
-
 };
 oop.inherits(CssBehaviour, CstyleBehaviour);
-
 exports.CssBehaviour = CssBehaviour;
+
 });
 
-ace.define("ace/mode/css",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/css_highlight_rules","ace/mode/matching_brace_outdent","ace/worker/worker_client","ace/mode/css_completions","ace/mode/behaviour/css","ace/mode/folding/cstyle"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/css",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/css_highlight_rules","ace/mode/matching_brace_outdent","ace/worker/worker_client","ace/mode/css_completions","ace/mode/behaviour/css","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var CssHighlightRules = require("./css_highlight_rules").CssHighlightRules;
@@ -11810,8 +13067,7 @@ var WorkerClient = require("../worker/worker_client").WorkerClient;
 var CssCompletions = require("./css_completions").CssCompletions;
 var CssBehaviour = require("./behaviour/css").CssBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
-
-var Mode = function() {
+var Mode = function () {
     this.HighlightRules = CssHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
     this.$behaviour = new CssBehaviour();
@@ -11819,75 +13075,57 @@ var Mode = function() {
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
-
-(function() {
-
+(function () {
     this.foldingRules = "cStyle";
-    this.blockComment = {start: "/*", end: "*/"};
-
-    this.getNextLineIndent = function(state, line, tab) {
+    this.blockComment = { start: "/*", end: "*/" };
+    this.getNextLineIndent = function (state, line, tab) {
         var indent = this.$getIndent(line);
         var tokens = this.getTokenizer().getLineTokens(line, state).tokens;
-        if (tokens.length && tokens[tokens.length-1].type == "comment") {
+        if (tokens.length && tokens[tokens.length - 1].type == "comment") {
             return indent;
         }
-
         var match = line.match(/^.*\{\s*$/);
         if (match) {
             indent += tab;
         }
-
         return indent;
     };
-
-    this.checkOutdent = function(state, line, input) {
+    this.checkOutdent = function (state, line, input) {
         return this.$outdent.checkOutdent(line, input);
     };
-
-    this.autoOutdent = function(state, doc, row) {
+    this.autoOutdent = function (state, doc, row) {
         this.$outdent.autoOutdent(doc, row);
     };
-
-    this.getCompletions = function(state, session, pos, prefix) {
+    this.getCompletions = function (state, session, pos, prefix) {
         return this.$completer.getCompletions(state, session, pos, prefix);
     };
-
-    this.createWorker = function(session) {
+    this.createWorker = function (session) {
         var worker = new WorkerClient(["ace"], "ace/mode/css_worker", "Worker");
         worker.attachToDocument(session.getDocument());
-
-        worker.on("annotate", function(e) {
+        worker.on("annotate", function (e) {
             session.setAnnotations(e.data);
         });
-
-        worker.on("terminate", function() {
+        worker.on("terminate", function () {
             session.clearAnnotations();
         });
-
         return worker;
     };
-
     this.$id = "ace/mode/css";
+    this.snippetFileId = "ace/snippets/css";
 }).call(Mode.prototype);
-
 exports.Mode = Mode;
 
 });
 
-ace.define("ace/mode/behaviour/xml",["require","exports","module","ace/lib/oop","ace/mode/behaviour","ace/token_iterator","ace/lib/lang"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/behaviour/xml",["require","exports","module","ace/lib/oop","ace/mode/behaviour","ace/token_iterator","ace/lib/lang"], function(require, exports, module){"use strict";
 var oop = require("../../lib/oop");
 var Behaviour = require("../behaviour").Behaviour;
 var TokenIterator = require("../../token_iterator").TokenIterator;
 var lang = require("../../lib/lang");
-
 function is(token, type) {
     return token && token.type.lastIndexOf(type + ".xml") > -1;
 }
-
 var XmlBehaviour = function () {
-
     this.add("string_dquotes", "insertion", function (state, action, editor, session, text) {
         if (text == '"' || text == "'") {
             var quote = text;
@@ -11898,26 +13136,21 @@ var XmlBehaviour = function () {
                     selection: false
                 };
             }
-
             var cursor = editor.getCursorPosition();
             var line = session.doc.getLine(cursor.row);
             var rightChar = line.substring(cursor.column, cursor.column + 1);
             var iterator = new TokenIterator(session, cursor.row, cursor.column);
             var token = iterator.getCurrentToken();
-
             if (rightChar == quote && (is(token, "attribute-value") || is(token, "string"))) {
                 return {
                     text: "",
                     selection: [1, 1]
                 };
             }
-
             if (!token)
                 token = iterator.stepBackward();
-
             if (!token)
                 return;
-
             while (is(token, "tag-whitespace") || is(token, "whitespace")) {
                 token = iterator.stepBackward();
             }
@@ -11930,8 +13163,7 @@ var XmlBehaviour = function () {
             }
         }
     });
-
-    this.add("string_dquotes", "deletion", function(state, action, editor, session, range) {
+    this.add("string_dquotes", "deletion", function (state, action, editor, session, range) {
         var selected = session.doc.getTextRange(range);
         if (!range.isMultiLine() && (selected == '"' || selected == "'")) {
             var line = session.doc.getLine(range.start.row);
@@ -11942,7 +13174,6 @@ var XmlBehaviour = function () {
             }
         }
     });
-
     this.add("autoclosing", "insertion", function (state, action, editor, session, text) {
         if (text == '>') {
             var position = editor.getSelectionRange().start;
@@ -11963,7 +13194,6 @@ var XmlBehaviour = function () {
                     iterator.stepBackward();
                 }
             }
-            
             if (/^\s*>/.test(session.getLine(position.row).slice(position.column)))
                 return;
             while (!is(token, "tag-name")) {
@@ -11973,63 +13203,54 @@ var XmlBehaviour = function () {
                     break;
                 }
             }
-
             var tokenRow = iterator.getCurrentTokenRow();
             var tokenColumn = iterator.getCurrentTokenColumn();
             if (is(iterator.stepBackward(), "end-tag-open"))
                 return;
-
             var element = token.value;
             if (tokenRow == position.row)
                 element = element.substring(0, position.column - tokenColumn);
-
             if (this.voidElements.hasOwnProperty(element.toLowerCase()))
-                 return;
-
+                return;
             return {
-               text: ">" + "</" + element + ">",
-               selection: [1, 1]
+                text: ">" + "</" + element + ">",
+                selection: [1, 1]
             };
         }
     });
-
     this.add("autoindent", "insertion", function (state, action, editor, session, text) {
         if (text == "\n") {
             var cursor = editor.getCursorPosition();
             var line = session.getLine(cursor.row);
             var iterator = new TokenIterator(session, cursor.row, cursor.column);
             var token = iterator.getCurrentToken();
-
             if (token && token.type.indexOf("tag-close") !== -1) {
                 if (token.value == "/>")
                     return;
                 while (token && token.type.indexOf("tag-name") === -1) {
                     token = iterator.stepBackward();
                 }
-
                 if (!token) {
                     return;
                 }
-
                 var tag = token.value;
                 var row = iterator.getCurrentTokenRow();
                 token = iterator.stepBackward();
                 if (!token || token.type.indexOf("end-tag") !== -1) {
                     return;
                 }
-
                 if (this.voidElements && !this.voidElements[tag]) {
-                    var nextToken = session.getTokenAt(cursor.row, cursor.column+1);
+                    var nextToken = session.getTokenAt(cursor.row, cursor.column + 1);
                     var line = session.getLine(row);
                     var nextIndent = this.$getIndent(line);
                     var indent = nextIndent + session.getTabString();
-
                     if (nextToken && nextToken.value === "</") {
                         return {
                             text: "\n" + indent + "\n" + nextIndent,
                             selection: [1, indent.length, 1, indent.length]
                         };
-                    } else {
+                    }
+                    else {
                         return {
                             text: "\n" + indent
                         };
@@ -12038,31 +13259,23 @@ var XmlBehaviour = function () {
             }
         }
     });
-
 };
-
 oop.inherits(XmlBehaviour, Behaviour);
-
 exports.XmlBehaviour = XmlBehaviour;
+
 });
 
-ace.define("ace/mode/folding/mixed",["require","exports","module","ace/lib/oop","ace/mode/folding/fold_mode"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/folding/mixed",["require","exports","module","ace/lib/oop","ace/mode/folding/fold_mode"], function(require, exports, module){"use strict";
 var oop = require("../../lib/oop");
 var BaseFoldMode = require("./fold_mode").FoldMode;
-
-var FoldMode = exports.FoldMode = function(defaultMode, subModes) {
+var FoldMode = exports.FoldMode = function (defaultMode, subModes) {
     this.defaultMode = defaultMode;
     this.subModes = subModes;
 };
 oop.inherits(FoldMode, BaseFoldMode);
-
-(function() {
-
-
-    this.$getMode = function(state) {
-        if (typeof state != "string") 
+(function () {
+    this.$getMode = function (state) {
+        if (typeof state != "string")
             state = state[0];
         for (var key in this.subModes) {
             if (state.indexOf(key) === 0)
@@ -12070,96 +13283,70 @@ oop.inherits(FoldMode, BaseFoldMode);
         }
         return null;
     };
-    
-    this.$tryMode = function(state, session, foldStyle, row) {
+    this.$tryMode = function (state, session, foldStyle, row) {
         var mode = this.$getMode(state);
         return (mode ? mode.getFoldWidget(session, foldStyle, row) : "");
     };
-
-    this.getFoldWidget = function(session, foldStyle, row) {
-        return (
-            this.$tryMode(session.getState(row-1), session, foldStyle, row) ||
+    this.getFoldWidget = function (session, foldStyle, row) {
+        return (this.$tryMode(session.getState(row - 1), session, foldStyle, row) ||
             this.$tryMode(session.getState(row), session, foldStyle, row) ||
-            this.defaultMode.getFoldWidget(session, foldStyle, row)
-        );
+            this.defaultMode.getFoldWidget(session, foldStyle, row));
     };
-
-    this.getFoldWidgetRange = function(session, foldStyle, row) {
-        var mode = this.$getMode(session.getState(row-1));
-        
+    this.getFoldWidgetRange = function (session, foldStyle, row) {
+        var mode = this.$getMode(session.getState(row - 1));
         if (!mode || !mode.getFoldWidget(session, foldStyle, row))
             mode = this.$getMode(session.getState(row));
-        
         if (!mode || !mode.getFoldWidget(session, foldStyle, row))
             mode = this.defaultMode;
-        
         return mode.getFoldWidgetRange(session, foldStyle, row);
     };
-
 }).call(FoldMode.prototype);
 
 });
 
-ace.define("ace/mode/folding/xml",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/range","ace/mode/folding/fold_mode","ace/token_iterator"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/folding/xml",["require","exports","module","ace/lib/oop","ace/range","ace/mode/folding/fold_mode"], function(require, exports, module){"use strict";
 var oop = require("../../lib/oop");
-var lang = require("../../lib/lang");
 var Range = require("../../range").Range;
 var BaseFoldMode = require("./fold_mode").FoldMode;
-var TokenIterator = require("../../token_iterator").TokenIterator;
-
-var FoldMode = exports.FoldMode = function(voidElements, optionalEndTags) {
+var FoldMode = exports.FoldMode = function (voidElements, optionalEndTags) {
     BaseFoldMode.call(this);
     this.voidElements = voidElements || {};
     this.optionalEndTags = oop.mixin({}, this.voidElements);
     if (optionalEndTags)
         oop.mixin(this.optionalEndTags, optionalEndTags);
-    
 };
 oop.inherits(FoldMode, BaseFoldMode);
-
-var Tag = function() {
+var Tag = function () {
     this.tagName = "";
     this.closing = false;
     this.selfClosing = false;
-    this.start = {row: 0, column: 0};
-    this.end = {row: 0, column: 0};
+    this.start = { row: 0, column: 0 };
+    this.end = { row: 0, column: 0 };
 };
-
 function is(token, type) {
     return token.type.lastIndexOf(type + ".xml") > -1;
 }
-
-(function() {
-
-    this.getFoldWidget = function(session, foldStyle, row) {
+(function () {
+    this.getFoldWidget = function (session, foldStyle, row) {
         var tag = this._getFirstTagInLine(session, row);
-
         if (!tag)
             return this.getCommentFoldWidget(session, row);
-
         if (tag.closing || (!tag.tagName && tag.selfClosing))
-            return foldStyle == "markbeginend" ? "end" : "";
-
+            return foldStyle === "markbeginend" ? "end" : "";
         if (!tag.tagName || tag.selfClosing || this.voidElements.hasOwnProperty(tag.tagName.toLowerCase()))
             return "";
-
         if (this._findEndTagInLine(session, row, tag.tagName, tag.end.column))
             return "";
-
         return "start";
     };
-    
-    this.getCommentFoldWidget = function(session, row) {
+    this.getCommentFoldWidget = function (session, row) {
         if (/comment/.test(session.getState(row)) && /<!-/.test(session.getLine(row)))
             return "start";
         return "";
     };
-    this._getFirstTagInLine = function(session, row) {
+    this._getFirstTagInLine = function (session, row) {
         var tokens = session.getTokens(row);
         var tag = new Tag();
-
         for (var i = 0; i < tokens.length; i++) {
             var token = tokens[i];
             if (is(token, "tag-open")) {
@@ -12179,17 +13366,16 @@ function is(token, type) {
                     }
                 }
                 return tag;
-            } else if (is(token, "tag-close")) {
+            }
+            else if (is(token, "tag-close")) {
                 tag.selfClosing = token.value == '/>';
                 return tag;
             }
             tag.start.column += token.value.length;
         }
-
         return null;
     };
-
-    this._findEndTagInLine = function(session, row, tagName, startColumn) {
+    this._findEndTagInLine = function (session, row, tagName, startColumn) {
         var tokens = session.getTokens(row);
         var column = 0;
         for (var i = 0; i < tokens.length; i++) {
@@ -12205,174 +13391,37 @@ function is(token, type) {
         }
         return false;
     };
-    this._readTagForward = function(iterator) {
-        var token = iterator.getCurrentToken();
-        if (!token)
-            return null;
-
-        var tag = new Tag();
-        do {
-            if (is(token, "tag-open")) {
-                tag.closing = is(token, "end-tag-open");
-                tag.start.row = iterator.getCurrentTokenRow();
-                tag.start.column = iterator.getCurrentTokenColumn();
-            } else if (is(token, "tag-name")) {
-                tag.tagName = token.value;
-            } else if (is(token, "tag-close")) {
-                tag.selfClosing = token.value == "/>";
-                tag.end.row = iterator.getCurrentTokenRow();
-                tag.end.column = iterator.getCurrentTokenColumn() + token.value.length;
-                iterator.stepForward();
-                return tag;
-            }
-        } while(token = iterator.stepForward());
-
-        return null;
-    };
-    
-    this._readTagBackward = function(iterator) {
-        var token = iterator.getCurrentToken();
-        if (!token)
-            return null;
-
-        var tag = new Tag();
-        do {
-            if (is(token, "tag-open")) {
-                tag.closing = is(token, "end-tag-open");
-                tag.start.row = iterator.getCurrentTokenRow();
-                tag.start.column = iterator.getCurrentTokenColumn();
-                iterator.stepBackward();
-                return tag;
-            } else if (is(token, "tag-name")) {
-                tag.tagName = token.value;
-            } else if (is(token, "tag-close")) {
-                tag.selfClosing = token.value == "/>";
-                tag.end.row = iterator.getCurrentTokenRow();
-                tag.end.column = iterator.getCurrentTokenColumn() + token.value.length;
-            }
-        } while(token = iterator.stepBackward());
-
-        return null;
-    };
-    
-    this._pop = function(stack, tag) {
-        while (stack.length) {
-            
-            var top = stack[stack.length-1];
-            if (!tag || top.tagName == tag.tagName) {
-                return stack.pop();
-            }
-            else if (this.optionalEndTags.hasOwnProperty(top.tagName)) {
-                stack.pop();
-                continue;
-            } else {
-                return null;
-            }
+    this.getFoldWidgetRange = function (session, foldStyle, row) {
+        var tags = session.getMatchingTags({ row: row, column: 0 });
+        if (tags) {
+            return new Range(tags.openTag.end.row, tags.openTag.end.column, tags.closeTag.start.row, tags.closeTag.start.column);
         }
-    };
-    
-    this.getFoldWidgetRange = function(session, foldStyle, row) {
-        var firstTag = this._getFirstTagInLine(session, row);
-        
-        if (!firstTag) {
+        else {
             return this.getCommentFoldWidget(session, row)
                 && session.getCommentFoldRange(row, session.getLine(row).length);
         }
-        
-        var isBackward = firstTag.closing || firstTag.selfClosing;
-        var stack = [];
-        var tag;
-        
-        if (!isBackward) {
-            var iterator = new TokenIterator(session, row, firstTag.start.column);
-            var start = {
-                row: row,
-                column: firstTag.start.column + firstTag.tagName.length + 2
-            };
-            if (firstTag.start.row == firstTag.end.row)
-                start.column = firstTag.end.column;
-            while (tag = this._readTagForward(iterator)) {
-                if (tag.selfClosing) {
-                    if (!stack.length) {
-                        tag.start.column += tag.tagName.length + 2;
-                        tag.end.column -= 2;
-                        return Range.fromPoints(tag.start, tag.end);
-                    } else
-                        continue;
-                }
-                
-                if (tag.closing) {
-                    this._pop(stack, tag);
-                    if (stack.length == 0)
-                        return Range.fromPoints(start, tag.start);
-                }
-                else {
-                    stack.push(tag);
-                }
-            }
-        }
-        else {
-            var iterator = new TokenIterator(session, row, firstTag.end.column);
-            var end = {
-                row: row,
-                column: firstTag.start.column
-            };
-            
-            while (tag = this._readTagBackward(iterator)) {
-                if (tag.selfClosing) {
-                    if (!stack.length) {
-                        tag.start.column += tag.tagName.length + 2;
-                        tag.end.column -= 2;
-                        return Range.fromPoints(tag.start, tag.end);
-                    } else
-                        continue;
-                }
-                
-                if (!tag.closing) {
-                    this._pop(stack, tag);
-                    if (stack.length == 0) {
-                        tag.start.column += tag.tagName.length + 2;
-                        if (tag.start.row == tag.end.row && tag.start.column < tag.end.column)
-                            tag.start.column = tag.end.column;
-                        return Range.fromPoints(tag.start, end);
-                    }
-                }
-                else {
-                    stack.push(tag);
-                }
-            }
-        }
-        
     };
-
 }).call(FoldMode.prototype);
 
 });
 
-ace.define("ace/mode/folding/html",["require","exports","module","ace/lib/oop","ace/mode/folding/mixed","ace/mode/folding/xml","ace/mode/folding/cstyle"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/folding/html",["require","exports","module","ace/lib/oop","ace/mode/folding/mixed","ace/mode/folding/xml","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../../lib/oop");
 var MixedFoldMode = require("./mixed").FoldMode;
 var XmlFoldMode = require("./xml").FoldMode;
 var CStyleFoldMode = require("./cstyle").FoldMode;
-
-var FoldMode = exports.FoldMode = function(voidElements, optionalTags) {
+var FoldMode = exports.FoldMode = function (voidElements, optionalTags) {
     MixedFoldMode.call(this, new XmlFoldMode(voidElements, optionalTags), {
         "js-": new CStyleFoldMode(),
         "css-": new CStyleFoldMode()
     });
 };
-
 oop.inherits(FoldMode, MixedFoldMode);
 
 });
 
-ace.define("ace/mode/html_completions",["require","exports","module","ace/token_iterator"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/html_completions",["require","exports","module","ace/token_iterator"], function(require, exports, module){"use strict";
 var TokenIterator = require("../token_iterator").TokenIterator;
-
 var commonAttributes = [
     "accesskey",
     "class",
@@ -12396,7 +13445,6 @@ var commonAttributes = [
     "title",
     "translate"
 ];
-
 var eventAttributes = [
     "onabort",
     "onblur",
@@ -12454,49 +13502,47 @@ var eventAttributes = [
     "onvolumechange",
     "onwaiting"
 ];
-
 var globalAttributes = commonAttributes.concat(eventAttributes);
-
 var attributeMap = {
-    "a": {"href": 1, "target": {"_blank": 1, "top": 1}, "ping": 1, "rel": {"nofollow": 1, "alternate": 1, "author": 1, "bookmark": 1, "help": 1, "license": 1, "next": 1, "noreferrer": 1, "prefetch": 1, "prev": 1, "search": 1, "tag": 1}, "media": 1, "hreflang": 1, "type": 1},
+    "a": { "href": 1, "target": { "_blank": 1, "top": 1 }, "ping": 1, "rel": { "nofollow": 1, "alternate": 1, "author": 1, "bookmark": 1, "help": 1, "license": 1, "next": 1, "noreferrer": 1, "prefetch": 1, "prev": 1, "search": 1, "tag": 1 }, "media": 1, "hreflang": 1, "type": 1 },
     "abbr": {},
     "address": {},
-    "area": {"shape": 1, "coords": 1, "href": 1, "hreflang": 1, "alt": 1, "target": 1, "media": 1, "rel": 1, "ping": 1, "type": 1},
-    "article": {"pubdate": 1},
+    "area": { "shape": 1, "coords": 1, "href": 1, "hreflang": 1, "alt": 1, "target": 1, "media": 1, "rel": 1, "ping": 1, "type": 1 },
+    "article": { "pubdate": 1 },
     "aside": {},
-    "audio": {"src": 1, "autobuffer": 1, "autoplay": {"autoplay": 1}, "loop": {"loop": 1}, "controls": {"controls": 1}, "muted": {"muted": 1}, "preload": {"auto": 1, "metadata": 1, "none": 1 }},
+    "audio": { "src": 1, "autobuffer": 1, "autoplay": { "autoplay": 1 }, "loop": { "loop": 1 }, "controls": { "controls": 1 }, "muted": { "muted": 1 }, "preload": { "auto": 1, "metadata": 1, "none": 1 } },
     "b": {},
-    "base": {"href": 1, "target": 1},
+    "base": { "href": 1, "target": 1 },
     "bdi": {},
     "bdo": {},
-    "blockquote": {"cite": 1},
-    "body": {"onafterprint": 1, "onbeforeprint": 1, "onbeforeunload": 1, "onhashchange": 1, "onmessage": 1, "onoffline": 1, "onpopstate": 1, "onredo": 1, "onresize": 1, "onstorage": 1, "onundo": 1, "onunload": 1},
+    "blockquote": { "cite": 1 },
+    "body": { "onafterprint": 1, "onbeforeprint": 1, "onbeforeunload": 1, "onhashchange": 1, "onmessage": 1, "onoffline": 1, "onpopstate": 1, "onredo": 1, "onresize": 1, "onstorage": 1, "onundo": 1, "onunload": 1 },
     "br": {},
-    "button": {"autofocus": 1, "disabled": {"disabled": 1}, "form": 1, "formaction": 1, "formenctype": 1, "formmethod": 1, "formnovalidate": 1, "formtarget": 1, "name": 1, "value": 1, "type": {"button": 1, "submit": 1}},
-    "canvas": {"width": 1, "height": 1},
+    "button": { "autofocus": 1, "disabled": { "disabled": 1 }, "form": 1, "formaction": 1, "formenctype": 1, "formmethod": 1, "formnovalidate": 1, "formtarget": 1, "name": 1, "value": 1, "type": { "button": 1, "submit": 1 } },
+    "canvas": { "width": 1, "height": 1 },
     "caption": {},
     "cite": {},
     "code": {},
-    "col": {"span": 1},
-    "colgroup": {"span": 1},
-    "command": {"type": 1, "label": 1, "icon": 1, "disabled": 1, "checked": 1, "radiogroup": 1, "command": 1},
+    "col": { "span": 1 },
+    "colgroup": { "span": 1 },
+    "command": { "type": 1, "label": 1, "icon": 1, "disabled": 1, "checked": 1, "radiogroup": 1, "command": 1 },
     "data": {},
     "datalist": {},
     "dd": {},
-    "del": {"cite": 1, "datetime": 1},
-    "details": {"open": 1},
+    "del": { "cite": 1, "datetime": 1 },
+    "details": { "open": 1 },
     "dfn": {},
-    "dialog": {"open": 1},
+    "dialog": { "open": 1 },
     "div": {},
     "dl": {},
     "dt": {},
     "em": {},
-    "embed": {"src": 1, "height": 1, "width": 1, "type": 1},
-    "fieldset": {"disabled": 1, "form": 1, "name": 1},
+    "embed": { "src": 1, "height": 1, "width": 1, "type": 1 },
+    "fieldset": { "disabled": 1, "form": 1, "name": 1 },
     "figcaption": {},
     "figure": {},
     "footer": {},
-    "form": {"accept-charset": 1, "action": 1, "autocomplete": 1, "enctype": {"multipart/form-data": 1, "application/x-www-form-urlencoded": 1}, "method": {"get": 1, "post": 1}, "name": 1, "novalidate": 1, "target": {"_blank": 1, "top": 1}},
+    "form": { "accept-charset": 1, "action": 1, "autocomplete": 1, "enctype": { "multipart/form-data": 1, "application/x-www-form-urlencoded": 1 }, "method": { "get": 1, "post": 1 }, "name": 1, "novalidate": 1, "target": { "_blank": 1, "top": 1 } },
     "h1": {},
     "h2": {},
     "h3": {},
@@ -12506,109 +13552,101 @@ var attributeMap = {
     "head": {},
     "header": {},
     "hr": {},
-    "html": {"manifest": 1},
+    "html": { "manifest": 1 },
     "i": {},
-    "iframe": {"name": 1, "src": 1, "height": 1, "width": 1, "sandbox": {"allow-same-origin": 1, "allow-top-navigation": 1, "allow-forms": 1, "allow-scripts": 1}, "seamless": {"seamless": 1}},
-    "img": {"alt": 1, "src": 1, "height": 1, "width": 1, "usemap": 1, "ismap": 1},
+    "iframe": { "name": 1, "src": 1, "height": 1, "width": 1, "sandbox": { "allow-same-origin": 1, "allow-top-navigation": 1, "allow-forms": 1, "allow-scripts": 1 }, "seamless": { "seamless": 1 } },
+    "img": { "alt": 1, "src": 1, "height": 1, "width": 1, "usemap": 1, "ismap": 1 },
     "input": {
-        "type": {"text": 1, "password": 1, "hidden": 1, "checkbox": 1, "submit": 1, "radio": 1, "file": 1, "button": 1, "reset": 1, "image": 31, "color": 1, "date": 1, "datetime": 1, "datetime-local": 1, "email": 1, "month": 1, "number": 1, "range": 1, "search": 1, "tel": 1, "time": 1, "url": 1, "week": 1},
-        "accept": 1, "alt": 1, "autocomplete": {"on": 1, "off": 1}, "autofocus": {"autofocus": 1}, "checked": {"checked": 1}, "disabled": {"disabled": 1}, "form": 1, "formaction": 1, "formenctype": {"application/x-www-form-urlencoded": 1, "multipart/form-data": 1, "text/plain": 1}, "formmethod": {"get": 1, "post": 1}, "formnovalidate": {"formnovalidate": 1}, "formtarget": {"_blank": 1, "_self": 1, "_parent": 1, "_top": 1}, "height": 1, "list": 1, "max": 1, "maxlength": 1, "min": 1, "multiple": {"multiple": 1}, "name": 1, "pattern": 1, "placeholder": 1, "readonly": {"readonly": 1}, "required": {"required": 1}, "size": 1, "src": 1, "step": 1, "width": 1, "files": 1, "value": 1},
-    "ins": {"cite": 1, "datetime": 1},
+        "type": { "text": 1, "password": 1, "hidden": 1, "checkbox": 1, "submit": 1, "radio": 1, "file": 1, "button": 1, "reset": 1, "image": 31, "color": 1, "date": 1, "datetime": 1, "datetime-local": 1, "email": 1, "month": 1, "number": 1, "range": 1, "search": 1, "tel": 1, "time": 1, "url": 1, "week": 1 },
+        "accept": 1, "alt": 1, "autocomplete": { "on": 1, "off": 1 }, "autofocus": { "autofocus": 1 }, "checked": { "checked": 1 }, "disabled": { "disabled": 1 }, "form": 1, "formaction": 1, "formenctype": { "application/x-www-form-urlencoded": 1, "multipart/form-data": 1, "text/plain": 1 }, "formmethod": { "get": 1, "post": 1 }, "formnovalidate": { "formnovalidate": 1 }, "formtarget": { "_blank": 1, "_self": 1, "_parent": 1, "_top": 1 }, "height": 1, "list": 1, "max": 1, "maxlength": 1, "min": 1, "multiple": { "multiple": 1 }, "name": 1, "pattern": 1, "placeholder": 1, "readonly": { "readonly": 1 }, "required": { "required": 1 }, "size": 1, "src": 1, "step": 1, "width": 1, "files": 1, "value": 1
+    },
+    "ins": { "cite": 1, "datetime": 1 },
     "kbd": {},
-    "keygen": {"autofocus": 1, "challenge": {"challenge": 1}, "disabled": {"disabled": 1}, "form": 1, "keytype": {"rsa": 1, "dsa": 1, "ec": 1}, "name": 1},
-    "label": {"form": 1, "for": 1},
+    "keygen": { "autofocus": 1, "challenge": { "challenge": 1 }, "disabled": { "disabled": 1 }, "form": 1, "keytype": { "rsa": 1, "dsa": 1, "ec": 1 }, "name": 1 },
+    "label": { "form": 1, "for": 1 },
     "legend": {},
-    "li": {"value": 1},
-    "link": {"href": 1, "hreflang": 1, "rel": {"stylesheet": 1, "icon": 1}, "media": {"all": 1, "screen": 1, "print": 1}, "type": {"text/css": 1, "image/png": 1, "image/jpeg": 1, "image/gif": 1}, "sizes": 1},
+    "li": { "value": 1 },
+    "link": { "href": 1, "hreflang": 1, "rel": { "stylesheet": 1, "icon": 1 }, "media": { "all": 1, "screen": 1, "print": 1 }, "type": { "text/css": 1, "image/png": 1, "image/jpeg": 1, "image/gif": 1 }, "sizes": 1 },
     "main": {},
-    "map": {"name": 1},
+    "map": { "name": 1 },
     "mark": {},
     "math": {},
-    "menu": {"type": 1, "label": 1},
-    "meta": {"http-equiv": {"content-type": 1}, "name": {"description": 1, "keywords": 1}, "content": {"text/html; charset=UTF-8": 1}, "charset": 1},
-    "meter": {"value": 1, "min": 1, "max": 1, "low": 1, "high": 1, "optimum": 1},
+    "menu": { "type": 1, "label": 1 },
+    "meta": { "http-equiv": { "content-type": 1 }, "name": { "description": 1, "keywords": 1 }, "content": { "text/html; charset=UTF-8": 1 }, "charset": 1 },
+    "meter": { "value": 1, "min": 1, "max": 1, "low": 1, "high": 1, "optimum": 1 },
     "nav": {},
-    "noscript": {"href": 1},
-    "object": {"param": 1, "data": 1, "type": 1, "height" : 1, "width": 1, "usemap": 1, "name": 1, "form": 1, "classid": 1},
-    "ol": {"start": 1, "reversed": 1},
-    "optgroup": {"disabled": 1, "label": 1},
-    "option": {"disabled": 1, "selected": 1, "label": 1, "value": 1},
-    "output": {"for": 1, "form": 1, "name": 1},
+    "noscript": { "href": 1 },
+    "object": { "param": 1, "data": 1, "type": 1, "height": 1, "width": 1, "usemap": 1, "name": 1, "form": 1, "classid": 1 },
+    "ol": { "start": 1, "reversed": 1 },
+    "optgroup": { "disabled": 1, "label": 1 },
+    "option": { "disabled": 1, "selected": 1, "label": 1, "value": 1 },
+    "output": { "for": 1, "form": 1, "name": 1 },
     "p": {},
-    "param": {"name": 1, "value": 1},
+    "param": { "name": 1, "value": 1 },
     "pre": {},
-    "progress": {"value": 1, "max": 1},
-    "q": {"cite": 1},
+    "progress": { "value": 1, "max": 1 },
+    "q": { "cite": 1 },
     "rp": {},
     "rt": {},
     "ruby": {},
     "s": {},
     "samp": {},
-    "script": {"charset": 1, "type": {"text/javascript": 1}, "src": 1, "defer": 1, "async": 1},
-    "select": {"autofocus": 1, "disabled": 1, "form": 1, "multiple": {"multiple": 1}, "name": 1, "size": 1, "readonly":{"readonly": 1}},
+    "script": { "charset": 1, "type": { "text/javascript": 1 }, "src": 1, "defer": 1, "async": 1 },
+    "select": { "autofocus": 1, "disabled": 1, "form": 1, "multiple": { "multiple": 1 }, "name": 1, "size": 1, "readonly": { "readonly": 1 } },
     "small": {},
-    "source": {"src": 1, "type": 1, "media": 1},
+    "source": { "src": 1, "type": 1, "media": 1 },
     "span": {},
     "strong": {},
-    "style": {"type": 1, "media": {"all": 1, "screen": 1, "print": 1}, "scoped": 1},
+    "style": { "type": 1, "media": { "all": 1, "screen": 1, "print": 1 }, "scoped": 1 },
     "sub": {},
     "sup": {},
     "svg": {},
-    "table": {"summary": 1},
+    "table": { "summary": 1 },
     "tbody": {},
-    "td": {"headers": 1, "rowspan": 1, "colspan": 1},
-    "textarea": {"autofocus": {"autofocus": 1}, "disabled": {"disabled": 1}, "form": 1, "maxlength": 1, "name": 1, "placeholder": 1, "readonly": {"readonly": 1}, "required": {"required": 1}, "rows": 1, "cols": 1, "wrap": {"on": 1, "off": 1, "hard": 1, "soft": 1}},
+    "td": { "headers": 1, "rowspan": 1, "colspan": 1 },
+    "textarea": { "autofocus": { "autofocus": 1 }, "disabled": { "disabled": 1 }, "form": 1, "maxlength": 1, "name": 1, "placeholder": 1, "readonly": { "readonly": 1 }, "required": { "required": 1 }, "rows": 1, "cols": 1, "wrap": { "on": 1, "off": 1, "hard": 1, "soft": 1 } },
     "tfoot": {},
-    "th": {"headers": 1, "rowspan": 1, "colspan": 1, "scope": 1},
+    "th": { "headers": 1, "rowspan": 1, "colspan": 1, "scope": 1 },
     "thead": {},
-    "time": {"datetime": 1},
+    "time": { "datetime": 1 },
     "title": {},
     "tr": {},
-    "track": {"kind": 1, "src": 1, "srclang": 1, "label": 1, "default": 1},
+    "track": { "kind": 1, "src": 1, "srclang": 1, "label": 1, "default": 1 },
     "section": {},
     "summary": {},
     "u": {},
     "ul": {},
     "var": {},
-    "video": {"src": 1, "autobuffer": 1, "autoplay": {"autoplay": 1}, "loop": {"loop": 1}, "controls": {"controls": 1}, "width": 1, "height": 1, "poster": 1, "muted": {"muted": 1}, "preload": {"auto": 1, "metadata": 1, "none": 1}},
+    "video": { "src": 1, "autobuffer": 1, "autoplay": { "autoplay": 1 }, "loop": { "loop": 1 }, "controls": { "controls": 1 }, "width": 1, "height": 1, "poster": 1, "muted": { "muted": 1 }, "preload": { "auto": 1, "metadata": 1, "none": 1 } },
     "wbr": {}
 };
-
 var elements = Object.keys(attributeMap);
-
 function is(token, type) {
     return token.type.lastIndexOf(type + ".xml") > -1;
 }
-
 function findTagName(session, pos) {
     var iterator = new TokenIterator(session, pos.row, pos.column);
     var token = iterator.getCurrentToken();
-    while (token && !is(token, "tag-name")){
+    while (token && !is(token, "tag-name")) {
         token = iterator.stepBackward();
     }
     if (token)
         return token.value;
 }
-
 function findAttributeName(session, pos) {
     var iterator = new TokenIterator(session, pos.row, pos.column);
     var token = iterator.getCurrentToken();
-    while (token && !is(token, "attribute-name")){
+    while (token && !is(token, "attribute-name")) {
         token = iterator.stepBackward();
     }
     if (token)
         return token.value;
 }
-
-var HtmlCompletions = function() {
-
+var HtmlCompletions = function () {
 };
-
-(function() {
-
-    this.getCompletions = function(state, session, pos, prefix) {
+(function () {
+    this.getCompletions = function (state, session, pos, prefix) {
         var token = session.getTokenAt(pos.row, pos.column);
-
         if (!token)
             return [];
         if (is(token, "tag-name") || is(token, "tag-open") || is(token, "end-tag-open"))
@@ -12620,12 +13658,10 @@ var HtmlCompletions = function() {
         var line = session.getLine(pos.row).substr(0, pos.column);
         if (/&[a-z]*$/i.test(line))
             return this.getHTMLEntityCompletions(state, session, pos, prefix);
-
         return [];
     };
-
-    this.getTagCompletions = function(state, session, pos, prefix) {
-        return elements.map(function(element){
+    this.getTagCompletions = function (state, session, pos, prefix) {
+        return elements.map(function (element) {
             return {
                 value: element,
                 meta: "tag",
@@ -12633,8 +13669,7 @@ var HtmlCompletions = function() {
             };
         });
     };
-
-    this.getAttributeCompletions = function(state, session, pos, prefix) {
+    this.getAttributeCompletions = function (state, session, pos, prefix) {
         var tagName = findTagName(session, pos);
         if (!tagName)
             return [];
@@ -12642,7 +13677,7 @@ var HtmlCompletions = function() {
         if (tagName in attributeMap) {
             attributes = attributes.concat(Object.keys(attributeMap[tagName]));
         }
-        return attributes.map(function(attribute){
+        return attributes.map(function (attribute) {
             return {
                 caption: attribute,
                 snippet: attribute + '="$0"',
@@ -12651,18 +13686,16 @@ var HtmlCompletions = function() {
             };
         });
     };
-
-    this.getAttributeValueCompletions = function(state, session, pos, prefix) {
+    this.getAttributeValueCompletions = function (state, session, pos, prefix) {
         var tagName = findTagName(session, pos);
         var attributeName = findAttributeName(session, pos);
-        
         if (!tagName)
             return [];
         var values = [];
         if (tagName in attributeMap && attributeName in attributeMap[tagName] && typeof attributeMap[tagName][attributeName] === "object") {
             values = Object.keys(attributeMap[tagName][attributeName]);
         }
-        return values.map(function(value){
+        return values.map(function (value) {
             return {
                 caption: value,
                 snippet: value,
@@ -12671,11 +13704,9 @@ var HtmlCompletions = function() {
             };
         });
     };
-
-    this.getHTMLEntityCompletions = function(state, session, pos, prefix) {
+    this.getHTMLEntityCompletions = function (state, session, pos, prefix) {
         var values = ['Aacute;', 'aacute;', 'Acirc;', 'acirc;', 'acute;', 'AElig;', 'aelig;', 'Agrave;', 'agrave;', 'alefsym;', 'Alpha;', 'alpha;', 'amp;', 'and;', 'ang;', 'Aring;', 'aring;', 'asymp;', 'Atilde;', 'atilde;', 'Auml;', 'auml;', 'bdquo;', 'Beta;', 'beta;', 'brvbar;', 'bull;', 'cap;', 'Ccedil;', 'ccedil;', 'cedil;', 'cent;', 'Chi;', 'chi;', 'circ;', 'clubs;', 'cong;', 'copy;', 'crarr;', 'cup;', 'curren;', 'Dagger;', 'dagger;', 'dArr;', 'darr;', 'deg;', 'Delta;', 'delta;', 'diams;', 'divide;', 'Eacute;', 'eacute;', 'Ecirc;', 'ecirc;', 'Egrave;', 'egrave;', 'empty;', 'emsp;', 'ensp;', 'Epsilon;', 'epsilon;', 'equiv;', 'Eta;', 'eta;', 'ETH;', 'eth;', 'Euml;', 'euml;', 'euro;', 'exist;', 'fnof;', 'forall;', 'frac12;', 'frac14;', 'frac34;', 'frasl;', 'Gamma;', 'gamma;', 'ge;', 'gt;', 'hArr;', 'harr;', 'hearts;', 'hellip;', 'Iacute;', 'iacute;', 'Icirc;', 'icirc;', 'iexcl;', 'Igrave;', 'igrave;', 'image;', 'infin;', 'int;', 'Iota;', 'iota;', 'iquest;', 'isin;', 'Iuml;', 'iuml;', 'Kappa;', 'kappa;', 'Lambda;', 'lambda;', 'lang;', 'laquo;', 'lArr;', 'larr;', 'lceil;', 'ldquo;', 'le;', 'lfloor;', 'lowast;', 'loz;', 'lrm;', 'lsaquo;', 'lsquo;', 'lt;', 'macr;', 'mdash;', 'micro;', 'middot;', 'minus;', 'Mu;', 'mu;', 'nabla;', 'nbsp;', 'ndash;', 'ne;', 'ni;', 'not;', 'notin;', 'nsub;', 'Ntilde;', 'ntilde;', 'Nu;', 'nu;', 'Oacute;', 'oacute;', 'Ocirc;', 'ocirc;', 'OElig;', 'oelig;', 'Ograve;', 'ograve;', 'oline;', 'Omega;', 'omega;', 'Omicron;', 'omicron;', 'oplus;', 'or;', 'ordf;', 'ordm;', 'Oslash;', 'oslash;', 'Otilde;', 'otilde;', 'otimes;', 'Ouml;', 'ouml;', 'para;', 'part;', 'permil;', 'perp;', 'Phi;', 'phi;', 'Pi;', 'pi;', 'piv;', 'plusmn;', 'pound;', 'Prime;', 'prime;', 'prod;', 'prop;', 'Psi;', 'psi;', 'quot;', 'radic;', 'rang;', 'raquo;', 'rArr;', 'rarr;', 'rceil;', 'rdquo;', 'real;', 'reg;', 'rfloor;', 'Rho;', 'rho;', 'rlm;', 'rsaquo;', 'rsquo;', 'sbquo;', 'Scaron;', 'scaron;', 'sdot;', 'sect;', 'shy;', 'Sigma;', 'sigma;', 'sigmaf;', 'sim;', 'spades;', 'sub;', 'sube;', 'sum;', 'sup;', 'sup1;', 'sup2;', 'sup3;', 'supe;', 'szlig;', 'Tau;', 'tau;', 'there4;', 'Theta;', 'theta;', 'thetasym;', 'thinsp;', 'THORN;', 'thorn;', 'tilde;', 'times;', 'trade;', 'Uacute;', 'uacute;', 'uArr;', 'uarr;', 'Ucirc;', 'ucirc;', 'Ugrave;', 'ugrave;', 'uml;', 'upsih;', 'Upsilon;', 'upsilon;', 'Uuml;', 'uuml;', 'weierp;', 'Xi;', 'xi;', 'Yacute;', 'yacute;', 'yen;', 'Yuml;', 'yuml;', 'Zeta;', 'zeta;', 'zwj;', 'zwnj;'];
-
-        return values.map(function(value){
+        return values.map(function (value) {
             return {
                 caption: value,
                 snippet: value,
@@ -12684,15 +13715,12 @@ var HtmlCompletions = function() {
             };
         });
     };
-
 }).call(HtmlCompletions.prototype);
-
 exports.HtmlCompletions = HtmlCompletions;
+
 });
 
-ace.define("ace/mode/html",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text","ace/mode/javascript","ace/mode/css","ace/mode/html_highlight_rules","ace/mode/behaviour/xml","ace/mode/folding/html","ace/mode/html_completions","ace/worker/worker_client"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/html",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text","ace/mode/javascript","ace/mode/css","ace/mode/html_highlight_rules","ace/mode/behaviour/xml","ace/mode/folding/html","ace/mode/html_completions","ace/worker/worker_client"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var TextMode = require("./text").Mode;
@@ -12705,118 +13733,93 @@ var HtmlCompletions = require("./html_completions").HtmlCompletions;
 var WorkerClient = require("../worker/worker_client").WorkerClient;
 var voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "menuitem", "param", "source", "track", "wbr"];
 var optionalEndTags = ["li", "dt", "dd", "p", "rt", "rp", "optgroup", "option", "colgroup", "td", "th"];
-
-var Mode = function(options) {
+var Mode = function (options) {
     this.fragmentContext = options && options.fragmentContext;
     this.HighlightRules = HtmlHighlightRules;
     this.$behaviour = new XmlBehaviour();
     this.$completer = new HtmlCompletions();
-    
     this.createModeDelegates({
         "js-": JavaScriptMode,
         "css-": CssMode
     });
-    
     this.foldingRules = new HtmlFoldMode(this.voidElements, lang.arrayToMap(optionalEndTags));
 };
 oop.inherits(Mode, TextMode);
-
-(function() {
-
-    this.blockComment = {start: "<!--", end: "-->"};
-
+(function () {
+    this.blockComment = { start: "<!--", end: "-->" };
     this.voidElements = lang.arrayToMap(voidElements);
-
-    this.getNextLineIndent = function(state, line, tab) {
+    this.getNextLineIndent = function (state, line, tab) {
         return this.$getIndent(line);
     };
-
-    this.checkOutdent = function(state, line, input) {
+    this.checkOutdent = function (state, line, input) {
         return false;
     };
-
-    this.getCompletions = function(state, session, pos, prefix) {
+    this.getCompletions = function (state, session, pos, prefix) {
         return this.$completer.getCompletions(state, session, pos, prefix);
     };
-
-    this.createWorker = function(session) {
+    this.createWorker = function (session) {
         if (this.constructor != Mode)
             return;
         var worker = new WorkerClient(["ace"], "ace/mode/html_worker", "Worker");
         worker.attachToDocument(session.getDocument());
-
         if (this.fragmentContext)
-            worker.call("setOptions", [{context: this.fragmentContext}]);
-
-        worker.on("error", function(e) {
+            worker.call("setOptions", [{ context: this.fragmentContext }]);
+        worker.on("error", function (e) {
             session.setAnnotations(e.data);
         });
-
-        worker.on("terminate", function() {
+        worker.on("terminate", function () {
             session.clearAnnotations();
         });
-
         return worker;
     };
-
     this.$id = "ace/mode/html";
+    this.snippetFileId = "ace/snippets/html";
 }).call(Mode.prototype);
-
 exports.Mode = Mode;
+
 });
 
-ace.define("ace/mode/php",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/php_highlight_rules","ace/mode/php_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/worker/worker_client","ace/mode/php_completions","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle","ace/unicode","ace/mode/html","ace/mode/javascript","ace/mode/css"], function(require, exports, module) {
-"use strict";
-
+ace.define("ace/mode/php",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/php_highlight_rules","ace/mode/php_highlight_rules","ace/mode/matching_brace_outdent","ace/worker/worker_client","ace/mode/php_completions","ace/mode/folding/cstyle","ace/unicode","ace/mode/html","ace/mode/javascript","ace/mode/css"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var PhpHighlightRules = require("./php_highlight_rules").PhpHighlightRules;
 var PhpLangHighlightRules = require("./php_highlight_rules").PhpLangHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var Range = require("../range").Range;
 var WorkerClient = require("../worker/worker_client").WorkerClient;
 var PhpCompletions = require("./php_completions").PhpCompletions;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var unicode = require("../unicode");
 var HtmlMode = require("./html").Mode;
 var JavaScriptMode = require("./javascript").Mode;
 var CssMode = require("./css").Mode;
-
-var PhpMode = function(opts) {
+var PhpMode = function (opts) {
     this.HighlightRules = PhpLangHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.$completer = new PhpCompletions();
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(PhpMode, TextMode);
-
-(function() {
-
+(function () {
     this.tokenRe = new RegExp("^[" + unicode.wordChars + "_]+", "g");
     this.nonTokenRe = new RegExp("^(?:[^" + unicode.wordChars + "_]|\\s])+", "g");
-
     this.lineCommentStart = ["//", "#"];
-    this.blockComment = {start: "/*", end: "*/"};
-
-    this.getNextLineIndent = function(state, line, tab) {
+    this.blockComment = { start: "/*", end: "*/" };
+    this.getNextLineIndent = function (state, line, tab) {
         var indent = this.$getIndent(line);
-
         var tokenizedLine = this.getTokenizer().getLineTokens(line, state);
         var tokens = tokenizedLine.tokens;
         var endState = tokenizedLine.state;
-
-        if (tokens.length && tokens[tokens.length-1].type == "comment") {
+        if (tokens.length && tokens[tokens.length - 1].type == "comment") {
             return indent;
         }
-
         if (state == "start") {
             var match = line.match(/^.*[\{\(\[:]\s*$/);
             if (match) {
                 indent += tab;
             }
-        } else if (state == "doc-start") {
+        }
+        else if (state == "doc-start") {
             if (endState != "doc-start") {
                 return "";
             }
@@ -12828,26 +13831,20 @@ oop.inherits(PhpMode, TextMode);
                 indent += "* ";
             }
         }
-
         return indent;
     };
-
-    this.checkOutdent = function(state, line, input) {
+    this.checkOutdent = function (state, line, input) {
         return this.$outdent.checkOutdent(line, input);
     };
-
-    this.autoOutdent = function(state, doc, row) {
+    this.autoOutdent = function (state, doc, row) {
         this.$outdent.autoOutdent(doc, row);
     };
-
-    this.getCompletions = function(state, session, pos, prefix) {
+    this.getCompletions = function (state, session, pos, prefix) {
         return this.$completer.getCompletions(state, session, pos, prefix);
     };
-
     this.$id = "ace/mode/php-inline";
 }).call(PhpMode.prototype);
-
-var Mode = function(opts) {
+var Mode = function (opts) {
     if (opts && opts.inline) {
         var mode = new PhpMode();
         mode.createWorker = this.createWorker;
@@ -12864,31 +13861,25 @@ var Mode = function(opts) {
     this.foldingRules.subModes["php-"] = new CStyleFoldMode();
 };
 oop.inherits(Mode, HtmlMode);
-
-(function() {
-
-    this.createWorker = function(session) {
+(function () {
+    this.createWorker = function (session) {
         var worker = new WorkerClient(["ace"], "ace/mode/php_worker", "PhpWorker");
         worker.attachToDocument(session.getDocument());
-
         if (this.inlinePhp)
-            worker.call("setOptions", [{inline: true}]);
-
-        worker.on("annotate", function(e) {
+            worker.call("setOptions", [{ inline: true }]);
+        worker.on("annotate", function (e) {
             session.setAnnotations(e.data);
         });
-
-        worker.on("terminate", function() {
+        worker.on("terminate", function () {
             session.clearAnnotations();
         });
-
         return worker;
     };
-
     this.$id = "ace/mode/php";
+    this.snippetFileId = "ace/snippets/php";
 }).call(Mode.prototype);
-
 exports.Mode = Mode;
+
 });                (function() {
                     ace.require(["ace/mode/php"], function(m) {
                         if (typeof module == "object" && typeof exports == "object" && module) {
