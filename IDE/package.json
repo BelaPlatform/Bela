@@ -32,7 +32,7 @@
     "gulp-replace": "^0.6.1",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^5.0.1",
-    "mocha": "^5.1.1",
+    "mocha": "^10.2.0",
     "mock-fs": "^4.5.0",
     "sinon": "^5.0.7",
     "typescript": "^2.8.3"
