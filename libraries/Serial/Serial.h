@@ -40,6 +40,10 @@ public:
 	 */
 	int write(const char* buf, size_t len = -1);
 	/**
+	 * Get the number of bytes available to read.
+	 */
+	int available();
+	/**
 	 * Close the device.
 	 */
 	void cleanup();

@@ -189,5 +189,17 @@ int Serial::write(const char* buf, size_t len) {
 	return ret;
 }
 
+#include <sys/ioctl.h>
+
+int Serial::available()
+{
+	int bytes_avail;
+	int err = ioctl(fd, FIONREAD, &bytes_avail);
+	if(err)
+		return -err;
+	else
+		return bytes_avail;
+}
+
 void Serial::cleanup() { close(fd); }
 
