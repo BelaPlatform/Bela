@@ -32,7 +32,7 @@
 #undef BELA_LIBPD_SYSTEM_THREADED
 #endif // BELA_LIBPD_DISABLE_SYSTEM_THREADD
 
-//#define PD_THREADED_IO
+#define PD_THREADED_IO
 #include <libraries/libpd/libpd.h>
 #include <DigitalChannelManager.h>
 #include <stdio.h>
