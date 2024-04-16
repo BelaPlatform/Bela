@@ -7,7 +7,7 @@
 http://bela.io
 */
 /**
-\example Audio/convolution/render.cpp
+\example Audio/convolver/render.cpp
 
 Convolve a signal with an impulse response.
 ==========================================
