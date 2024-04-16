@@ -7,7 +7,7 @@
 http://bela.io
 */
 /**
-\example Audio/telephone-fiter/render.cpp
+\example Audio/telephone-filter/render.cpp
 
 Telephone filter
 ================

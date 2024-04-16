@@ -14,7 +14,7 @@ Mutichannel File Player
 
 This example streams a multi-channel wav file to its respective audio outputs.
 
-The example is essentially the same as \example Audio/sample-streamer as the AudioFile library
+The example is essentially the same as \ref Audio/sample-streamer/render.cpp as the AudioFile library
 can handle an arbitrary number of channels and it has been added to serve as ane example
 for multichannel files.
 
@@ -22,7 +22,8 @@ The provided wav file is an 8-channel wav with different detuned oscillators tha
 at different rates. Each oscillator is assigned to a different channel.
 
 If WALK_CHANNELS is defined then channels on the file will be played one by one independenty for each playback cycle.
-**/
+*/
+
 #include <Bela.h>
 #include <libraries/AudioFile/AudioFile.h>
 #include <vector>
