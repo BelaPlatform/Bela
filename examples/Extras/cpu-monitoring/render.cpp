@@ -7,7 +7,7 @@
 http://bela.io
 */
 /**
-\example Extra/cpu-monitoring/render.cpp
+\example Extras/cpu-monitoring/render.cpp
 
 Monitor the CPU usage of your code
 ---------------------------
