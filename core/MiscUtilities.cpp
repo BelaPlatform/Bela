@@ -25,7 +25,8 @@ std::vector<std::string> split(const std::string& s, char delimiter, bool remove
 			// in the final token
 			std::stringstream left;
 			left << tokenStream.rdbuf();
-			tokens.push_back(left.str());
+			if(left.str().size())
+				tokens.push_back(left.str());
 			break;
 		}
 	}
