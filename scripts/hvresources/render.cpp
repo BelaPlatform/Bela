@@ -566,7 +566,7 @@ static void sendHook(
 							value = 0;
 						if(Trill::prescalerMax < value)
 							value = Trill::prescalerMax;
-						rt_fprintf(stderr, "bela_setTrill prescaler value out of range, clipping to %u\n", value);
+						rt_fprintf(stderr, "bela_setTrill prescaler value out of range, clipping to %.0f\n", value);
 					}
 					gTouchSensors[idx].second->setPrescaler(value);
 				}
