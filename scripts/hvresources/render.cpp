@@ -646,7 +646,7 @@ bool setup(BelaContext *context, void *userData)	{
 	hvMidiHashes[kmmPitchBend] = hv_stringToHash("__hv_bendin");
 #endif // BELA_HV_MIDI
 
-	gHeavyContext = hv_bela_new_with_options(context->audioSampleRate, 10, 2, 0);
+	gHeavyContext = hv_bela_new_with_options(context->audioSampleRate, 1000, 200, 0);
 
 	gHvInputChannels = hv_getNumInputChannels(gHeavyContext);
 	gHvOutputChannels = hv_getNumOutputChannels(gHeavyContext);
