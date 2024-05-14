@@ -36,6 +36,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #define BELA_HV_SCOPE
 #define BELA_HV_MIDI
 #define BELA_HV_TRILL
+#define BELA_HV_OSC
 
 #ifdef BELA_HV_DISABLE_SCOPE
 #undef BELA_HV_SCOPE
@@ -46,6 +47,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 #ifdef BELA_HV_DISABLE_TRILL
 #undef BELA_HV_TRILL
 #endif // BELA_HV_DISABLE_TRILL
+#ifdef BELA_HV_DISABLE_OSC
+#undef BELA_HV_OSC
+#endif // BELA_HV_DISABLE_OSC
 
 enum { minFirstDigitalChannel = 10 };
 
@@ -185,6 +189,51 @@ void readTouchSensors(void*)
 	}
 }
 #endif // BELA_HV_TRILL
+#ifdef BELA_HV_OSC
+#include <libraries/OscReceiver/OscReceiver.h>
+void oscCallback(oscpkt::Message* msg, const char* addr, void* arg)
+{
+	extern HeavyContextInterface *gHeavyContext;
+	if(!gHeavyContext)
+		return;
+	oscpkt::Message::ArgReader args = msg->arg();
+	// we send to hv the OSC path as the first argument, followed by the arguments
+	unsigned int numArgs = args.nbArgRemaining() + 1;
+	HvMessage* m = (HvMessage *)hv_alloca(hv_msg_getByteSize(numArgs));
+	hv_msg_init(m, numArgs, 0);
+	int i = 0;
+	float val = 0;;
+	std::string pattern = msg->addressPattern();
+	hv_msg_setSymbol(m, i++, pattern.c_str());
+	std::vector<std::string> strs(numArgs); // these need to be valid until hv_sendMessageToReceiver() is called
+	while(args.nbArgRemaining() && args.isOk() && i < numArgs)
+	{
+		if(args.isNumber())
+		{
+			float num;
+			args.popNumber(num);
+			hv_msg_setFloat(m, i++, num);
+			val = num;
+		} else if(args.isStr())
+		{
+			args.popStr(strs[i]);
+			hv_msg_setSymbol(m, i, strs[i].c_str());
+			i++;
+		} else {
+			// unsupported type (blob?). Skip
+			args.pop();
+		}
+	}
+	static auto oscHash = hv_stringToHash("osc-receiver");
+	bool success = false;
+	if(i)
+		success = hv_sendMessageToReceiver(gHeavyContext, oscHash, 0, m);
+	if(i != numArgs || !success)
+		fprintf(stderr, "oscCallback \"%s\" processed %d of %d arguments, %s\n", msg->addressPattern().c_str(), i - 1, numArgs - 1, success ? "" : "FAILED");
+}
+
+OscReceiver oscReceiver(7562, oscCallback);
+#endif // BELA_HV_OSC
 
 /*
  *	HEAVY CONTEXT & BUFFERS
