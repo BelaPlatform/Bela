@@ -115,6 +115,7 @@ struct ClientInstance {
 	void setXParams();
 	void scope_control_connected();
 	void scope_control_data(const char* data);
+	void parse_cmd(std::shared_ptr<JSONValue> value);
 	void parse_settings(std::shared_ptr<JSONValue> value);
 	void outBufferSetTimestamp();
 	void outBufferAppendData(size_t startptr, size_t endptr, size_t outChannelWidth);
