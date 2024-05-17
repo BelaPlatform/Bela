@@ -59,7 +59,7 @@ public:
 	 * number of channels of the object.
 	 * Omitted values will be set to 0.
 	 */
-	void log(double chn1, ...);
+	void log(double chn0, ...);
 
 	/**
 	 * \brief Logs a frame of data to the scope.
@@ -93,8 +93,6 @@ private:
 	static constexpr size_t kTimestampSlots = sizeof(Timestamp) / sizeof(float);
 	std::unique_ptr<WSServer> ws_server;
 	std::unique_ptr<AuxTaskRT> scopeTriggerTask;
-	bool prelog();
-	void postlog();
 
 	// settings
 	size_t numChannels;
