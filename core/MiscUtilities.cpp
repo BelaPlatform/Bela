@@ -2,7 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <sys/stat.h> // mkdir, stat
+#include <sys/stat.h>
+#include <glob.h>
+#include <string.h>
 
 using namespace StringUtils;
 using namespace IoUtils;
@@ -142,6 +144,25 @@ std::string readTextFile(const std::string& path)
 	std::stringstream out;
 	out << in.rdbuf();
 	return out.str();
+}
+
+std::vector<std::string> glob(const std::string& pattern)
+{
+	// see https://stackoverflow.com/a/8615450/2958741
+	glob_t glob_result = {0};
+	int return_value = glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_result);
+	if(return_value != 0) {
+		globfree(&glob_result);
+		return {};
+	}
+	std::vector<std::string> filenames;
+	size_t numPaths = glob_result.gl_pathc;
+	filenames.reserve(numPaths);
+	for(size_t i = 0; i < numPaths; ++i) {
+		filenames.push_back(glob_result.gl_pathv[i]);
+	}
+	globfree(&glob_result);
+	return filenames;
 }
 
 } // IoUtils
