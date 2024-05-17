@@ -6,17 +6,11 @@
 #include <AuxTaskRT.h>
 #include <stdexcept>
 
-Scope::Scope(): isUsingOutBuffer(false),
-	isUsingBuffer(false),
-	isResizing(true),
-	upSampling(1),
-	downSampling(1),
-	triggerPrimed(false),
-	started(false),
-	windowFFT(NULL),
-	inFFT(NULL),
-	outFFT(NULL),
-	cfg(NULL)
+#define FRAMES_STORED 4
+
+#define TRIGGER_LOG_COUNT 16
+
+Scope::Scope()
 {}
 
 Scope::Scope(unsigned int numChannels, float sampleRate){
@@ -24,7 +18,6 @@ Scope::Scope(unsigned int numChannels, float sampleRate){
 }
 
 void Scope::cleanup(){
-	dealloc();
 	// ensure that all connections are closed before
 	// destroying the object, so we avoid calling the disconnect callback
 	// after the Scope object has been destroyed
@@ -34,14 +27,28 @@ Scope::~Scope(){
 	cleanup();
 }
 
-void Scope::dealloc(){
+Scope::ClientInstance::ClientInstance(Scope& scope) :
+		s(scope),
+		isUsingOutBuffer(false),
+		isUsingBuffer(false),
+		isResizing(true),
+		upSampling(1),
+		triggerPrimed(false),
+		started(false),
+		windowFFT(NULL),
+		inFFT(NULL),
+		outFFT(NULL),
+		cfg(NULL)
+{}
+Scope::ClientInstance::~ClientInstance()
+{
 	delete[] windowFFT;
 	NE10_FREE(inFFT);
 	NE10_FREE(outFFT);
 	NE10_FREE(cfg);
 }
 
-void Scope::triggerTask(){
+void Scope::ClientInstance::triggerTask(){
 	if (TIME_DOMAIN == plotMode){
 		triggerTimeDomain();
 	} else if (FREQ_DOMAIN == plotMode){
@@ -53,8 +60,8 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	if(_numChannels > 50)
 		throw std::runtime_error(std::string("Scope::setup(): too many channels (")+std::to_string(_numChannels)+std::string(")."));
 
-	setSetting(L"numChannels", _numChannels);
-	setSetting(L"sampleRate", _sampleRate);
+	c.setSetting(L"numChannels", _numChannels);
+	c.setSetting(L"sampleRate", _sampleRate);
 
 	// set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
@@ -62,36 +69,36 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	ws_server->addAddress("scope_data", nullptr, nullptr, nullptr, true);
 	ws_server->addAddress("scope_control",
 			[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size){
-			scope_control_data((const char*) buf);
+				c.scope_control_data((const char*) buf);
 			},
 			[this](const std::string& address, const WSServerDetails* id){
-			scope_control_connected();
+				c.scope_control_connected();
 			},
 			[this](const std::string& address, const WSServerDetails* id){
-			stop();
+				c.stop();
 			});
 
 	// setup the auxiliary tasks
 	scopeTriggerTask = std::unique_ptr<AuxTaskRT>(new AuxTaskRT());
-	scopeTriggerTask->create("scope-trigger-task", [this](){ triggerTask(); });
+	scopeTriggerTask->create("scope-trigger-task", [this](){ c.triggerTask(); });
 }
 
-void Scope::start(){
+void Scope::ClientInstance::start(){
 
 	// reset the pointers
-	writePointer = 0;
+	s.writePointer = 0;
 	readPointer = 0;
 
-	logCount = 0;
+	s.logCount = 0;
 	started = true;
 
 }
 
-void Scope::stop(){
+void Scope::ClientInstance::stop(){
 	started = false;
 }
 
-void Scope::setPlotMode(){
+void Scope::ClientInstance::setPlotMode(){
 	// printf("setPlotMode\n");
 	isResizing = true;
 	while(!Bela_stopRequested() && (isUsingBuffer || isUsingOutBuffer)){
@@ -107,14 +114,14 @@ void Scope::setPlotMode(){
 	if(0 == frameWidth)
 		frameWidth = 1; // avoid divides by zero
 	if(TIME_DOMAIN == plotMode) {
-		channelWidth = frameWidth * FRAMES_STORED;
+		s.channelWidth = frameWidth * FRAMES_STORED;
 	} else {
-		channelWidth = FFTLength;
+		s.channelWidth = FFTLength;
 	}
-	buffer.resize(numChannels*channelWidth);
+	s.buffer.resize(s.numChannels * s.channelWidth);
 
 	// setup the output buffer
-	outBuffer.resize(numChannels * frameWidth + kTimestampSlots);
+	outBuffer.resize(s.numChannels * frameWidth + kTimestampSlots);
 
 	// reset the trigger
 	triggerPointer = 0;
@@ -122,12 +129,11 @@ void Scope::setPlotMode(){
 	triggerCollecting = false;
 	triggerWaiting = false;
 	triggerCount = 0;
-	downSampleCount = 1;
+	s.downSampleCount = 1;
 	autoTriggerCount = 0;
 	customTriggered = false;
 
 	if (FREQ_DOMAIN == plotMode){
-		dealloc();
 		inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
 		outFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
 		cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
@@ -184,9 +190,9 @@ void Scope::log(double chn1, ...){
 
 bool Scope::prelog(){
 
-	if (!started || isResizing || isUsingBuffer) return false;
+	if (!c.started || c.isResizing || c.isUsingBuffer) return false;
 
-	if (TIME_DOMAIN == plotMode && downSampling > 1){
+	if (TIME_DOMAIN == c.plotMode && downSampling > 1){
 		if (downSampleCount < downSampling){
 			downSampleCount++;
 			return false;
@@ -194,13 +200,13 @@ bool Scope::prelog(){
 		downSampleCount = 1;
 	}
 
-	isUsingBuffer = true;
+	c.isUsingBuffer = true;
 	return true;
 }
 
 void Scope::postlog(){
 
-	isUsingBuffer = false;
+	c.isUsingBuffer = false;
 	writePointer = (writePointer+1)%channelWidth;
 
 	if (logCount++ > TRIGGER_LOG_COUNT || downSampling > TRIGGER_LOG_COUNT){
@@ -210,18 +216,18 @@ void Scope::postlog(){
 }
 
 bool Scope::trigger(){
-	if (CUSTOM == triggerMode && !customTriggered && triggerPrimed && started){
-		customTriggerPointer = (writePointer-xOffset+channelWidth)%channelWidth;
-		customTriggered = true;
+	if (CUSTOM == c.triggerMode && !c.customTriggered && c.triggerPrimed && c.started){
+		c.customTriggerPointer = (writePointer - c.xOffset + channelWidth) % channelWidth;
+		c.customTriggered = true;
 		return true;
 	}
 	return false;
 }
 
-bool Scope::triggered(){
+bool Scope::ClientInstance::triggered(){
 	if (AUTO == triggerMode || NORMAL == triggerMode){
-		float prev = buffer[channelWidth * triggerChannel + ((readPointer - 1 + channelWidth) % channelWidth)];
-		float cur = buffer[channelWidth * triggerChannel + readPointer];
+		float prev = s.buffer[s.channelWidth * triggerChannel + ((readPointer - 1 + s.channelWidth) % s.channelWidth)];
+		float cur = s.buffer[s.channelWidth * triggerChannel + readPointer];
 		bool negativeEdge = prev >= triggerLevel && cur < triggerLevel;
 		bool positiveEdge = prev < triggerLevel && cur >= triggerLevel;
 		switch (triggerDir) {
@@ -239,42 +245,42 @@ bool Scope::triggered(){
 	return false;
 }
 
-void Scope::outBufferSetTimestamp(){
+void Scope::ClientInstance::outBufferSetTimestamp(){
 	memcpy(outBuffer.data(), &timestamp, sizeof(timestamp));
 	outBufferSize = 0;
 }
 
-void Scope::outBufferAppendData(size_t startptr, size_t endptr, size_t outChannelWidth){
+void Scope::ClientInstance::outBufferAppendData(size_t startptr, size_t endptr, size_t outChannelWidth){
 	if(endptr > startptr) {
-		for(size_t i = 0; i < numChannels; ++i){
-			std::copy(&buffer[channelWidth*i+startptr], &buffer[channelWidth*i+endptr], outBuffer.begin()+(i*outChannelWidth) + kTimestampSlots + outBufferSize);
+		for(size_t i = 0; i < s.numChannels; ++i){
+			std::copy(&s.buffer[s.channelWidth * i + startptr], &s.buffer[s.channelWidth * i + endptr], outBuffer.begin() + (i * outChannelWidth) + kTimestampSlots + outBufferSize);
 		}
 		outBufferSize += endptr - startptr;
 	} else {
-		for(size_t i = 0; i < numChannels; ++i){
-			std::copy(&buffer[channelWidth*i+startptr], &buffer[channelWidth*(i+1)], outBuffer.begin()+(i*outChannelWidth) + kTimestampSlots + outBufferSize);
-			std::copy(&buffer[channelWidth*i], &buffer[channelWidth*i+endptr], outBuffer.begin()+((i+1)*outChannelWidth-endptr) + kTimestampSlots + outBufferSize);
+		for(size_t i = 0; i < s.numChannels; ++i){
+			std::copy(&s.buffer[s.channelWidth * i + startptr], &s.buffer[s.channelWidth * (i + 1)], outBuffer.begin() + (i * outChannelWidth) + kTimestampSlots + outBufferSize);
+			std::copy(&s.buffer[s.channelWidth * i], &s.buffer[s.channelWidth * i + endptr], outBuffer.begin() + ((i + 1) * outChannelWidth - endptr) + kTimestampSlots + outBufferSize);
 		}
-		outBufferSize += endptr + channelWidth - startptr;
+		outBufferSize += endptr + s.channelWidth - startptr;
 	}
 }
 
-void Scope::outBufferSend(){
-	size_t elems = kTimestampSlots + outBufferSize * numChannels;
+void Scope::ClientInstance::outBufferSend(){
+	size_t elems = kTimestampSlots + outBufferSize * s.numChannels;
 	size_t bytes = sizeof(outBuffer[0]) * elems;
-	ws_server->sendRt("scope_data", outBuffer.data(), bytes);
+	s.ws_server->sendRt("scope_data", outBuffer.data(), bytes);
 }
 
-void Scope::triggerTimeDomain(){
+void Scope::ClientInstance::triggerTimeDomain(){
 	// printf("do trigger %i, %i\n", readPointer, writePointer);
 	// iterate over the samples between the read and write pointers and check for / deal with triggers
 	// target approx 30 Hz
-	size_t numRollSamples = sampleRate / 30 / downSampling;
+	size_t numRollSamples = s.sampleRate / 30 / s.downSampling;
 	if(!numRollSamples)
 		numRollSamples = 1;
-	while (readPointer != writePointer){
+	while (readPointer != s.writePointer){
 		timestamp++;
-		if(downSampling > 1 && X_NORMAL != xAxisBehaviour)
+		if(s.downSampling > 1 && X_NORMAL != xAxisBehaviour)
 		{
 			// send "rolling" blocks without waiting for a trigger
 			rollPtr++;
@@ -284,7 +290,7 @@ void Scope::triggerTimeDomain(){
 				isUsingOutBuffer = true;
 				isUsingBuffer = true;
 				outBufferSetTimestamp();
-				outBufferAppendData((readPointer - numRollSamples + channelWidth) % channelWidth , readPointer % channelWidth, numRollSamples);
+				outBufferAppendData((readPointer - numRollSamples + s.channelWidth) % s.channelWidth , readPointer % s.channelWidth, numRollSamples);
 				outBufferSend();
 				isUsingBuffer = false;
 				isUsingOutBuffer = false;
@@ -300,7 +306,7 @@ void Scope::triggerTimeDomain(){
 				triggerCollecting = true;
 
 				// save the readpointer at the trigger point
-				triggerPointer = (readPointer-xOffsetSamples+channelWidth)%channelWidth;
+				triggerPointer = (readPointer - xOffsetSamples + s.channelWidth) % s.channelWidth;
 
 				triggerCount = frameWidth/2.0f - xOffsetSamples;
 				autoTriggerCount = 0;
@@ -313,7 +319,7 @@ void Scope::triggerTimeDomain(){
 					triggerCollecting = true;
 
 					// save the readpointer at the trigger point
-					triggerPointer = (readPointer-xOffsetSamples+channelWidth)%channelWidth;
+					triggerPointer = (readPointer - xOffsetSamples + s.channelWidth) % s.channelWidth;
 
 					triggerCount = frameWidth/2.0f - xOffsetSamples;
 					autoTriggerCount = 0;
@@ -335,8 +341,8 @@ void Scope::triggerTimeDomain(){
 					isUsingOutBuffer = true;
 
 					// copy the previous to next frameWidth/2.0f samples into the outBuffer
-					int startptr = (triggerPointer-(int)(frameWidth/2.0f) + channelWidth)%channelWidth;
-					int endptr = (startptr + frameWidth)%channelWidth;
+					int startptr = (triggerPointer - (int)(frameWidth / 2.0f) + s.channelWidth) % s.channelWidth;
+					int endptr = (startptr + frameWidth) % s.channelWidth;
 
 					outBufferSetTimestamp();
 					outBufferAppendData(startptr, endptr, frameWidth);
@@ -365,13 +371,13 @@ void Scope::triggerTimeDomain(){
 		}
 
 		// increment the read pointer
-		readPointer = (readPointer+1)%channelWidth;
+		readPointer = (readPointer + 1) % s.channelWidth;
 	}
 
 }
 
-void Scope::triggerFFT(){
-	while (readPointer != writePointer){
+void Scope::ClientInstance::triggerFFT(){
+	while (readPointer != s.writePointer){
 
 		pointerFFT += 1;
 
@@ -392,12 +398,12 @@ void Scope::triggerFFT(){
 		}
 
 		// increment the read pointer
-		readPointer = (readPointer+1)%channelWidth;
+		readPointer = (readPointer + 1) % s.channelWidth;
 
 	}
 }
 
-void Scope::doFFT(){
+void Scope::ClientInstance::doFFT(){
 
 	if(isResizing)
 		return;
@@ -405,16 +411,16 @@ void Scope::doFFT(){
 	isUsingOutBuffer = true;
 
 	// constants
-	int ptr = readPointer-FFTLength+channelWidth;
-	float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
+	int ptr = readPointer - FFTLength + s.channelWidth;
+	float ratio = (float)(FFTLength / 2) / (frameWidth * s.downSampling);
 	float logConst = -logf(1.0f/(float)frameWidth)/(float)frameWidth;
 
 	isUsingBuffer = true;
-	for (int c = 0; c < numChannels; c++){
+	for (int c = 0; c < s.numChannels; c++){
 
 		// prepare the FFT input & do windowing
 		for (int i = 0; i < FFTLength; i++){
-			inFFT[i].r = (ne10_float32_t)(buffer[(ptr+i)%channelWidth+c*channelWidth] * windowFFT[i]);
+			inFFT[i].r = (ne10_float32_t)(s.buffer[(ptr + i) % s.channelWidth+ c * s.channelWidth] * windowFFT[i]);
 			inFFT[i].i = 0;
 		}
 
@@ -496,28 +502,28 @@ void Scope::doFFT(){
 
 	// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
 	// rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
-	ws_server->sendRt("scope_data", outBuffer.data(), outBuffer.size() * sizeof(float));
+	s.ws_server->sendRt("scope_data", outBuffer.data(), outBuffer.size() * sizeof(float));
 
 	isUsingOutBuffer = false;
 }
 
-void Scope::setXParams(){
+void Scope::ClientInstance::setXParams(){
 	if (TIME_DOMAIN == plotMode){
-		holdOffSamples = (int)(sampleRate*0.001*holdOff/downSampling);
+		holdOffSamples = (int)(s.sampleRate * 0.001 * holdOff / s.downSampling);
 	} else if (FREQ_DOMAIN == plotMode){
-		holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling);
+		holdOffSamples = (int)(s.sampleRate * 0.001 * holdOff * upSampling);
 	}
 	xOffsetSamples = xOffset/upSampling;
 }
 
 void Scope::setTrigger(TriggerMode mode, unsigned int channel, TriggerSlope dir, float level){
-	setSetting(L"triggerMode", mode);
-	setSetting(L"triggerChannel", channel);
-	setSetting(L"triggerDir", dir);
-	setSetting(L"triggerLevel", level);
+	c.setSetting(L"triggerMode", mode);
+	c.setSetting(L"triggerChannel", channel);
+	c.setSetting(L"triggerDir", dir);
+	c.setSetting(L"triggerLevel", level);
 }
 
-void Scope::setSetting(std::wstring setting, float value){
+void Scope::ClientInstance::setSetting(std::wstring setting, float value){
 
 	// std::string str = std::string(setting.begin(), setting.end());
 	// printf("setting %s to %f\n", str.c_str(), value);
@@ -553,7 +559,7 @@ void Scope::setSetting(std::wstring setting, float value){
 		setXParams();
 		start();
 	} else if (setting.compare(L"downSampling") == 0){
-		downSampling = (int)value;
+		s.downSampling = (int)value;
 	} else if (setting.compare(L"holdOff") == 0){
 		holdOff = value;
 		setXParams();
@@ -568,9 +574,9 @@ void Scope::setSetting(std::wstring setting, float value){
 	} else if (setting.compare(L"FFTYAxis") == 0){
 		FFTYAxis = (int)value;
 	} else if (setting.compare(L"numChannels") == 0){
-		numChannels = value;
+		s.numChannels = value;
 	} else if (setting.compare(L"sampleRate") == 0){
-		sampleRate = value;
+		s.sampleRate = value;
 	}
 
 	settings[setting] = value;
@@ -582,7 +588,7 @@ void Scope::setSetting(std::wstring setting, float value){
 // (i.e numChannels, sampleRate)
 // JS replies with "connection-reply" which is parsed
 // by scope_control_data()
-void Scope::scope_control_connected(){
+void Scope::ClientInstance::scope_control_connected(){
 
 	// printf("connection!\n");
 
@@ -596,12 +602,12 @@ void Scope::scope_control_connected(){
 	std::wstring wide = value.Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
-	ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback);
+	s.ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback);
 }
 
 // on_data callback for scope_control websocket
 // runs on the (linux priority) seasocks thread
-void Scope::scope_control_data(const char* data){
+void Scope::ClientInstance::scope_control_data(const char* data){
 
 	// printf("recieved: %s\n", data);
 
@@ -627,7 +633,7 @@ void Scope::scope_control_data(const char* data){
 	parse_settings(value);
 }
 
-void Scope::parse_settings(std::shared_ptr<JSONValue> value){
+void Scope::ClientInstance::parse_settings(std::shared_ptr<JSONValue> value){
 	// printf("parsing settings\n");
 	std::vector<std::wstring> keys = value->ObjectKeys();
 	for (auto& key : keys){
