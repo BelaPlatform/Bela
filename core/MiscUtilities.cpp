@@ -107,6 +107,8 @@ std::ofstream openOutput(const std::string& path, Mode mode)
 
 int writeTextFile(const std::string& path, const std::string& content, Mode mode)
 {
+	if("" == StringUtils::trim(path))
+		return -2;
 	std::ofstream outputFile = openOutput(path, mode);
 	if(outputFile.is_open())
 	{
