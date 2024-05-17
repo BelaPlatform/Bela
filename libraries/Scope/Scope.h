@@ -4,10 +4,6 @@
 #include <map>
 #include <memory>
 
-#define FRAMES_STORED 4
-
-#define TRIGGER_LOG_COUNT 16
-
 // forward declarations
 class WSServer;
 class JSONValue;
@@ -93,14 +89,29 @@ private:
 		TIME_DOMAIN, ///< Time domain
 		FREQ_DOMAIN, ///< Frequency domain
 	} PlotMode;
-	void dealloc();
+	typedef uint32_t Timestamp;
+	static constexpr size_t kTimestampSlots = sizeof(Timestamp) / sizeof(float);
+	std::unique_ptr<WSServer> ws_server;
+	std::unique_ptr<AuxTaskRT> scopeTriggerTask;
+	bool prelog();
+	void postlog();
+
+	// settings
+	size_t numChannels;
+	float sampleRate;
+	std::vector<float> buffer;
+	int writePointer;
+	int channelWidth;
+
+	int downSampling = 1;
+	int logCount;
+	int downSampleCount;
+struct ClientInstance {
 	void start();
 	void stop();
 	void triggerTimeDomain();
 	void triggerFFT();
 	bool triggered();
-	bool prelog();
-	void postlog();
 	void setPlotMode();
 	void doFFT();
 	void setXParams();
@@ -114,10 +125,6 @@ private:
 	bool volatile isUsingOutBuffer;
 	bool volatile isUsingBuffer;
 	bool volatile isResizing;
-
-	// settings
-	size_t numChannels;
-	float sampleRate;
 	int pixelWidth;
 	int frameWidth;
 	PlotMode plotMode = TIME_DOMAIN;
@@ -129,25 +136,18 @@ private:
 	int xOffset;
 	int xOffsetSamples;
 	int upSampling;
-	int downSampling;
 	float holdOff;
 
-	int logCount;
 
-	int channelWidth;
-	int downSampleCount;
 	int holdOffSamples;
 
 	// buffers
-	std::vector<float> buffer;
 	std::vector<float> outBuffer;
-	uint32_t timestamp = 0;
+	Timestamp timestamp = 0;
 	size_t outBufferSize;
 	size_t rollPtr = 0;
-	static constexpr size_t kTimestampSlots = sizeof(timestamp) / sizeof(outBuffer[0]);
 
 	// pointers
-	int writePointer;
 	int readPointer;
 	int triggerPointer;
 	int customTriggerPointer;
@@ -176,12 +176,12 @@ private:
 	ne10_fft_cpx_float32_t* outFFT;
 	ne10_fft_cfg_float32_t cfg;
 
-	std::unique_ptr<AuxTaskRT> scopeTriggerTask;
 	void triggerTask();
 
 	void setSetting(std::wstring setting, float value);
-
-	std::unique_ptr<WSServer> ws_server;
-
 	std::map<std::wstring, float> settings;
+	Scope& s;
+	ClientInstance(Scope& s);
+	~ClientInstance();
+} c = ClientInstance(*this);
 };
