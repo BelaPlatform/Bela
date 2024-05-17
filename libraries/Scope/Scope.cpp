@@ -563,6 +563,26 @@ void Scope::ClientInstance::setSetting(std::wstring setting, float value){
 	settings[setting] = value;
 }
 
+static JSONObject settingsToJson(const std::map<std::wstring, float>& settings)
+{
+	JSONObject root;
+	for (auto setting : settings){
+		root[setting.first] = new JSONValue(setting.second);
+	}
+	return root;
+}
+
+// assumes it is called from the server thread
+void Scope::ClientInstance::sendSettings(const std::string& event)
+{
+	JSONObject root = settingsToJson(settings);
+	root[L"event"] = new JSONValue(JSON::s2ws(event));
+	JSONValue value(root);
+	std::string str = JSON::ws2s(value.Stringify().c_str());
+	// printf("sending JSON: \n%s\n", str.c_str());
+	s.ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback);
+}
+
 // called when scope_control websocket is connected
 // communication is started here with cpp sending a
 // "connection" JSON with settings known by cpp
@@ -570,20 +590,8 @@ void Scope::ClientInstance::setSetting(std::wstring setting, float value){
 // JS replies with "connection-reply" which is parsed
 // by scope_control_data()
 void Scope::ClientInstance::scope_control_connected(){
-
-	// printf("connection!\n");
-
 	// send connection JSON
-	JSONObject root;
-	root[L"event"] = new JSONValue(L"connection");
-	for (auto setting : settings){
-		root[setting.first] = new JSONValue(setting.second);
-	}
-	JSONValue value(root);
-	std::wstring wide = value.Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	// printf("sending JSON: \n%s\n", str.c_str());
-	s.ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback);
+	sendSettings("connection");
 }
 
 // on_data callback for scope_control websocket
