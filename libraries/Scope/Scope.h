@@ -119,6 +119,7 @@ struct ClientInstance {
 	void outBufferSetTimestamp();
 	void outBufferAppendData(size_t startptr, size_t endptr, size_t outChannelWidth);
 	void outBufferSend();
+	void sendSettings(const std::string& event);
 
 	bool volatile isUsingOutBuffer;
 	bool volatile isUsingBuffer;
