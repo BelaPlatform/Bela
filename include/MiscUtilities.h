@@ -60,6 +60,10 @@ namespace IoUtils
 	 * Read a text file as a string.
 	 */
 	std::string readTextFile(const std::string& path);
+	/**
+	 * Return files matching pattern
+	 */
+	std::vector<std::string> glob(const std::string& path);
 }
 
 /**
