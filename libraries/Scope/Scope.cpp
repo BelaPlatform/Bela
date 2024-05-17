@@ -156,63 +156,44 @@ void Scope::ClientInstance::setPlotMode(){
 }
 
 void Scope::log(const float* values){
-
-	if (!prelog()) return;
-
-	// save the logged samples into the buffer
-	for (int i = 0; i < numChannels; i++) {
-		buffer[i*channelWidth + writePointer] = values[i];
-	}
-
-	postlog();
-
-}
-
-void Scope::log(double chn1, ...){
-
-	if (!prelog()) return;
-
-	va_list args;
-	va_start (args, chn1);
-
-	// save the logged samples into the buffer
-	buffer[writePointer] = chn1;
-
-	for (int i = 1; i < numChannels; i++) {
-		// iterate over the function arguments, store them in the relevant part of the buffer
-		// channels are stored sequentially in the buffer i.e [[channel1], [channel2], etc...]
-		buffer[i*channelWidth + writePointer] = (float)va_arg(args, double);
-	}
-
-	postlog();
-	va_end (args);
-}
-
-bool Scope::prelog(){
-
-	if (!c.started || c.isResizing || c.isUsingBuffer) return false;
-
+	if (!c.started || c.isResizing || c.isUsingBuffer)
+		return;
 	if (TIME_DOMAIN == c.plotMode && downSampling > 1){
 		if (downSampleCount < downSampling){
 			downSampleCount++;
-			return false;
+			// skip
+			return;
 		}
 		downSampleCount = 1;
 	}
-
 	c.isUsingBuffer = true;
-	return true;
-}
-
-void Scope::postlog(){
-
+	// save the logged samples into the buffer
+	for (int i = 0; i < numChannels; i++) {
+		// channels are stored sequentially in the buffer i.e [[channel1], [channel2], etc...]
+		buffer[i * channelWidth + writePointer] = values[i];
+	}
 	c.isUsingBuffer = false;
-	writePointer = (writePointer+1)%channelWidth;
+	writePointer = (writePointer + 1) % channelWidth;
 
 	if (logCount++ > TRIGGER_LOG_COUNT || downSampling > TRIGGER_LOG_COUNT){
 		logCount = 0;
 		scopeTriggerTask->schedule();
 	}
+}
+
+void Scope::log(double chn0, ...){
+	va_list args;
+	va_start (args, chn0);
+	float values[numChannels];
+	unsigned int i = 0;
+	values[i++] = chn0;
+	// save the logged samples into the buffer
+	for (; i < numChannels; i++) {
+		// iterate over the function arguments
+		values[i] = (float)va_arg(args, double);
+	}
+	va_end (args);
+	log(values);
 }
 
 bool Scope::trigger(){
