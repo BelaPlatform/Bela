@@ -5,6 +5,7 @@
 #include <JSON.h>
 #include <AuxTaskRT.h>
 #include <stdexcept>
+#include <MiscUtilities.h>
 
 #define FRAMES_STORED 4
 
@@ -609,7 +610,7 @@ void Scope::ClientInstance::scope_control_data(const char* data){
 
 	// look for the "event" key
 	JSONObject root = value->AsObject();
-	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+	if (root.count(L"event") && root[L"event"]->IsString()){
 		std::wstring event = root[L"event"]->AsString();
 		// std::wcout << "event: " << event << "\n";
 		if (event.compare(L"connection-reply") == 0){
@@ -619,7 +620,86 @@ void Scope::ClientInstance::scope_control_data(const char* data){
 		}
 		return;
 	}
+	if (root.count(L"cmd") && root[L"cmd"]->IsString()){
+		parse_cmd(value);
+		return;
+	}
 	parse_settings(value);
+}
+
+static std::shared_ptr<JSONValue> loadPresetFromDisk(const std::string& path)
+{
+	std::string str = IoUtils::readTextFile(path);
+	return std::shared_ptr<JSONValue>(JSON::Parse(str.c_str()));
+}
+
+static int storePresetToDisk(const std::string& path, std::shared_ptr<JSONValue> value)
+{
+	std::string content = JSON::ws2s(value->Stringify(true));
+	return IoUtils::writeTextFile(path, content);
+}
+
+static const std::string& getPresetPath(const std::string& type)
+{
+	static std::string strs[2] = {
+		"/root/Bela/libraries/Scope/presets",
+		"./scope-presets",
+	};
+	return "global" == type ? strs[0] : strs[1];
+}
+
+void Scope::ClientInstance::parse_cmd(std::shared_ptr<JSONValue> value)
+{
+	JSONObject root = value->AsObject();
+	std::string cmd = JSON::ws2s(root[L"cmd"]->AsString());
+	std::string path;
+	if(root.count(L"path") && root[L"path"]->IsString())
+		path = JSON::ws2s(root[L"path"]->AsString());
+	std::string pathType;
+	if(root.count(L"pathType") && root[L"pathType"]->IsString())
+		pathType = JSON::ws2s(root[L"pathType"]->AsString());
+	std::string fullPath = getPresetPath(pathType) + "/" + path;
+	if("presetList" == cmd)
+	{
+		JSONObject lists;
+		for(const auto& str : { std::string("global"), std::string("local") })
+		{
+			std::string basePath = getPresetPath(str);
+			std::vector<std::string> files = IoUtils::glob(basePath + "/*.json");
+			JSONArray arr;
+			arr.reserve(files.size());
+			for(const auto& f : files)
+				arr.push_back(new JSONValue(JSON::s2ws(f)));
+			lists[JSON::s2ws(str)] = new JSONValue(arr);
+		}
+		JSONObject root;
+		root[L"presetList"] = new JSONValue(lists);
+		JSONValue value(root);
+	} else if("presetLoad" == cmd)
+	{
+		auto value = loadPresetFromDisk(fullPath);
+		if (!value || !value->IsObject())
+		{
+			fprintf(stderr, "Scope: could not parse JSON from preset '%s':\n", fullPath.c_str());
+			return;
+		}
+		JSONObject root = value->AsObject();
+		parse_settings(value);
+		sendSettings("connection"); // TODO: should be something else
+		return;
+	} else if("presetStore" == cmd)
+	{
+		JSONObject root = settingsToJson(settings);
+		std::shared_ptr<JSONValue> json = std::shared_ptr<JSONValue>(new JSONValue(root));
+		int ret = storePresetToDisk(fullPath, json);
+		if(ret)
+		{
+			fprintf(stderr, "Scope: error writing preset to '%s'\n", fullPath.c_str());
+		} else {
+			printf("Scope: saved preset to '%s'\n", fullPath.c_str());
+		}
+		return;
+	}
 }
 
 void Scope::ClientInstance::parse_settings(std::shared_ptr<JSONValue> value){
