@@ -3,6 +3,7 @@
 #include <string>
 #include <AuxTaskNonRT.h>
 #include <tuple>
+#include <Bela.h>
 
 typedef unsigned char midi_byte_t;
 

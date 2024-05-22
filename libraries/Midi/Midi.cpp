@@ -356,7 +356,7 @@ int Midi::writeTo(const char* port){
 		return 0;
 	}
 	midiOutputTask = new AuxTaskNonRT();
-	midiOutputTask->create(outId, [this](void* buf, int size) {
+	midiOutputTask->create(outId, [this](const void* buf, int size) {
 		this->doWriteOutput(buf, size);
 	}, 45);
 	outputEnabled = true;
