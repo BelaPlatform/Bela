@@ -625,7 +625,7 @@ static void systemDoSystem(const char* cmd)
 }
 #ifdef BELA_LIBPD_SYSTEM_THREADED
 #include <AuxTaskNonRT.h>
-static AuxTaskNonRT systemTask("systemTask", [](void* buf, int size) {
+static AuxTaskNonRT systemTask("systemTask", [](const void* buf, int size) {
 	systemDoSystem((const char*)buf);
 });
 
