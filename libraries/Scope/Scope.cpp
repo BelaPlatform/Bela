@@ -6,6 +6,8 @@
 #include <AuxTaskRT.h>
 #include <stdexcept>
 #include <MiscUtilities.h>
+#include <unistd.h>
+#include <Bela.h>
 
 #define FRAMES_STORED 4
 
