@@ -41,7 +41,7 @@ float gTouchLocation[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 // Size of touches on Trill Bar
 float gTouchSize[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 // Number of active touches
-int gNumActiveTouches = 0;
+unsigned int gNumActiveTouches = 0;
 
 // Sleep time for auxiliary task in microseconds
 unsigned int gTaskSleepTime = 12000; // microseconds

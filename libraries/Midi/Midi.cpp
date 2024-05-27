@@ -448,16 +448,16 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 		if(l.hasInput) {
 			std::string str = "reading from " + l.name + ": " + l.desc;
 			if(1 == m->readFrom(l.name.c_str()))
-				printf("Port %d, %s\n", n, str.c_str());
+				printf("Port %zd, %s\n", n, str.c_str());
 			else
-				fprintf(stderr, "Port %d, ERROR %s\n", n, str.c_str());
+				fprintf(stderr, "Port %zd, ERROR %s\n", n, str.c_str());
 		}
 		if(l.hasOutput) {
 			std::string str = "writing to " + l.name + ": " + l.desc;
 			if(1 == m->writeTo(l.name.c_str()))
-				printf("Port %d, %s\n", n, str.c_str());
+				printf("Port %zd, %s\n", n, str.c_str());
 			else
-				fprintf(stderr, "Port %d, ERROR %s\n", n, str.c_str());
+				fprintf(stderr, "Port %zd, ERROR %s\n", n, str.c_str());
 		}
 		ports.push_back(m);
 	}

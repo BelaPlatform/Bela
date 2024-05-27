@@ -251,5 +251,5 @@ void AudioFileWriter::io(std::vector<float>& buffer)
 	size_t count = buffer.size();
 	sf_count_t ret = sf_write_float(sndfile, buffer.data(), buffer.size());
 	if(ret != sf_count_t(buffer.size()))
-		fprintf(stderr, "Error while writing to file: %lld\n", ret);
+		fprintf(stderr, "Error while writing to file: %lu\n", (long unsigned int)ret);
 }

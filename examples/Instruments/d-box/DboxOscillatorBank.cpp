@@ -130,7 +130,7 @@ bool DboxOscillatorBank::initBank(int oversamp) {
 	nyquistCut 					= new bool[numOfPartials];
 
 	if (err > 0) {
-		dbox_printf("Failed memory allocations %@#!\n");
+		dbox_printf("Failed memory allocations %%@#!\n");
 		return false;
 	}
 
