@@ -884,7 +884,7 @@ int Bela_stopRequested();
  */
 #include <time.h>
 typedef struct {
-	int count; ///< Number of samples (tic/toc pairs) in a acquisition cycle. Use 0 to disable.
+	unsigned int count; ///< Number of samples (tic/toc pairs) in a acquisition cycle. Use 0 to disable.
 	unsigned int currentCount; ///< Number of tics in current acquisition cycle
 	long long unsigned int busy; ///< Total CPU time spent being busy (between tic and toc) during the current acquisition cycle
 	long long unsigned int total; ///< Total CPU time (between tic and previous tic) during the current acquisition cycle

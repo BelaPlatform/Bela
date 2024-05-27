@@ -5,6 +5,7 @@
 #include <JSON.h>
 #include <AuxTaskRT.h>
 #include <stdexcept>
+#include <stdarg.h>
 #include <MiscUtilities.h>
 #include <unistd.h>
 #include <Bela.h>

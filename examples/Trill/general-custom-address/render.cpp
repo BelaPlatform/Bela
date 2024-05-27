@@ -79,7 +79,7 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	static int readCount = 0;
+	static unsigned int readCount = 0;
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		if(readCount >= printIntervalSamples) {
 			readCount = 0;

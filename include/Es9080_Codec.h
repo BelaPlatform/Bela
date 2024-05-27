@@ -39,6 +39,6 @@ protected:
 	bool running;
 	bool verbose;
 	int setAddressForReg(unsigned int reg, bool write);
-	int currentAddress = 0xFF;
+	unsigned int currentAddress = 0xFF;
 	Gpio gpio;
 };

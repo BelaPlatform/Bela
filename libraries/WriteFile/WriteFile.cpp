@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <Bela.h>
 
 //setupialise static members
 bool WriteFile::staticConstructed=false;

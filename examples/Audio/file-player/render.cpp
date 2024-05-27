@@ -53,7 +53,7 @@ void loadNextFile(void*)
 	gLoadingFile = (gLoadingFile + 1) % gFilenames.size();
 	size_t nextReader = (gCurrReader + 1) % gReaders.size();
 	gReaders[nextReader].setup(gFilenames[gLoadingFile], 16384);
-	rt_printf("Opening file [%d] %s in reader %d\n", gLoadingFile, gFilenames[gLoadingFile].c_str(), nextReader);
+	rt_printf("Opening file [%zu] %s in reader %zu\n", gLoadingFile, gFilenames[gLoadingFile].c_str(), nextReader);
 }
 
 bool setup(BelaContext *context, void *userData)
@@ -83,7 +83,7 @@ void render(BelaContext *context, void *userData) {
 	reader.getSamples(gSamples);
 	for(unsigned int n = 0; n < context->audioFrames; ++n)
 	{
-		float out;
+		float out = 0;
 		for(unsigned int c = 0; c < context->audioOutChannels; ++c)
 		{
 			// write each channel from the audio file to the
@@ -103,7 +103,7 @@ void render(BelaContext *context, void *userData) {
 			// start playing the file we preloaded
 			gCurrReader = (gCurrReader + 1) % gReaders.size();
 			reader.getSamples(gSamples);
-			rt_printf("Playing from reader: %d\n", gCurrReader);
+			rt_printf("Playing from reader: %zu\n", gCurrReader);
 			// start loading next file in a real-time safe way
 			Bela_scheduleAuxiliaryTask(gStartLoadingFileTask);
 		}

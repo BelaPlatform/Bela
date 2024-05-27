@@ -27,6 +27,7 @@
 
 #endif
 
+#include <Bela.h>
 #ifdef DBOX_USE_XENOMAI
 
 #define dbox_printf rt_printf
