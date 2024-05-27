@@ -46,24 +46,25 @@
 #include "../include/Es9080_Codec.h"
 #include "../include/Tlv320_Es9080_Codec.h"
 #include "../include/GPIOcontrol.h"
+PRU* gPRU = NULL;
+static AudioCodec* gDisabledCodec = NULL;
+static int gAmplifierMutePin = -1;
+static int gAmplifierShouldBeginMuted = 0;
+
 extern "C" void enable_runfast();
 extern "C" void disable_runfast();
-
-// ARM interrupt number for PRU event EVTOUT7
-#define PRU_RTAUDIO_IRQ		21
 
 using namespace std;
 using namespace BelaHwComponent;
 
+int gRTAudioVerbose = 0; // Verbosity level for debugging
 typedef struct
 {
 	AudioCodec* activeCodec;
 	AudioCodec* disabledCodec;
 } BelaHwConfigPrivate;
 
-int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
-static AudioCodec* gDisabledCodec = NULL;
 static BelaHw belaHw;
 BelaCpuData belaCpuData;
 extern const float BELA_INVALID_GAIN;
@@ -120,14 +121,10 @@ static pthread_t gFifoThread;
 static const char gRTAudioThreadName[] = "bela-audio";
 static const char gFifoThreadName[] = "bela-audio-fifo";
 
-PRU* gPRU = NULL;
-
 int volatile gShouldStop = false; // Flag which tells the audio task to stop
 
 // general settings
-static char gPRUFilename[MAX_PRU_FILENAME_LENGTH]; // Path to PRU binary file (internal code if empty)_
-static int gAmplifierMutePin = -1;
-static int gAmplifierShouldBeginMuted = 0;
+static std::string gPRUFilename; // Path to PRU binary file (internal code if empty)_
 static bool gHighPerformanceMode = 0;
 static unsigned int gAudioThreadStackSize;
 unsigned int gAuxiliaryTaskStackSize;
@@ -354,7 +351,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	if(gRTAudioVerbose)
 		printf("Bela_initAudio()\n");
-	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
+	gPRUFilename = settings->pruFilename;
 	gUserData = userData;
 
 	gHighPerformanceMode = settings->highPerformanceMode;
@@ -794,8 +791,8 @@ static int startAudioInline(){
 	if(gRTAudioVerbose)
 		mcaspConfig.print();
 	// initialize and run the PRU
-	if(gPRU->start(gPRUFilename, mcaspConfig.getRegisters())) {
-		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);
+	if(gPRU->start(gPRUFilename.c_str(), mcaspConfig.getRegisters())) {
+		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename.size() ? "embedded binary" : gPRUFilename.c_str());
 		return -1;
 	}
 
@@ -910,11 +907,11 @@ void Bela_cleanupAudio()
 	delete gPRU;
 	delete gAudioCodec;
 	delete gDisabledCodec;
-	delete gBcf;
 
 	if(gAmplifierMutePin >= 0)
 		gpio_unexport(gAmplifierMutePin);
 	gAmplifierMutePin = -1;
+	delete gBcf;
 }
 
 void Bela_setUserData(void* newUserData)
