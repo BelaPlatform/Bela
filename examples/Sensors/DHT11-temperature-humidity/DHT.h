@@ -84,7 +84,7 @@ public:
     kTxEnd,
   } state = kDisabled;
   void switchState(State newState);
-  int count;
+  unsigned int count;
   int inIdx;
   uint64_t inWord;
   bool pastIn = false;

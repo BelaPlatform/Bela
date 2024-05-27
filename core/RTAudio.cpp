@@ -34,6 +34,7 @@
 #include <pthread.h>
 
 #include "../include/RtWrappers.h"
+#include <cinttypes>
 
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
@@ -279,7 +280,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 	long long unsigned int timeNs = timespec_sub(&end, &begin);
 	if(printStats)
 	{
-		printf("frames: %llu\n", context->audioFramesElapsed);
+		printf("frames: %" PRIu64 "\n", context->audioFramesElapsed);
 		printf("wallTime: %llu.%09llus\n", timeNs / kNsInSec, timeNs % kNsInSec);
 		double wallTime = timeNs;
 		double dspTime = context->audioFramesElapsed / context->audioSampleRate * kNsInSec;

@@ -85,7 +85,7 @@ int Eeprom::prepareToReadWrite(unsigned int start, unsigned int& length)
 	if(start >= content.size())
 		return -1;
 	file.seekg(offset + start, ios_base::beg);
-	length = min(content.size() - start, length);
+	length = min(content.size() - start, size_t(length));
 	return 0;
 }
 

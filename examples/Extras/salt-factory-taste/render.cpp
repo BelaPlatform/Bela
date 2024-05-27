@@ -66,7 +66,7 @@ int gButtonStatus[gNumButtonsMax] = {0, 0, 0, 0};
 
 int gLedsOn = false;
 
-int gBlockSize = 512;//512;
+unsigned int gBlockSize = 512;//512;
 
 float gInverseAudioSampleRate;
 
@@ -109,8 +109,8 @@ void encodeNumberLed(BelaContext *context, int n, const int pwmPin, const int * 
 
 bool flashNumberLed(BelaContext *context, int n, const int pwmPin, const int * ledPins, unsigned int nLeds, unsigned int number, unsigned int nFlash, unsigned int period, int count, unsigned int color = 0, bool reset = false)
 {
-	static int flashBlock = count;
-	static int flashCount = 0;
+	static unsigned int flashBlock = count;
+	static unsigned int flashCount = 0;
 	static unsigned int prevNum = number;
 	static bool internalReset = reset;
 	if(prevNum != number || (reset && internalReset != reset))
@@ -260,6 +260,7 @@ void render(BelaContext *context, void *userData)
 		static bool buttonsWorking[gNumButtons] = {0};
 		static int numOfWorkingButtons = 0;
 		static bool buttonsFailing[gNumButtons] = {0};
+		(void)buttonsFailing[0]; // prevent the compiler from warning about unused variable. We may use it to print debugging information
 
 		// Turn LEDs on
 		if(!gLedsOn)
@@ -583,7 +584,7 @@ void render(BelaContext *context, void *userData)
 						if(fabs(readVal - previousRead[c]) > 0.01)
 						{
 							// If pot changes, update previous value
-							if(c != currentPot)
+							if(int(c) != currentPot)
 							{
 								currentPot = c;
 								previousRead[c] = readVal;
@@ -920,7 +921,7 @@ void render(BelaContext *context, void *userData)
 
 			// Peak detection on the audio inputs, with offset to catch
 			// DC errors
-			for(int ch = 0; ch < context->audioInChannels; ch++)
+			for(unsigned int ch = 0; ch < context->audioInChannels; ch++)
 			{
 				float value = audioRead(context, n, ch);
 				// Positive peak levels
@@ -1024,7 +1025,7 @@ void render(BelaContext *context, void *userData)
 					}
 					else
 					{
-						static int audioBrokenIndex = 0;
+						static unsigned int audioBrokenIndex = 0;
 						if(audioBrokenIndex < context->audioInChannels)
 						{
 							if(!workingAudioChannels[audioBrokenIndex])
@@ -1087,12 +1088,12 @@ void render(BelaContext *context, void *userData)
 	else if (gCurrentTest == kAudioDCTestHi)
 	{
 		PRINTONCE("kAudioDCTestHi: testing audio out loopback to CV in. Make sure CV1 and CV2 are at max\n");
-		static int currentChannel = 0;
+		static unsigned int currentChannel = 0;
 		static bool potCheck = true;
 
 		float readVal;
 		static bool brokenAudioChannels[2] =  {0};
-		static int numOfWokingAudioChannels = 0;
+		static unsigned int numOfWokingAudioChannels = 0;
 		float audioOutRange[2] = {-1.0, 0.0};
 		static float audioOutVal = audioOutRange[0];
 
@@ -1148,7 +1149,7 @@ void render(BelaContext *context, void *userData)
 							// Check that the read value and the ouput value are within range
 							if(!(fabs((readVal-1)*2 - audioOutVal) <= gAudioToCVtolerance))
 							{
-								rt_printf("audio out %d, fabs((readVal-1)*2 - audioOutVal): %f, gAudioToCVtolerance: %f, readVal: %f, audioOutVal: %f\n",
+								rt_printf("audio out %u, fabs((readVal-1)*2 - audioOutVal): %f, gAudioToCVtolerance: %f, readVal: %f, audioOutVal: %f\n",
 										currentChannel, fabs((readVal-1)*2 - audioOutVal) , gAudioToCVtolerance, readVal, audioOutVal);
 								brokenAudioChannels[currentChannel] = 1; // In and out are out of range
 							}
@@ -1178,7 +1179,7 @@ void render(BelaContext *context, void *userData)
 					}
 					else
 					{
-						static int audioBrokenIndex = 0;
+						static unsigned int audioBrokenIndex = 0;
 						if(audioBrokenIndex < context->audioInChannels)
 						{
 							if(brokenAudioChannels[audioBrokenIndex])
@@ -1211,13 +1212,13 @@ void render(BelaContext *context, void *userData)
 	else if (gCurrentTest == kAudioDCTestLo)
 	{
 		PRINTONCE("kAudioDCTestHi: testing audio out loopback to CV in. Make sure CV1 and CV2 are at min\n");
-		static int currentChannel = 0;
+		static unsigned int currentChannel = 0;
 
 		static bool potCheck = true;
 
 		float readVal;
 		static bool brokenAudioChannels[2] =  {0};
-		static int numOfWokingAudioChannels = 0;
+		static unsigned int numOfWokingAudioChannels = 0;
 		float audioOutRange[2] = {0.0, 1.0};
 		static float audioOutVal = audioOutRange[0];
 
@@ -1273,7 +1274,7 @@ void render(BelaContext *context, void *userData)
 							if(!(fabs(readVal*2 - audioOutVal) <= gAudioToCVtolerance))
 							{
 								brokenAudioChannels[currentChannel] = 1; // In and out are out of range
-								rt_printf("audio out %d, fabs(readVal*2 - audioOutVal): %f, gAudioToCVtolerance: %f, readVal: %f, audioOutVal: %f\n",
+								rt_printf("audio out %u, fabs(readVal*2 - audioOutVal): %f, gAudioToCVtolerance: %f, readVal: %f, audioOutVal: %f\n",
 										currentChannel, fabs(readVal*2 - audioOutVal), gAudioToCVtolerance, readVal, audioOutVal);
 							}
 
@@ -1302,7 +1303,7 @@ void render(BelaContext *context, void *userData)
 					}
 					else
 					{
-						static int audioBrokenIndex = 0;
+						static unsigned int audioBrokenIndex = 0;
 						if(audioBrokenIndex < context->audioInChannels)
 						{
 							if(brokenAudioChannels[audioBrokenIndex])

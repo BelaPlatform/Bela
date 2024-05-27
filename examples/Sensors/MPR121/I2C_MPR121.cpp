@@ -34,7 +34,7 @@ boolean I2C_MPR121::begin(uint8_t bus, uint8_t i2caddr) {
   uint8_t c = readRegister8(MPR121_CONFIG2);
   
   if (c != 0x24) {
-	  rt_printf("MPR121 read 0x%x instead of 0x24\n", c);
+	  printf("MPR121 read 0x%x instead of 0x24\n", c);
 	  return false;
   }
 
@@ -120,7 +120,7 @@ uint8_t I2C_MPR121::readRegister8(uint8_t reg) {
     packets.msgs      = messages;
     packets.nmsgs     = 2;
     if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-        rt_printf("Unable to send data");
+        printf("Unable to send data");
         return 0;
     }
 
@@ -153,7 +153,7 @@ uint16_t I2C_MPR121::readRegister16(uint8_t reg) {
     packets.msgs      = messages;
     packets.nmsgs     = 2;
     if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-        rt_printf("Unable to send data");
+        printf("Unable to send data");
         return 0;
     }
 

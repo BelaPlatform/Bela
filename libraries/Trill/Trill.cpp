@@ -392,7 +392,7 @@ int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, co
 	ssize_t bytesRead = readBytes(data, size);
 	if (bytesRead != ssize_t(size))
 	{
-		fprintf(stderr, "%s: failed to read %d bytes. ret: %d\n", name, size, bytesRead);
+		fprintf(stderr, "%s: failed to read %zd bytes. ret: %zd\n", name, size, bytesRead);
 		printErrno(bytesRead);
 		return 1;
 	}

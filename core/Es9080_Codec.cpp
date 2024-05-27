@@ -429,7 +429,7 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 			// TDM_CH_NUM: Total TDM slot number per frame = TDM_CH_NUM + 1.
 			// Note: this does not affect MASTER clocking, but it
 			// should be set correctly or some slots may not work
-			| kNumSlots - 1
+			| (kNumSlots - 1)
 		))
 		return 1;
 

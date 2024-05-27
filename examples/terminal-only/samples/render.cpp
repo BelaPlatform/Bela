@@ -85,7 +85,7 @@ void render(BelaContext *context, void *userData)
 		if(gReadPtr != -1)
 			out += data[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= data.size())
+		if(gReadPtr >= ssize_t(data.size()))
 			gReadPtr = -1;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)

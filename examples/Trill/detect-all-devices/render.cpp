@@ -40,7 +40,7 @@ bool setup(BelaContext *context, void *userData)
 		int addr = d.second;
 		printf("%#4x (%2d) | %s\n", addr, addr, device.c_str());
 	}
-	printf("Total: %d devices\n", devices.size());
+	printf("Total: %zu devices\n", devices.size());
 	return true;
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <ne10/NE10_types.h>
 #include <vector>
+#include <string>
 #include <map>
 #include <memory>
 
