@@ -52,12 +52,8 @@ long long int parseAsInt(std::string const& str)
 {
 	std::string st = trim(str);
 	int base = 10;
-	unsigned int offset = 0;
 	if(st.size() >= 2 && '0' == st[0] && 'x' == st[1])
-	{
-		offset = 2;
 		base = 16;
-	}
 	return strtoll(st.c_str(), NULL, base);
 }
 
