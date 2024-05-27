@@ -30,6 +30,7 @@
 #include "../include/board_detect.h"
 #include "../include/BelaContextFifo.h"
 #include "../include/MiscUtilities.h"
+#include "../include/InternalBelaContext.h"
 
 #include <pthread.h>
 
