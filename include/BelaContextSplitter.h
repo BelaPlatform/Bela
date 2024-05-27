@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Bela.h>
-#include <PRU.h> // InternalBelaContext
 #include <vector>
+#include "InternalBelaContext.h"
+
 class BelaContextSplitter {
 public:
 	BelaContextSplitter(unsigned int in = 1, unsigned int out = 1, const BelaContext* context = nullptr)
@@ -95,4 +96,3 @@ private:
 	struct streamOffsets offsets[kNumStreams];
 	direction_t direction;
 };
-
