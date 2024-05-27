@@ -1,3 +1,4 @@
+#include <InternalBelaContext.h>
 #include <BelaContextSplitter.h>
 #include <stddef.h>
 #include <string.h>
