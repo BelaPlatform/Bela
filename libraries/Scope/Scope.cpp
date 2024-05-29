@@ -38,18 +38,10 @@ Scope::ClientInstance::ClientInstance(Scope& scope) :
 		isResizing(true),
 		upSampling(1),
 		triggerPrimed(false),
-		started(false),
-		windowFFT(NULL),
-		inFFT(NULL),
-		outFFT(NULL),
-		cfg(NULL)
+		started(false)
 {}
 Scope::ClientInstance::~ClientInstance()
 {
-	delete[] windowFFT;
-	NE10_FREE(inFFT);
-	NE10_FREE(outFFT);
-	NE10_FREE(cfg);
 }
 
 void Scope::ClientInstance::triggerTask(){
@@ -138,10 +130,8 @@ void Scope::ClientInstance::setPlotMode(){
 	customTriggered = false;
 
 	if (FREQ_DOMAIN == plotMode){
-		inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
-		outFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
-		cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
-		windowFFT = new float[FFTLength];
+		fft.setup(FFTLength);
+		windowFFT.resize(FFTLength);
 
 		pointerFFT = 0;
 		collectingFFT = true;
@@ -405,12 +395,11 @@ void Scope::ClientInstance::doFFT(){
 
 		// prepare the FFT input & do windowing
 		for (int i = 0; i < FFTLength; i++){
-			inFFT[i].r = (ne10_float32_t)(s.buffer[(ptr + i) % s.channelWidth+ c * s.channelWidth] * windowFFT[i]);
-			inFFT[i].i = 0;
+			fft.td(i) = s.buffer[(ptr + i) % s.channelWidth+ c * s.channelWidth] * windowFFT[i];
 		}
 
 		// do the FFT
-		ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
+		fft.fft();
 
 		if (ratio < 1.0f){
 
@@ -429,7 +418,8 @@ void Scope::ClientInstance::doFFT(){
 
 				float yAxis[2];
 				for(unsigned int n = 0; n < 2; ++n){
-					float magSquared = outFFT[index + n].r * outFFT[index + n].r + outFFT[index + n].i * outFFT[index + n].i;
+					unsigned int i = index + n;
+					float magSquared = fft.fdr(i) * fft.fdr(i) + fft.fdi(i) * fft.fdi(i);
 					if (FFTYAxis == 0){ // normalised linear magnitude
 						yAxis[n] = FFTScale * sqrtf(magSquared);
 					} else { // Otherwise it is going to be (FFTYAxis == 1): decibels
@@ -467,7 +457,7 @@ void Scope::ClientInstance::doFFT(){
 				// do all magnitudes first, then search? - turns out this doesnt help
 				float maxVal = 0.0f;
 				for (int j=mindex; j<=maxdex; j++){
-					float mag = (float)(outFFT[j].r * outFFT[j].r + outFFT[j].i * outFFT[j].i);
+					float mag = fft.fdr(j) * fft.fdr(j) + fft.fdi(j) * fft.fdi(j);
 					if (mag > maxVal){
 						maxVal = mag;
 					}

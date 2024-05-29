@@ -1,5 +1,5 @@
 #pragma once
-#include <ne10/NE10_types.h>
+#include <libraries/Fft/Fft.h>
 #include <vector>
 #include <string>
 #include <map>
@@ -169,13 +169,11 @@ struct ClientInstance {
 	float FFTLogOffset;
 	int pointerFFT;
 	bool collectingFFT;
-	float *windowFFT;
+	std::vector<float> windowFFT;
 	int FFTXAxis;
 	int FFTYAxis;
 
-	ne10_fft_cpx_float32_t* inFFT;
-	ne10_fft_cpx_float32_t* outFFT;
-	ne10_fft_cfg_float32_t cfg;
+	Fft fft;
 
 	void triggerTask();
 
