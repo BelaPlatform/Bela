@@ -166,7 +166,7 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 #ifdef __COBALT__
 #include <rtdm/ipc.h>
 #endif // __COBALT__
-int createBelaRtPipe(const char* portName, size_t poolsz)
+int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtFd)
 #ifdef __COBALT__
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
 {
@@ -225,7 +225,20 @@ int createBelaRtPipe(const char* portName, size_t poolsz)
 		fprintf(stderr, "Failed call to bind: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
-	return s;
+	std::string path = "/proc/xenomai/registry/rtipc/xddp/" + std::string(portName);
+	// no idea why, but a usleep(0) is needed here. Give it a bit more time,
+	// just in case
+	usleep(10000);
+	int fd = open(path.c_str(), O_RDWR);
+	if(fd < 0)
+	{
+		fprintf(stderr, "Unable to open pipe %s: (%i) %s\n", path.c_str(), errno, strerror(errno));
+		close(s);
+		return -1;
+	}
+	*rtFd = s;
+	*nonRtFd = fd;
+	return 0;
 }
 #else // __COBALT__
 {
