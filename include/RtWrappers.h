@@ -59,7 +59,7 @@ int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
 
 int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, cpu_set_t* cpuset, pthread_callback_t* callback, void* arg);
 
-int createBelaRtPipe(const char* portName, size_t poolsz);
+int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtFd);
 
 void Bela_initRtBackend();
 

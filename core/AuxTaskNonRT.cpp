@@ -17,14 +17,12 @@ int AuxTaskNonRT::commsInit()
 	// create an rt_pipe
 	std::string p_name = "p_" + name;
 	int pipeSize = 65536 * 10;
-	int ret = createBelaRtPipe(p_name.c_str(), pipeSize);
-	pipeSocket = ret;
-	if(ret <= 0)
+	int ret = createBelaRtPipe(p_name.c_str(), pipeSize, &pipeSocket, &pipe_fd);
+	if(ret)
 	{
 		fprintf(stderr, "Unable to create AuxTaskNonRT %s pipe %s: (%i) %s\n", name.c_str(), p_name.c_str(), ret, strerror(ret));
 		return 1;
 	}
-	openPipe();
 	return 0;
 }
 
@@ -60,19 +58,6 @@ AuxTaskNonRT::~AuxTaskNonRT()
 	{
 		fprintf(stderr, "Error closing pipe_fd: %d %s\n", errno, strerror(errno));
 	}
-}
-
-int AuxTaskNonRT::openPipe()
-{
-	std::string outPipeNameTemplateString = "/proc/xenomai/registry/rtipc/xddp/p_";
-	std::string rtp_name = outPipeNameTemplateString + name;
-	pipe_fd = open(rtp_name.c_str(), O_RDWR);
-	if (pipe_fd < 0)
-	{
-		fprintf(stderr, "AuxTaskNonRT %s: could not open pipe %s: (%i) %s\n", name.c_str(), rtp_name.c_str(),  errno, strerror(errno));
-		return -1;
-	}
-	return 0;
 }
 
 ssize_t AuxTaskNonRT::commsReceive(char* buf, size_t size)

@@ -81,7 +81,6 @@ private:
 	ssize_t _readRt(void* ptr, size_t size);
 	static std::string defaultName;
 	std::string name;
-	std::string path;
 	int pipeSocket;
 	int fd = 0;
 	size_t pipeSize;

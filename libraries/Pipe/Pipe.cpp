@@ -23,25 +23,11 @@ bool Pipe::setup(const std::string& pipeName, size_t size, bool newBlockingRt, b
 	pipeSize = size;
 
 	name = "p_" + pipeName;
-	int ret = createBelaRtPipe(name.c_str(), pipeSize);
-	if(ret < 0)
+	int ret = createBelaRtPipe(name.c_str(), pipeSize, &pipeSocket, &fd);
+	if(ret)
 	{
-		fprintf(stderr, "Unable to create pipe %s with %u bytes: (%i) %s\n", name.c_str(), pipeSize, ret, strerror(ret));
+		fprintf(stderr, "Unable to create pipe %s with %zu bytes: (%i) %s\n", name.c_str(), pipeSize, ret, strerror(ret));
 		return false;
-	}
-	pipeSocket = ret;
-	path = "/proc/xenomai/registry/rtipc/xddp/" + name;
-	// no idea why, but a usleep(0) is needed here. Give it a bit more time,
-	// just in case
-	usleep(10000);
-	unsigned int blockingFlag = blockingNonRt ? 0 : O_NONBLOCK;
-	fd = open(path.c_str(), O_RDWR | blockingFlag);
-	if(fd < 0)
-	{
-		fprintf(stderr, "Unable to open pipe %s: (%i) %s\n", path.c_str(), errno, strerror(errno));
-		//TODO: close the pipe
-		return false;
-	
 	}
 	setBlockingRt(newBlockingRt);
 	setBlockingNonRt(newBlockingNonRt);
