@@ -1,6 +1,7 @@
 #include "Gui.h"
 #include <iostream>
 #include <libraries/WSServer/WSServer.h>
+#include <Bela.h>
 
 Gui::Gui()
 {
@@ -86,7 +87,7 @@ void Gui::ws_disconnect(const std::string& address, const WSServerDetails* id)
  *  on_data callback for gui_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onControlData(const std::string& address, const WSServerDetails* id, const unsigned char* data, unsigned int size)
+void Gui::ws_onControlData(const std::string& address, const WSServerDetails* id, const unsigned char* data, size_t size)
 {
 	// parse the data into a JSONValue
 	JSONValue *value = JSON::Parse((const char*)data);
