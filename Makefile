@@ -282,7 +282,7 @@ endif
 
 ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -DENABLE_PRU_UIO=1 $(BELA_RT_WRAP_FLAGS)
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -DENABLE_PRU_UIO=1 $(BELA_RT_WRAP_FLAGS)
 ifeq ($(SHARED),1)
 DEFAULT_COMMON_FLAGS+= -fPIC
 PROJ_INFIX=.fpic
