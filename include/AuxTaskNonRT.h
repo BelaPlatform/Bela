@@ -4,6 +4,12 @@
 class AuxTaskNonRT : public SchedulableThread
 {
 public:
+	AuxTaskNonRT(){};
+	template<typename T>
+	AuxTaskNonRT(const std::string& _name, T callback, int priority = 0)
+	{
+		create(_name, callback, priority);
+	}
 	~AuxTaskNonRT();
 private:
 	int commsInit();
