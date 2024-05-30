@@ -17,7 +17,10 @@ cd `realpath $SCRIPTDIR`/../../
 
 [ -z "$DETECT_LIBRARIES_VERBOSE" ] && DETECT_LIBRARIES_VERBOSE=0
 getfield() {
-	awk -v pat="$1" -F"=" ' $0 ~ pat { print $2 } ' $2
+	# more elegant (see https://stackoverflow.com/a/1665662/2958741)
+	sed "s/^$1=//;t;d" $2
+	# sometimes faster:
+	#grep "^$1=" "$2" | sed "s/^$1=//"
 }
 
 extract_dependencies() {
