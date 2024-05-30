@@ -282,7 +282,10 @@ endif
 
 ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -DENABLE_PRU_UIO=1 $(BELA_RT_WRAP_FLAGS)
+BELA_HW_FLAGS := -DENABLE_PRU_UIO=1
+BELA_HW_LIBS := -lprussdrv
+
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) $(BELA_HW_FLAGS) $(BELA_RT_WRAP_FLAGS)
 ifeq ($(SHARED),1)
 DEFAULT_COMMON_FLAGS+= -fPIC
 PROJ_INFIX=.fpic
@@ -292,7 +295,7 @@ endif # SHARED
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/ -Wl,--as-needed
-BELA_CORE_LDLIBS = $(BELA_RT_BACKEND_LDLIBS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
+BELA_CORE_LDLIBS = $(BELA_RT_BACKEND_LDLIBS) $(BELA_HW_LIBS) -lstdc++ # libraries needed by core code (libbela.so)
 BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so), taken from the dependencies of the libraries of the objects included in $(LIB_EXTRA_OBJS)
 BELA_LDLIBS := $(BELA_CORE_LDLIBS)
 BELA_LDLIBS := $(filter-out -lstdc++,$(BELA_LDLIBS))
@@ -392,30 +395,35 @@ CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
-CORE_CORE_OBJS := \
-build/core/BelaContextFifo.o \
-build/core/BelaContextSplitter.o \
-build/core/DataFifo.o \
+CORE_HW_OBJS := \
 build/core/Es9080_Codec.o \
-build/core/FormatConvert.o \
-build/core/GPIOcontrol.o \
 build/core/I2c_Codec.o \
 build/core/I2c_MultiI2sCodec.o \
 build/core/I2c_MultiTLVCodec.o \
 build/core/I2c_MultiTdmCodec.o \
-build/core/Mcasp.o \
-build/core/MiscUtilities.o \
-build/core/Mmap.o \
-build/core/PRU.o \
+build/core/Spi_Codec.o \
+build/core/Tlv320_Es9080_Codec.o \
 build/core/PruBinary.o \
 build/core/PruManager.o \
+build/core/PRU.o \
+build/core/Mcasp.o \
+# this line intentionally left blank (it's not)
+
+CORE_CORE_OBJS := \
+build/core/BelaContextFifo.o \
+build/core/BelaContextSplitter.o \
+build/core/DataFifo.o \
+build/core/FormatConvert.o \
+build/core/GPIOcontrol.o \
+build/core/Gpio.o \
+build/core/MiscUtilities.o \
+build/core/Mmap.o \
 build/core/RTAudio.o \
 build/core/RTAudioCommandLine.o \
 build/core/RtWrappers.o \
-build/core/Spi_Codec.o \
-build/core/Tlv320_Es9080_Codec.o \
-build/core/board_detect.o \
 build/core/math_runfast.o \
+build/core/board_detect.o \
+#$(CORE_HW_OBJS)
 # this line intentionally left blank (it's not)
 
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS)) $(filter-out $(CORE_CORE_OBJS),$(CORE_ASM_OBJS))
