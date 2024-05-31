@@ -1,8 +1,8 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 
 The platform for ultra-low latency audio and sensor processing
@@ -606,7 +606,7 @@ bool setup(BelaContext *context, void *userData)	{
 	gFirstScopeChannel = gFirstDigitalChannel + gDigitalChannelsInUse;
 
 	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
-	
+
 	// Create hashes for digital channels
 	generateDigitalNames(gDigitalChannelsInUse, gDigitalChannelOffset, gHvDigitalInHashes);
 
@@ -956,14 +956,14 @@ void render(BelaContext *context, void *userData)
 		// note: in multiple places below we assume that the number of digital frames is same as number of audio
 		// Bela digital in at message-rate
 		dcm.processInput(context->digital, context->digitalFrames);
-	
+
 		// Bela digital in at signal-rate
 		if(gDigitalSigInChannelsInUse > 0)
 		{
 			unsigned int j, k;
 			float *p0, *p1;
 			const unsigned int gLibpdBlockSize = context->audioFrames;
-			const unsigned int  audioFrameBase = 0;
+			const unsigned int audioFrameBase = 0;
 			float* gInBuf = gHvInputBuffers;
 			// block below copy/pasted from libpd, except
 			// 16 has been replaced with gDigitalSigInChannelsInUse
@@ -981,7 +981,7 @@ void render(BelaContext *context, void *userData)
 
 	// replacement for bang~ object
 	//hv_sendMessageToReceiverV(gHeavyContext, "bela_bang", 0.0f, "b");
-	
+
 	// heavy audio callback
 	hv_processInline(gHeavyContext, gHvInputBuffers, gHvOutputBuffers, context->audioFrames);
 	/*
@@ -1002,13 +1002,13 @@ void render(BelaContext *context, void *userData)
 				unsigned int j, k;
 				float *p0, *p1;
 				const unsigned int gLibpdBlockSize = context->audioFrames;
-				const unsigned int  audioFrameBase = 0;
+				const unsigned int audioFrameBase = 0;
 				float* gOutBuf = gHvOutputBuffers;
 				// block below copy/pasted from libpd, except
 				// context->digitalChannels has been replaced with gDigitalSigOutChannelsInUse
 				for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
 					unsigned int digitalFrame = (audioFrameBase + j);
-					for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstDigitalChannel;
+					for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstDigitalChannel;
 							k < gDigitalSigOutChannelsInUse; k++, p1 += gLibpdBlockSize) {
 						if(dcm.isSignalRate(k) && dcm.isOutput(k)){ // only process output channels that are handled at signal rate
 							digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
@@ -1019,7 +1019,7 @@ void render(BelaContext *context, void *userData)
 		// Bela digital out at message-rate
 		dcm.processOutput(context->digital, context->digitalFrames);
 	}
-	
+
 #ifdef BELA_HV_SCOPE
 	// Bela scope
 	if(gScopeChannelsInUse > 0)
@@ -1031,7 +1031,7 @@ void render(BelaContext *context, void *userData)
 
 		// block below copy/pasted from libpd
 		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
-			for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
 				gScopeOut[k] = *p1;
 			}
 			scope->log(gScopeOut);
