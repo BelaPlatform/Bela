@@ -165,9 +165,7 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 
 #ifdef __COBALT__
 #include <rtdm/ipc.h>
-#endif // __COBALT__
 int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtFd)
-#ifdef __COBALT__
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
 {
 	Bela_initRtBackend();
@@ -241,9 +239,22 @@ int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtF
 	return 0;
 }
 #else // __COBALT__
+#include <sys/socket.h>
+#include <sys/types.h>
+
+// Using a UNIX socket may not be the best way of performing intra-process communication,
+// but it seems to model the Xenomai-3 XDDP approach quite well.
+
+int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtFd)
 {
-#warning BelaRtPipe unsupported without COBALT
-	return -1;
+	Bela_initRtBackend();
+	int sv[2];
+	int a = socketpair(AF_UNIX, SOCK_DGRAM, 0, sv);
+	if(a)
+		return -1;
+	*rtFd = sv[0];
+	*nonRtFd = sv[1];
+	return 0;
 }
 #endif //__COBALT__
 
