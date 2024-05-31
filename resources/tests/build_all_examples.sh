@@ -16,6 +16,7 @@ Arguments:
 		instead. This can be either a folder or a sub-folder of
 		$BELA_EXAMPLES.
 	--only arg(s) : only test the examples provided as arg(s). This has to be last.
+	--skip arg(s): skip the examples provided as arg(s). This has to be last
 	--verbose : prints output of the \`make' command"
 }
 
@@ -107,8 +108,15 @@ do
 	--only)
 		shift
 		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --only $@"
-		EXAMPLES_TO_RUN=$@
+		EXAMPLES_TO_RUN="$@"
 		echo "Only running: $EXAMPLES_TO_RUN"
+		break
+	;;
+	--skip)
+		shift
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --only $@"
+		EXAMPLES_TO_SKIP="$@"
+		echo "Skipping: $EXAMPLES_TO_SKIP"
 		break
 	;;
 	--verbose)
@@ -132,7 +140,17 @@ for EXAMPLE in $EXAMPLES_TO_RUN
 do
 	[ -d "$EXAMPLE" ] || continue
 	[ "$EXAMPLE" = "$START_FROM" ] && START_FROM=
-	[ -z "$START_FROM" ] || { echo "Skipping $EXAMPLE"; continue; }
+	SHOULD_SKIP=false
+	for e in $EXAMPLES_TO_SKIP; do
+		if [ "$EXAMPLE" == "$e" ]; then
+			SHOULD_SKIP=true
+			break
+		fi
+	done
+	if [ -n "$START_FROM" -o true == "$SHOULD_SKIP" ]; then
+		echo "Skipping $EXAMPLE"
+		continue
+	fi
 	printf "$EXAMPLE -- "
 	rm -rf "../projects/$TEST_PROJECT"
 	cp -r "$EXAMPLE" "../projects/$TEST_PROJECT"
