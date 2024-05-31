@@ -24,9 +24,12 @@ shift
 [ -d $SOURCE ] && {
 	SOURCE=$SOURCE/_main.pd
 }
-[ -z $PROJECT_NAME ] && PROJECT_NAME=$(basename $(dirname $SOURCE))
+SRC_PROJECT_FOLDER="$(dirname $SOURCE)"
+[ -z $PROJECT_NAME ] && PROJECT_NAME=$(basename $SRC_PROJECT_FOLDER)
 
 SCRIPTDIR=$(dirname "$0")
+[ -z "$CUSTOM_HEAVY_SOURCE_PATH" ] && CUSTOM_HEAVY_SOURCE_PATH="$SRC_PROJECT_FOLDER/heavy/"
+[ -z "$HVRESOURCES_DIR" ] && HVRESOURCES_DIR=$SCRIPTDIR/hvresources/
 [ -z "$SCRIPTDIR" ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/
 [ -z "$tmppath" ] && tmppath="$SCRIPTDIR/../tmp/heavy/hvtemp/"
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }
@@ -39,6 +42,21 @@ else
 	HVCC_PATHS_CL=
 fi
 
+# compile pd to C
 hvcc $SOURCE -o $tmppath -n bela -g c $HVCC_PATHS_CL
-rsync -aq $SCRIPTDIR/hvresources/render.cpp $tmppath/c
+
+# provide render file
+projectpath="$tmppath/c"
+# check if custom CUSTOM_HEAVY_SOURCE_PATH folder is provided
+if [ -e "$CUSTOM_HEAVY_SOURCE_PATH" ] && [ "$(ls $CUSTOM_HEAVY_SOURCE_PATH)" ]; then
+	echo "Custom heavy folder in use: $CUSTOM_HEAVY_SOURCE_PATH, using files in there instead of the default render.cpp:"
+	[ -d "$CUSTOM_HEAVY_SOURCE_PATH" ] && {
+		rsync -av "$CUSTOM_HEAVY_SOURCE_PATH"/* "$projectpath/" || exit 1;
+	} || { rsync -av "$CUSTOM_HEAVY_SOURCE_PATH" "$projectpath/" || exit 1; }
+else
+	echo "Using Heavy default render.cpp"
+	rsync -av "$HVRESOURCES_DIR/render.cpp" "$projectpath/" || exit 1
+fi
+
+# build resulting project
 $SCRIPTDIR/build_project.sh $tmppath/c/ -p $PROJECT_NAME -m "CPPFLAGS=-Wno-unused-private-field" "$@"
