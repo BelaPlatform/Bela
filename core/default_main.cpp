@@ -48,7 +48,8 @@ int main(int argc, char *argv[])
 	settings->cleanup = cleanup;
 	if(argc > 0 && argv[0])
 	{
-		settings->projectName = strrchr(argv[0], '/') + 1;
+		char* nameWithSlash = strrchr(argv[0], '/');
+		settings->projectName = nameWithSlash ? nameWithSlash + 1 : argv[0];
 	}
 
 	while (1) {
