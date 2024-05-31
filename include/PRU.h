@@ -34,7 +34,7 @@ public:
 				   uint32_t disabledBelaDigitalChannels);
 
 	// Run the code image in pru_rtaudio_bin.h
-	int start(char * const filename, const McaspRegisters& mcaspRegisters);
+	int start(const char * const filename, const McaspRegisters& mcaspRegisters);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
 	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData);

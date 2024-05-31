@@ -698,7 +698,7 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 }
 
 // Run the code image in the specified file
-int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
+int PRU::start(const char * const filename, const McaspRegisters& mcaspRegisters)
 {
 	switch(belaHw)
 	{
