@@ -423,6 +423,8 @@ build/core/RTAudioCommandLine.o \
 build/core/RtWrappers.o \
 build/core/math_runfast.o \
 build/core/board_detect.o \
+build/core/AuxiliaryTasks.o \
+build/core/RtLock.o \
 #$(CORE_HW_OBJS)
 # this line intentionally left blank (it's not)
 
@@ -809,7 +811,7 @@ lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 
 LIB_SO =libbela.so
 LIB_A = libbela.a
-LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o build/core/Gpio.o build/core/RtLock.o
+LIB_OBJS = $(CORE_CORE_OBJS)
 lib/$(LIB_SO): $(LIB_OBJS)
 	$(AT) echo Building lib/$(LIB_SO)
 	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDLIBS) $(BELA_CORE_LDLIBS)
