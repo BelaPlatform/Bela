@@ -52,7 +52,8 @@ void Scope::ClientInstance::triggerTask(){
 	}
 }
 
-void Scope::setup(unsigned int _numChannels, float _sampleRate){
+int Scope::setup(unsigned int _numChannels, float _sampleRate)
+{
 	if(_numChannels > 50)
 		throw std::runtime_error(std::string("Scope::setup(): too many channels (")+std::to_string(_numChannels)+std::string(")."));
 
@@ -61,7 +62,12 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 
 	// set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
-	ws_server->setup(5432);
+	int ret;
+	if((ret = ws_server->setup(5432)))
+	{
+		fprintf(stderr, "Scope: failed to create server: %d\n", ret);
+		return 1;
+	}
 	ws_server->addAddress("scope_data", nullptr, nullptr, nullptr, true);
 	ws_server->addAddress("scope_control",
 			[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size){
@@ -76,7 +82,12 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 
 	// setup the auxiliary tasks
 	scopeTriggerTask = std::unique_ptr<AuxTaskRT>(new AuxTaskRT());
-	scopeTriggerTask->create("scope-trigger-task", [this](){ c.triggerTask(); });
+	if((ret = scopeTriggerTask->create("scope-trigger-task", [this](){ c.triggerTask(); })))
+	{
+		fprintf(stderr, "Scope: failed to create trigger task: %d\n", ret);
+		return 1;
+	}
+	return 0;
 }
 
 void Scope::ClientInstance::start(){
