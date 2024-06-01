@@ -442,6 +442,12 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->codecMode)
 		codecMode = settings->codecMode;
 
+	if(settings->projectName)
+	{
+		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH - 1);
+		if(gRTAudioVerbose)
+			printf("Project name: %s\n", gContext.projectName);
+	}
 	if(BelaHw_Batch == belaHw)
 	{
 		gCoreRender = settings->render;
@@ -540,13 +546,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gContext.audioFrames = settings->periodSize / gFifoFactor;
 	if(gRTAudioVerbose)
 		printf("core audioFrames: %u\n", gContext.audioFrames);
-
-	if(settings->projectName)
-	{
-		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH - 1);
-		if(gRTAudioVerbose)
-			printf("Project name: %s\n", gContext.projectName);
-	}
 	gAudioCodec = pcfg.activeCodec;
 	if(pcfg.disabledCodec)
 	{
