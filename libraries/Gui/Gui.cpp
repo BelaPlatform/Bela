@@ -19,7 +19,12 @@ int Gui::setup(unsigned int port, std::string address)
 
 	// Set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
-	ws_server->setup(port);
+	int ret = ws_server->setup(port);
+	if(ret)
+	{
+		fprintf(stderr, "Gui: unable to create websocket on port %u\n", port);
+		return 1;
+	}
 	ws_server->addAddress(_addressData,
 		[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size)
 		{

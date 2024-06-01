@@ -37,7 +37,10 @@ int SchedulableThread::create(const std::string& _name, int priority)
 	name = _name;
 	int ret = commsInit();
 	if(ret)
+	{
+		fprintf(stderr, "SchedulableThread: unable to initialize communication %s: %i\n", name.c_str(), ret);
 		return 1;
+	}
 	
 	// start the xenomai task
 	int stackSize = 0;

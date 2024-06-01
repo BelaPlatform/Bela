@@ -77,15 +77,17 @@ void WSServer::sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler
 	}
 }
 
-void WSServer::setup(int _port) {
+int WSServer::setup(int _port) {
 	port = _port;
 	
 	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	server = std::make_shared<seasocks::Server>(logger);
 
 	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	server_task->create(std::string("WSServer_")+std::to_string(_port), [this](){ server->serve("/dev/null", port); });
+	if(server_task->create(std::string("WSServer_")+std::to_string(_port), [this](){ server->serve("/dev/null", port); }))
+		return 1;
 	server_task->schedule();
+	return 0;
 }
 
 void WSServer::addAddress(const std::string& _address,

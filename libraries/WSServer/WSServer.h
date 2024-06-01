@@ -26,7 +26,7 @@ class WSServer{
 		WSServer(int _port);
 		~WSServer();
 		
-		void setup(int port);
+		int setup(int port);
 
 		void addAddress(const std::string& address,
 				std::function<void(const std::string&, const WSServerDetails*, const unsigned char*, size_t)> on_receive = nullptr,
