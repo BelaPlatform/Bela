@@ -18,5 +18,6 @@ private:
 	int commsSend(const void* buf, size_t size);
 	ssize_t commsReceive(char* buf, size_t size);
 	mqd_t queueDesc;
+	bool queueValid = false;
 	std::string queueName;
 };
