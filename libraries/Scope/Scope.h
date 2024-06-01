@@ -50,7 +50,7 @@ public:
 	 * @param numChannels number of channels displayed by the scope.
 	 * @param sampleRate sample rate of the data passed in.
 	 */
-	void setup(unsigned int numChannels, float sampleRate);
+	int setup(unsigned int numChannels, float sampleRate);
 
 	void cleanup();
 	/**
