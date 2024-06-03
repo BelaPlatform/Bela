@@ -54,7 +54,7 @@ ne10_fft_cfg_float32_t cfg;
 
 // Sample info
 SampleData gSampleData;	// User defined structure to get complex data from main
-int gReadPtr = 0;		// Position of last read sample from file
+unsigned int gReadPtr = 0; // Position of last read sample from file
 
 // Auxiliary task for calculating FFT
 AuxiliaryTask gFFTTask;
@@ -230,11 +230,11 @@ void process_fft_background(void*) {
 
 void render(BelaContext* context, void* userData)
 {
-	int numAudioFrames = context->audioFrames;
+	unsigned int numAudioFrames = context->audioFrames;
 	// ------ this code internal to the demo; leave as is ----------------
 
 	// Prep the "input" to be the sound file played in a loop
-	for(int n = 0; n < numAudioFrames; n++) {
+	for(unsigned int n = 0; n < numAudioFrames; n++) {
 		if(gReadPtr < gSampleData.sampleLen)
 			gInputAudio[2*n] = gInputAudio[2*n+1] = gSampleData.samples[gReadPtr]*(1-gPlaybackLive) +
 				gPlaybackLive*0.5f*(audioRead(context,n,0)+audioRead(context,n,1));
@@ -245,7 +245,7 @@ void render(BelaContext* context, void* userData)
 	}
 	// -------------------------------------------------------------------
 
-	for(int n = 0; n < numAudioFrames; n++) {
+	for(unsigned int n = 0; n < numAudioFrames; n++) {
 		gInputBuffer[gInputBufferPointer] = ((gInputAudio[n*gAudioChannelNum] + gInputAudio[n*gAudioChannelNum+1]) * 0.5);
 
 		// Copy output buffer to output

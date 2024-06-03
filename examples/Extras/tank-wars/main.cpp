@@ -4,14 +4,16 @@
  *  Created on: Oct 24, 2014
  *      Author: parallels
  */
-
+#include <unistd.h>
 #include <iostream>
 #include <cstdlib>
 #include <libgen.h>
 #include <signal.h>
 #include <getopt.h>
-#include <libraries/sndfile/sndfile.h>
-#include <Bela.h>
+#include <string.h>
+#include "../include/Bela.h"
+
+#include <libraries/AudioFile/AudioFile.h>
 
 extern int gScreenFramesPerSecond;
 
@@ -26,37 +28,13 @@ int gSoundHitBufferLength = 0;
 using namespace std;
 
 // Load a sound sample from file
-int loadSoundFile(const string& path, float **buffer, int *bufferLength)
+int loadSoundFile(const string& path, vector<float>& v, float **buffer, int *bufferLength)
 {
-	SNDFILE *sndfile ;
-	SF_INFO sfinfo ;
-	sfinfo.format = 0;
-	if (!(sndfile = sf_open (path.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << path.c_str() << ": " << sf_strerror(sndfile) << endl;
+	v = AudioFileUtilities::loadMono(path);
+	if(!v.size())
 		return 1;
-	}
-
-	int numChan = sfinfo.channels;
-	if(numChan != 1)
-	{
-		cout << "Error: " << path << " is not a mono file" << endl;
-		return 1;
-	}
-
-	*bufferLength = sfinfo.frames * numChan;
-	*buffer = new float[*bufferLength];
-	if(*buffer == 0){
-		cout << "Could not allocate buffer" << endl;
-		return 1;
-	}
-
-	int readcount = sf_read_float(sndfile, *buffer, *bufferLength);
-
-	// Pad with zeros in case we couldn't read whole file
-	for(int k = readcount; k < *bufferLength; k++)
-		(*buffer)[k] = 0;
-
-	sf_close(sndfile);
+	*bufferLength = v.size();
+	*buffer = v.data();
 	return 0;
 }
 
@@ -80,10 +58,7 @@ void usage(const char * processName)
 int main(int argc, char *argv[])
 {
 	BelaInitSettings* settings = Bela_InitSettings_alloc();	// Standard audio settings
-	string musicFileName = "music.wav";
-	string soundBoomFileName = "boom.wav";
-	string soundHitFileName = "hit.wav";
-	
+
 	struct option customOptions[] =
 	{
 		{"help", 0, NULL, 'h'},
@@ -96,12 +71,18 @@ int main(int argc, char *argv[])
 	settings->setup = setup;
 	settings->render = render;
 	settings->cleanup = cleanup;
+	if(argc > 0 && argv[0])
+	{
+		char* nameWithSlash = strrchr(argv[0], '/');
+		settings->projectName = nameWithSlash ? nameWithSlash + 1 : argv[0];
+	}
 
-	// Parse command-line arguments
 	while (1) {
 		int c = Bela_getopt_long(argc, argv, "hf:", customOptions, settings);
 		if (c < 0)
+		{
 			break;
+		}
 		int ret = -1;
 		switch (c) {
 			case 'f':
@@ -128,27 +109,35 @@ int main(int argc, char *argv[])
 	}
 
 	// Load the sound files
-	if(loadSoundFile(musicFileName, &gMusicBuffer, &gMusicBufferLength) != 0) {
+	string musicFileName = "music.wav";
+	string soundBoomFileName = "boom.wav";
+	string soundHitFileName = "hit.wav";
+	vector<float> m, b, h;
+	if(loadSoundFile(musicFileName, m, &gMusicBuffer, &gMusicBufferLength) != 0) {
 		cout << "Warning: unable to load sound file " << musicFileName << endl;
 	}
-	if(loadSoundFile(soundBoomFileName, &gSoundBoomBuffer, &gSoundBoomBufferLength) != 0) {
+	if(loadSoundFile(soundBoomFileName, b, &gSoundBoomBuffer, &gSoundBoomBufferLength) != 0) {
 		cout << "Warning: unable to load sound file " << soundBoomFileName << endl;
 	}
-	if(loadSoundFile(soundHitFileName, &gSoundHitBuffer, &gSoundHitBufferLength) != 0) {
+	if(loadSoundFile(soundHitFileName, h, &gSoundHitBuffer, &gSoundHitBufferLength) != 0) {
 		cout << "Warning: unable to load sound file " << soundHitFileName << endl;
 	}
 	
 	// Initialise the PRU audio device
 	if(Bela_initAudio(settings, 0) != 0) {
-		Bela_InitSettings_free(settings);	
-		cout << "Error: unable to initialise audio" << endl;
+		Bela_InitSettings_free(settings);
+		fprintf(stderr,"Error: unable to initialise audio\n");
 		return 1;
 	}
 	Bela_InitSettings_free(settings);
 
 	// Start the audio device running
 	if(Bela_startAudio()) {
-		cout << "Error: unable to start real-time audio" << endl;
+		fprintf(stderr,"Error: unable to start real-time audio\n");
+		// Stop the audio device
+		Bela_stopAudio();
+		// Clean up any resources allocated for audio
+		Bela_cleanupAudio();
 		return 1;
 	}
 
@@ -167,14 +156,6 @@ int main(int argc, char *argv[])
 	// Clean up any resources allocated for audio
 	Bela_cleanupAudio();
 
-	// Release sound files
-	if(gMusicBuffer != 0)
-		free(gMusicBuffer);
-	if(gSoundBoomBuffer != 0)
-		free(gSoundBoomBuffer);
-	if(gSoundHitBuffer != 0)
-		free(gSoundHitBuffer);
-	
 	// All done!
 	return 0;
 }
