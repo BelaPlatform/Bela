@@ -10,14 +10,19 @@
  *  Queen Mary University of London
  */
 
+#include <unistd.h>
+#include <iostream>
+#include <cstdlib>
+#include <libgen.h>
+#include <signal.h>
+#include <getopt.h>
+#include <string.h>
+#include "../include/Bela.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <strings.h>
 #include <math.h>
-#include <iostream>
-#include <signal.h>		// interrupt handler
 #include <assert.h>
 #include <vector>
 #include <dirent.h>		// to handle files in dirs
@@ -31,10 +36,6 @@
 #include <pthread.h>
 #include <sched.h>
 
-// get_opt_long
-#include <getopt.h>
-
-#include <Bela.h>
 #include "config.h"
 #include "sensors.h"
 #include "DboxOscillatorBank.h"
@@ -90,15 +91,6 @@ char gGroup	= '2';	// 0 is no info, 1 info.   2 is not set
 extern ne10_float32_t *filterState[2];
 extern ne10_float32_t *filterIn[2];
 extern ne10_float32_t *filterOut[2];
-
-struct arg_data
-{
-   int  argc;
-   char **argv;
-};
-
-arg_data args;
-
 
 int readFiles()
 {
@@ -252,7 +244,7 @@ int initSoundFiles()
 
 //---------------------------------------------------------------------------------------------------------
 
-// Handle Ctrl-C
+// Handle Ctrl-C by requesting that the audio rendering stop
 void interrupt_handler(int var)
 {
 	// kill keyboard thread mercilessly
@@ -262,8 +254,7 @@ void interrupt_handler(int var)
 	Bela_requestStop();
 }
 
-
-void parseArguments(arg_data args, BelaInitSettings *settings)
+void parseArguments(int argc, char *argv[], BelaInitSettings *settings)
 {
 	// Default filename;
 	gPartialFilename = strdup("D-Box_sound_250_60_40_h88_2.txt");
@@ -288,23 +279,26 @@ void parseArguments(arg_data args, BelaInitSettings *settings)
 		{"group", 1, NULL, 'g'},
 		{NULL, 0, NULL, 0},
 	};
-	int morehelp = 0;
 	int tmp = -1;
 
 	Bela_defaultSettings(settings);
 	settings->setup = setup;
 	settings->render = render;
 	settings->cleanup = cleanup;
+	if(argc > 0 && argv[0])
+	{
+		char* nameWithSlash = strrchr(argv[0], '/');
+		settings->projectName = nameWithSlash ? nameWithSlash + 1 : argv[0];
+	}
 
 	while (1)
 	{
-		int c = Bela_getopt_long(args.argc, args.argv, "hf:ki:sq:r:t:l:u:o:n:g:", long_option, settings);
+		int c = Bela_getopt_long(argc, argv, "hf:ki:sq:r:t:l:u:o:n:g:", long_option, settings);
 		if (c < 0)
 			break;
 		switch (c)
 		{
 			case 'h':
-				morehelp++;
 				break;
 			case 'f':
 				free(gPartialFilename);
@@ -373,9 +367,7 @@ int main(int argc, char *argv[])
 	int oscBankHopSize;
 
 	// Parse command-line arguments
-	args.argc = argc;
-	args.argv = argv;
-	parseArguments(args, settings);
+	parseArguments(argc, argv, settings);
 
 	Bela_setVerboseLevel(gVerbose);
 	if(gVerbose == 1 && useAudioTest)
@@ -390,6 +382,7 @@ int main(int argc, char *argv[])
 	// Initialise the audio device
 	if(Bela_initAudio(settings, &oscBankHopSize) != 0) {
 		Bela_InitSettings_free(settings);
+		fprintf(stderr,"Error: unable to initialise audio\n");
 		return 1;
 	}
 	Bela_InitSettings_free(settings);
@@ -413,7 +406,11 @@ int main(int argc, char *argv[])
 		cout << "main() : creating audio thread" << endl;
 
 	if(Bela_startAudio()) {
-		cout << "Error: unable to start real-time audio" << endl;
+		fprintf(stderr,"Error: unable to start real-time audio\n");
+		// Stop the audio device
+		Bela_stopAudio();
+		// Clean up any resources allocated for audio
+		Bela_cleanupAudio();
 		return 1;
 	}
 
@@ -459,22 +456,24 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// Set up interrupt handler to catch Control-C and SIGTERM
-	signal(SIGINT, interrupt_handler);
-	signal(SIGTERM, interrupt_handler);
-
 	// load all other files into oscBanks
 	loadAudioFiles(false);
 	cout << "Finished loading analysis files\n";
 	gIsLoading = false;
+
+	// Set up interrupt handler to catch Control-C and SIGTERM
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
 
 	// Run until told to stop
 	while(!Bela_stopRequested()) {
 		usleep(100000);
 	}
 
+	// Stop the audio device
 	Bela_stopAudio();
 
+	// Clean up any resources allocated for audio
 	Bela_cleanupAudio();
 
 	pthread_join( keyboardThread, NULL);

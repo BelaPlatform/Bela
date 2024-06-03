@@ -28,7 +28,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <string>
 #include <getopt.h>
 #include <string.h>
-#include <Bela.h>
+#include "../include/Bela.h"
 
 using namespace std;
 static string fileName = "sample.wav"; // possibly overridden below
@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
 	settings->cleanup = cleanup;
 	if(argc > 0 && argv[0])
 	{
-		settings->projectName = strrchr(argv[0], '/') + 1;
+		char* nameWithSlash = strrchr(argv[0], '/');
+		settings->projectName = nameWithSlash ? nameWithSlash + 1 : argv[0];
 	}
 
 	while (1) {

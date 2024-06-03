@@ -26,7 +26,8 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <libgen.h>
 #include <signal.h>
 #include <getopt.h>
-#include <Bela.h>
+#include <string.h>
+#include "../include/Bela.h"
 
 extern int gBufferSize;
 
@@ -45,8 +46,8 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --buffer-size [-b] size  Set the analysis buffer size\n";
-	cerr << "   --help [-h]:             Print this menu\n";
+	cerr << "   --buffer-size [-b] size:            Set the analysis buffer size\n";
+	cerr << "   --help [-h]:                        Print this menu\n";
 }
 
 int main(int argc, char *argv[])
@@ -65,6 +66,11 @@ int main(int argc, char *argv[])
 	settings->setup = setup;
 	settings->render = render;
 	settings->cleanup = cleanup;
+	if(argc > 0 && argv[0])
+	{
+		char* nameWithSlash = strrchr(argv[0], '/');
+		settings->projectName = nameWithSlash ? nameWithSlash + 1 : argv[0];
+	}
 
 	// By default use a longer period size because latency is not an issue
 	settings->periodSize = 32;
@@ -94,21 +100,25 @@ int main(int argc, char *argv[])
 			return ret;
 		}
 	}
-	
+
 	if(gBufferSize < settings->periodSize)
 		gBufferSize = settings->periodSize;
 
 	// Initialise the PRU audio device
 	if(Bela_initAudio(settings, 0) != 0) {
-		Bela_InitSettings_free(settings);	
-		cout << "Error: unable to initialise audio" << endl;
+		Bela_InitSettings_free(settings);
+		fprintf(stderr,"Error: unable to initialise audio\n");
 		return 1;
 	}
 	Bela_InitSettings_free(settings);
 
 	// Start the audio device running
 	if(Bela_startAudio()) {
-		cout << "Error: unable to start real-time audio" << endl;
+		fprintf(stderr,"Error: unable to start real-time audio\n");
+		// Stop the audio device
+		Bela_stopAudio();
+		// Clean up any resources allocated for audio
+		Bela_cleanupAudio();
 		return 1;
 	}
 
