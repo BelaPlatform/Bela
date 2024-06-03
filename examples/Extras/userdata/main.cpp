@@ -27,7 +27,8 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <libgen.h>
 #include <signal.h>
 #include <getopt.h>
-#include <Bela.h>
+#include <string.h>
+#include "../include/Bela.h"
 
 using namespace std;
 
@@ -44,14 +45,14 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --frequency [-f] frequency: Set the frequency of the oscillator\n";
-	cerr << "   --help [-h]:                Print this menu\n";
+	cerr << "   --frequency [-f] frequency:         Set the frequency of the oscillator\n";
+	cerr << "   --help [-h]:                        Print this menu\n";
 }
 
 int main(int argc, char *argv[])
 {
 	BelaInitSettings* settings = Bela_InitSettings_alloc();	// Standard audio settings
-	float frequency = 440.0;	// Frequency of oscillator
+	float frequency = 440.0; // Default frequency of oscillator
 
 	struct option customOptions[] =
 	{
@@ -65,12 +66,19 @@ int main(int argc, char *argv[])
 	settings->setup = setup;
 	settings->render = render;
 	settings->cleanup = cleanup;
+	if(argc > 0 && argv[0])
+	{
+		char* nameWithSlash = strrchr(argv[0], '/');
+		settings->projectName = nameWithSlash ? nameWithSlash + 1 : argv[0];
+	}
 
 	// Parse command-line arguments
 	while (1) {
 		int c = Bela_getopt_long(argc, argv, "hf:", customOptions, settings);
 		if (c < 0)
+		{
 			break;
+		}
 		int ret = -1;
 		switch (c) {
 			case 'h':
@@ -94,21 +102,23 @@ int main(int argc, char *argv[])
 
 	// Initialise the PRU audio device
 
-	/* 
-	 *  Note how we are passing the frequency parameter so that it
-	 *  can be read from the setup() function inside render.cpp
-	 */
+	//  Note how we are passing the frequency parameter so that it
+	//  can be read from the setup() function inside render.cpp
 
 	if(Bela_initAudio(settings, &frequency) != 0) {
-		Bela_InitSettings_free(settings);	
-		cout << "Error: unable to initialise audio" << endl;
+		Bela_InitSettings_free(settings);
+		fprintf(stderr,"Error: unable to initialise audio\n");
 		return 1;
 	}
 	Bela_InitSettings_free(settings);
 
 	// Start the audio device running
 	if(Bela_startAudio()) {
-		cout << "Error: unable to start real-time audio" << endl;
+		fprintf(stderr,"Error: unable to start real-time audio\n");
+		// Stop the audio device
+		Bela_stopAudio();
+		// Clean up any resources allocated for audio
+		Bela_cleanupAudio();
 		return 1;
 	}
 
