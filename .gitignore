@@ -7,7 +7,6 @@
 /projects/
 /tmp/
 *.sw?
-*.orig
 /Release/
 **/build/
 /Debug/
