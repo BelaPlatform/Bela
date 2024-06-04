@@ -1,5 +1,23 @@
 #include "Fft.h"
 
+// heuristic to guess whether ne10 is available
+#if ((defined(__aarch64__) || defined(__arm__)) && !defined(DARWIN))
+#define NE10
+#else
+#define FFTW3
+#endif
+
+#if defined(FFTW3) + defined(NE10) != 1
+#error Exactly one of FFTW3 or NE10 should be selected
+#endif
+
+#ifdef NE10
+#include <libraries/ne10/NE10.h>
+#endif // NE10
+#ifdef FFTW3
+#include <fftw3.h>
+#endif // FFTW3
+
 unsigned int Fft::roundUpToPowerOfTwo(unsigned int n)
 {
 	if(n <= 2)
@@ -23,7 +41,29 @@ bool Fft::isPowerOfTwo(unsigned int n)
 	return 1 == n;
 }
 
-int Fft::setup(unsigned int length)
+struct Fft::Private
+{
+#ifdef NE10
+	ne10_fft_r2c_cfg_float32_t cfg = nullptr;
+#endif
+#ifdef FFTW3
+	fftwf_plan cfgDirect = nullptr;
+	fftwf_plan cfgInverse = nullptr;
+#endif // FFTW3
+};
+
+Fft::Fft() : p(new Fft::Private) {}
+Fft::Fft(size_t length) : p(new Fft::Private) {
+	setup(length);
+}
+
+Fft::~Fft()
+{
+	cleanup();
+	delete p;
+}
+
+int Fft::setup(size_t length)
 {
 	if(!isPowerOfTwo(length))
 	{
@@ -32,10 +72,21 @@ int Fft::setup(unsigned int length)
 	}
 	cleanup();
 	this->length = length;
+#ifdef NE10
 	timeDomain = (ne10_float32_t*) NE10_MALLOC (length * sizeof (ne10_float32_t));
-	frequencyDomain = (ne10_fft_cpx_float32_t*) NE10_MALLOC (length * sizeof (ne10_fft_cpx_float32_t));
-	cfg = ne10_fft_alloc_r2c_float32 (length);
-	if(!cfg || !timeDomain || !frequencyDomain)
+	frequencyDomain = (float*)NE10_MALLOC(length * sizeof (ne10_fft_cpx_float32_t));
+	p->cfg = ne10_fft_alloc_r2c_float32 (length);
+	bool good = !!p->cfg;
+#endif // NE10
+#ifdef FFTW3
+	timeDomain = fftwf_alloc_real(length);
+	frequencyDomain = (float*)fftwf_alloc_complex(length);
+	// without FFTW_ESTIMATE things take a long time and seem to hang, but could provide better performance
+	p->cfgDirect = fftwf_plan_dft_r2c_1d(length, timeDomain, (fftwf_complex*)frequencyDomain, FFTW_PRESERVE_INPUT | FFTW_ESTIMATE);
+	p->cfgInverse = fftwf_plan_dft_c2r_1d(length, (fftwf_complex*)frequencyDomain, timeDomain, FFTW_PRESERVE_INPUT | FFTW_ESTIMATE);
+	bool good = p->cfgDirect && p->cfgInverse;
+#endif // FFTW3
+	if(!good || !timeDomain || !frequencyDomain)
 	{
 		cleanup();
 		return -1;
@@ -45,17 +96,32 @@ int Fft::setup(unsigned int length)
 
 void Fft::cleanup()
 {
+#ifdef NE10
 	NE10_FREE(timeDomain);
-	timeDomain = nullptr;
 	NE10_FREE(frequencyDomain);
+	ne10_fft_destroy_r2c_float32(p->cfg);
+	p->cfg = nullptr;
+#endif // NE10
+#ifdef FFTW3
+	free(timeDomain);
+	free(frequencyDomain);
+	fftwf_destroy_plan(p->cfgDirect);
+	fftwf_destroy_plan(p->cfgInverse);
+	p->cfgDirect = nullptr;
+	p->cfgInverse = nullptr;
+#endif // FFTW3
+	timeDomain = nullptr;
 	frequencyDomain = nullptr;
-	ne10_fft_destroy_r2c_float32(cfg);
-	cfg = nullptr;
 }
 
 void Fft::fft()
 {
-	ne10_fft_r2c_1d_float32_neon(frequencyDomain, timeDomain, cfg);
+#ifdef NE10
+	ne10_fft_r2c_1d_float32_neon((ne10_fft_cpx_float32_t*)frequencyDomain, (ne10_float32_t*)timeDomain, p->cfg);
+#endif // NE10
+#ifdef FFTW3
+	fftwf_execute(p->cfgDirect);
+#endif // FFTW3
 }
 
 #include <string.h>
@@ -69,7 +135,12 @@ void Fft::fft(const std::vector<float>& input)
 
 void Fft::ifft()
 {
-	ne10_fft_c2r_1d_float32_neon(timeDomain, frequencyDomain, cfg);
+#ifdef NE10
+	ne10_fft_c2r_1d_float32_neon(timeDomain, (ne10_fft_cpx_float32_t*)frequencyDomain, p->cfg);
+#endif // NE10
+#ifdef FFTW3
+	fftwf_execute(p->cfgInverse);
+#endif // FFTW3
 }
 
 void Fft::ifft(const std::vector<float>& reInput, const std::vector<float>& imInput)

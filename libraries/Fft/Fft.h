@@ -1,5 +1,4 @@
 #pragma once
-#include <libraries/ne10/NE10.h>
 #include <vector>
 #include <cmath>
 #include <libraries/math_neon/math_neon.h>
@@ -11,10 +10,10 @@
 class Fft
 {
 public:
-	Fft(){};
-	Fft(unsigned int length){ setup(length); };
-	~Fft(){ cleanup(); };
-	int setup(unsigned int length);
+	Fft();
+	Fft(size_t length);
+	~Fft();
+	int setup(size_t length);
 	void cleanup();
 	/**
 	 * Perform the FFT of the signal whose time-domain representation is stored internally.
@@ -36,11 +35,15 @@ public:
 	/**
 	 * Get the real part of the frequency-domain representation at index `n`.
 	 */
-	float& fdr(unsigned int n) { return frequencyDomain[n].r; };
+	float& fdr(unsigned int n) {
+		return frequencyDomain[n * 2];
+	};
 	/**
 	 * Get the imaginary part of the frequency-domain representation at index `n`.
 	 */
-	float& fdi(unsigned int n) { return frequencyDomain[n].i; };
+	float& fdi(unsigned int n) {
+		return frequencyDomain[n * 2 + 1];
+	};
 	/**
 	 * Get the absolute value of the frequency-domain representation at index `n`.
 	 * The value is computed on the fly at each call and is not cached.
@@ -53,8 +56,9 @@ public:
 	static bool isPowerOfTwo(unsigned int n);
 	static unsigned int roundUpToPowerOfTwo(unsigned int n);
 private:
-	ne10_float32_t* timeDomain = nullptr;
-	ne10_fft_cpx_float32_t* frequencyDomain = nullptr;
-	ne10_fft_r2c_cfg_float32_t cfg = nullptr;
-	unsigned int length;
+	float* timeDomain = nullptr;
+	float* frequencyDomain = nullptr;
+	size_t length;
+	struct Private;
+	struct Private* p;
 };
