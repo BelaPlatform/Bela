@@ -249,7 +249,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 		fprintf(stderr, "Error in clock_gettime(): %d %s\n", errno, strerror(errno));
 		return 1;
 	}
-	while(1) {
+	while(!Bela_stopRequested()) {
 		render((BelaContext*)context, userData);
 		context->audioFramesElapsed += context->audioFrames;
 		if(maxTimeNs)
