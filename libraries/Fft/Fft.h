@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <libraries/math_neon/math_neon.h>
+#include <stddef.h>
 
 /**
  * A real-to-complex FFT and complex-to-real IFFT. This is a wrapper for the libne10 FFT.
