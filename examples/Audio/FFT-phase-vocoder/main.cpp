@@ -127,6 +127,10 @@ int main(int argc, char *argv[])
 	}
 	Bela_InitSettings_free(settings);
 
+	// Set up interrupt handler to catch Control-C and SIGTERM
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
+
 	// Start the audio device running
 	if(Bela_startAudio()) {
 		fprintf(stderr,"Error: unable to start real-time audio\n");
@@ -136,10 +140,6 @@ int main(int argc, char *argv[])
 		Bela_cleanupAudio();
 		return 1;
 	}
-
-	// Set up interrupt handler to catch Control-C and SIGTERM
-	signal(SIGINT, interrupt_handler);
-	signal(SIGTERM, interrupt_handler);
 
 	// Run until told to stop
 	while(!Bela_stopRequested()) {

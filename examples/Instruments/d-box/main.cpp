@@ -405,6 +405,11 @@ int main(int argc, char *argv[])
 	if(gVerbose == 1)
 		cout << "main() : creating audio thread" << endl;
 
+	// Set up interrupt handler to catch Control-C and SIGTERM
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
+
+	// Start the audio device running
 	if(Bela_startAudio()) {
 		fprintf(stderr,"Error: unable to start real-time audio\n");
 		// Stop the audio device
@@ -460,10 +465,6 @@ int main(int argc, char *argv[])
 	loadAudioFiles(false);
 	cout << "Finished loading analysis files\n";
 	gIsLoading = false;
-
-	// Set up interrupt handler to catch Control-C and SIGTERM
-	signal(SIGINT, interrupt_handler);
-	signal(SIGTERM, interrupt_handler);
 
 	// Run until told to stop
 	while(!Bela_stopRequested()) {
