@@ -1,5 +1,6 @@
 #include <DataFifo.h>
 #include <sys/errno.h>
+#include <time.h>
 
 DataFifo::DataFifo()
 {
