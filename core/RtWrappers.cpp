@@ -165,9 +165,10 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 
 #ifdef __COBALT__
 #include <rtdm/ipc.h>
-int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtFd)
+int createBelaRtPipe(const char* portName_, size_t poolsz, int* rtFd, int* nonRtFd)
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
 {
+	std::string portName(portName_);
 	Bela_initRtBackend();
 	/*
 	 * Get a datagram socket to bind to the RT endpoint. Each
@@ -185,7 +186,21 @@ int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtF
 	 * binding
 	 */
 	struct rtipc_port_label plabel;
-	strcpy(plabel.label, portName);
+	// truncate portName to maximum allowed length
+	size_t maxLen = sizeof(plabel.label) - 1;
+	if(portName.size() > maxLen)
+		portName.resize(maxLen);
+	std::string path;
+	path = "/proc/xenomai/registry/rtipc/xddp/" + portName;
+	int dummyFd = open(path.c_str(), O_RDWR);
+	if(dummyFd >= 0)
+	{
+		// File already exists, possibly due to truncation.
+		fprintf(stderr, "Failed to create pipe at %s: it already exists\n", path.c_str());
+		close(dummyFd);
+		return -1;
+	}
+	strncpy(plabel.label, portName.c_str(), maxLen + 1);
 	int ret = BELA_RT_WRAP(setsockopt(s, SOL_XDDP, XDDP_LABEL,
 			 &plabel, sizeof(plabel)));
 	if(ret)
@@ -223,7 +238,6 @@ int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtF
 		fprintf(stderr, "Failed call to bind: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
-	std::string path = "/proc/xenomai/registry/rtipc/xddp/" + std::string(portName);
 	// no idea why, but a usleep(0) is needed here. Give it a bit more time,
 	// just in case
 	usleep(10000);
