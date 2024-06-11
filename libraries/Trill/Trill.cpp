@@ -126,6 +126,8 @@ void Trill::updateChannelMask(uint32_t mask)
 
 int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
+	dataBuffer.resize(0);
+	rawData.resize(0);
 	rawData.resize(kNumChannelsMax);
 	address = 0;
 	frameId = 0;
