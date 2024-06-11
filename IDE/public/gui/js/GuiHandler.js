@@ -121,6 +121,28 @@ export default class GuiHandler {
 			this.iframeEl.parentNode.removeChild(this.iframeEl);
 			this.iframeEl = null;
 		}
+		if("/" === projectName[0]) {
+			// an absolute path: take it at face value
+			this.sketchSource = projectName;
+			let spl = projectName.split('/');
+			let next = false;
+			// guess project name
+			projectName = null;
+			let good = -1;
+			for(let n = 0; n < spl.length - 1; ++n) {
+				if(1 == n && "projects" === spl[n])
+					good = n + 1;
+				if(good == n) {
+					// most likely: /projects/<projectName>/.../file.js
+					projectName = spl[n];
+					break;
+				}
+			}
+			if(!projectName)
+				projectName = spl[spl.length - 2]; // if this is outside /projects, the best guess is the name of the folder containing the file
+		} else {
+			this.sketchSource = "/projects/" + projectName + "/sketch.js";
+		}
 		let that = this;
 		this.project = projectName;
 
@@ -181,15 +203,7 @@ export default class GuiHandler {
 	loadSketch(projectName, parentSection, dom, resources=null, defaultSource = "/gui/p5-sketches/sketch.js") {
 		resources = (resources == null || Array.isArray(resources)) ? resources : [resources];
 		let resourcePromises = [];
-		let projectPath;
-		let sketchSource;
-		if("/" === projectName[0])
-		{
-			// an absolute path: take it at face value
-			sketchSource = projectName;
-		} else {
-			sketchSource = "/projects/" + projectName + "/sketch.js";
-		}
+		let sketchSource = this.sketchSource;
 		let projectDir = sketchSource.split("/").slice(0, -1).join("/");
 		if(resources != null)
 			resources.forEach(r => resourcePromises.push(this.control.loadResource(projectDir + "/" + r)) );
