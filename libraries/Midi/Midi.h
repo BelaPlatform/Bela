@@ -213,7 +213,7 @@ public:
 	 * first argument.
 	 *
 	 * @param newCallback the callback function.
-	 * @param arg the third argument to be passed to the callback function.
+	 * @param arg the second argument to be passed to the callback function.
 	 *
 	 */
 	void setSysexCallback(void (*newCallback)(midi_byte_t, void*), void* arg=nullptr){
