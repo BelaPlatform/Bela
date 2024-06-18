@@ -90,7 +90,7 @@ RtMutex::~RtMutex() {
 // - return true if it succeeds, or false if it fails
 // id and name are just for debugging purposes, while m_enabled is there because it saves duplicating some lines
 template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_enabled, T* id, const char* name) {
-	xprintf("tid: %d ", getTid());
+	xprintf("tid: %d ", gettid());
 	if (!m_enabled) {
 		xfprintf(stderr, "%s disabled %p\n", name, id);
 		return false;
@@ -171,7 +171,7 @@ struct RtConditionVariable::Private {
 RtConditionVariable::RtConditionVariable() {
 	Bela_initRtBackend();
 	p = std::unique_ptr<Private>(new Private);
-	xprintf("Construct CondictionVariable\n");
+	xprintf("Construct ConditionVariable\n");
 	int ret;
 	if ((ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))))
 	{
