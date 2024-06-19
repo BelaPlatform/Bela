@@ -648,7 +648,9 @@ stopstartup: ## stop the system service that ran Bela at startup
 	$(AT) systemctl stop bela_startup || true
 
 stoprunning: ## Stops a Bela program that is currently running
+ifeq (xenomai,$(strip $(BELA_RT_BACKEND)))
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) $(XENOMAI_STAT_PATH) | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+endif
 # take care of stale sclang / scsynth processes
 ifeq ($(PROJECT_TYPE),sc)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
