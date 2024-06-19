@@ -118,7 +118,7 @@ void Bela_HwConfig_delete(BelaHwConfig* cfg)
 // Real-time tasks and objects
 pthread_t gRTAudioThread;
 static pthread_t gFifoThread;
-static const char gRTAudioThreadName[] = "bela-audio";
+extern const char gRTAudioThreadName[] = "bela-audio";
 static const char gFifoThreadName[] = "bela-audio-fifo";
 
 int volatile gShouldStop = false; // Flag which tells the audio task to stop
@@ -304,19 +304,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(!settings)
 		return -1;
 	Bela_setVerboseLevel(settings->verbose);
-#ifdef __COBALT__
-	// Before we go ahead, let's check if Bela is already running:
-	// check if another real-time thread of the same name is already running.
-	char command[200];
-	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
-	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
-	int ret = system(command);
-	if(ret == 0)
+	if(Bela_isAlreadyRunning())
 	{
 		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
 		return -1;
 	}
-#endif // __COBALT__
 	Bela_initRtBackend();
 	turnIntoRtThread();
 
@@ -325,10 +317,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gAudioThreadStackSize = settings->audioThreadStackSize;
 	gAuxiliaryTaskStackSize = settings->auxiliaryTaskStackSize;
 
-	// First check if there's a Bela program already running on the board.
-	// We can't have more than one instance at a time, but we can tell via
-	// the Xenomai task info. We expect the rt_task_bind call to fail so if it
-	// doesn't then it means something else is running.
 	if(!settings->render)
 	{
 		fprintf(stderr, "Error: no audio callback defined. Make sure you set settings->render to point to your audio callback\n");

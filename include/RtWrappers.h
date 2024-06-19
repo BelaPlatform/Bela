@@ -63,6 +63,8 @@ int createBelaRtPipe(const char* portName, size_t poolsz, int* rtFd, int* nonRtF
 
 void Bela_initRtBackend();
 
+bool Bela_isAlreadyRunning();
+
 bool turnIntoRtThread();
 
 #ifdef __cplusplus
