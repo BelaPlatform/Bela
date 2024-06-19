@@ -69,11 +69,6 @@ static int rtdm_fd_mcasp_to_pru = 0;
 using namespace std;
 using namespace BelaHwComponent;
 
-// Select whether to use NEON-based sample conversion
-// (this will probably go away in a future commit once its performance
-//  is verified over extended use)
-#undef USE_NEON_FORMAT_CONVERSION
-
 // PRU memory: PRU0- and PRU1- DATA RAM are 8kB (0x2000) long each
 //             PRU-SHARED RAM is 12kB (0x3000) long
 
@@ -192,16 +187,6 @@ const unsigned int saltSwitch1Gpio = 60; // P9_12
 
 const unsigned int PRU::kPruGPIODACSyncPin = kSpiDacChipSelectPin;
 const unsigned int PRU::kPruGPIOADCSyncPin = kSpiAdcChipSelectPin;
-
-#ifdef USE_NEON_FORMAT_CONVERSION
-// These four functions are written in assembly in FormatConvert.S
-extern "C" {
-	void int16_to_float_audio(int numSamples, int16_t *inBuffer, float *outBuffer);
-	void int16_to_float_analog(int numSamples, uint16_t *inBuffer, float *outBuffer);
-	void float_to_int16_audio(int numSamples, float *inBuffer, int16_t *outBuffer);
-	void float_to_int16_analog(int numSamples, float *inBuffer, uint16_t *outBuffer);
-}
-#endif /* USE_NEON_FORMAT_CONVERSION */
 
 // Constructor: specify a PRU number (0 or 1)
 PRU::PRU(InternalBelaContext *input_context)
@@ -470,54 +455,15 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	}
 
 	// Allocate audio buffers
-#ifdef USE_NEON_FORMAT_CONVERSION
-	if(belaHw == BelaHw_Salt)
-	{
-		fprintf(stderr, "USE_NEON_FORMAT_CONVERSION is incompatible with Salt\n");
-		return 1;
-	}
-	if(uniform_sample_rate && context->analogFrames != hardaware_analog_frames)
-	{
-		fprintf(stderr, "Error: using uniform_sample_rate is not allowed with USE_NEON_FORMAT_CONVERSION\n");
-		return 1;
-	}
-	if(posix_memalign((void **)&context->audioIn, 16, 2 * context->audioFrames * sizeof(float))) {
-		fprintf(stderr, "Error allocating audio input buffer\n");
-		return 1;
-	}
-	if(posix_memalign((void **)&context->audioOut, 16, 2 * context->audioFrames * sizeof(float))) {
-		fprintf(stderr, "Error allocating audio output buffer\n");
-		return 1;
-	}
-#else
 	context->audioIn = (float *)malloc(context->audioInChannels * context->audioFrames * sizeof(float));
 	context->audioOut = (float *)calloc(1, context->audioOutChannels * context->audioFrames * sizeof(float));
 	if(context->audioIn == 0 || context->audioOut == 0) {
 		fprintf(stderr, "Error: couldn't allocate audio buffers\n");
 		return 1;
 	}
-#endif
 	
 	// Allocate analog buffers
 	if(analog_enabled) {
-#ifdef USE_NEON_FORMAT_CONVERSION
-		if(posix_memalign((void **)&context->analogIn, 16, 
-							context->analogInChannels * context->analogFrames * sizeof(float))) {
-			fprintf(stderr, "Error allocating analog input buffer\n");
-			return 1;
-		}
-		if(posix_memalign((void **)&context->analogOut, 16, 
-							context->analogOutChannels * context->analogFrames * sizeof(float))) {
-			fprintf(stderr, "Error allocating analog output buffer\n");
-			return 1;
-		}
-		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
-
-		if(last_analog_out_frame == 0) {
-			fprintf(stderr, "Error: couldn't allocate analog persistence buffer\n");
-			return 1;
-		}		
-#else
 		context->analogIn = (float *)malloc(context->analogInChannels * context->analogFrames * sizeof(float));
 		context->analogOut = (float *)calloc(1, context->analogOutChannels * context->analogFrames * sizeof(float));
 		last_analog_out_frame = (float *)calloc(1, context->analogOutChannels * sizeof(float));
@@ -526,7 +472,6 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 			fprintf(stderr, "Error: couldn't allocate analog buffers\n");
 			return 1;
 		}
-#endif
 		
 		memset(last_analog_out_frame, 0, context->analogOutChannels * sizeof(float));
 
@@ -1019,10 +964,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		pruMemory->copyFromPru(pruBufferForArm);
 
 		// Convert short (16-bit) samples to float
-#ifdef USE_NEON_FORMAT_CONVERSION
-		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
-		// TODO: implement non-interlaved
-#else
 		unsigned int audioInChannels = context->audioInChannels;
 		if(interleaved)
 		{
@@ -1043,7 +984,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 				}
 			}
 		}
-#endif /* defined USE_NEON_FORMAT_CONVERSION */
 		if(BelaHw_CtagBeast == belaHw || BelaHw_CtagBeastBela == belaHw)
 		{
 			// on the input data line we get:
@@ -1116,11 +1056,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 				}
 			}
 			
-#ifdef USE_NEON_FORMAT_CONVERSION
-			// TODO: add support for different analogs_per_audio ratios
-			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
-									analogInRaw, context->analogIn);
-#else
 			if(uniform_sample_rate && analogs_per_audio == 0.5)
 			{
 				unsigned int channels = context->analogInChannels;
@@ -1219,7 +1154,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 						// context->analogIn[n] = 1;
 				}
 			}
-#endif /* USE_NEON_FORMAT_CONVERSION */
 			
 			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
 				// Audio expander enabled on at least one analog input
@@ -1371,10 +1305,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			}
 
 			// Convert float back to short for SPI output
-#ifdef USE_NEON_FORMAT_CONVERSION
-			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
-								  context->analogOut, dac_pru_buffer);
-#else // USE_NEON_FORMAT_CONVERSION
 			if(analog_out_is_audio)
 			{
 				// currently sending to PRU all samples, despite the fact that when
@@ -1494,7 +1424,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 					}
 				}
 			}
-#endif /* USE_NEON_FORMAT_CONVERSION */
 		}
 
 		if(digital_enabled) { // keep track of past digital values
@@ -1514,9 +1443,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		}
 
 		// Convert float back to short for audio
-#ifdef USE_NEON_FORMAT_CONVERSION
-		float_to_int16_audio(2 * context->audioFrames, context->audioOut, audio_dac_pru_buffer);
-#else	
 		const bool handleSerialisersSplit = analog_out_is_audio;
 		const unsigned int minCommonChannelMult = handleSerialisersSplit ?
 			(context->audioOutChannels < context->analogOutChannels ? context->audioOutChannels : context->analogOutChannels)
@@ -1531,7 +1457,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 				audioOutRaw[dstIdx] = audioFloatToAudioRaw(context->audioOut[srcIdx]);
 			}
 		}
-#endif /* USE_NEON_FORMAT_CONVERSION */
 		pruMemory->copyToPru(pruBufferForArm);
 
 		// Check for underruns by comparing the number of samples reported
