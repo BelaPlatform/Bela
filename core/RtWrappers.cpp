@@ -372,6 +372,23 @@ void Bela_initRtBackend()
 	});
 }
 
+bool Bela_isAlreadyRunning()
+{
+#ifdef __COBALT__
+	extern const char gRTAudioThreadName[];
+	// Before we go ahead, let's check if Bela is already running:
+	// check if another real-time thread of the same name is already running.
+	char command[200];
+	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
+	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
+	int ret = system(command);
+	return ret == 0;
+#else
+	// can't check, assume it's not
+	return false;
+#endif
+}
+
 #include <Bela.h>
 #include <stdarg.h>
 #define var_num_to_va_list(stream, fmt, dest) \
