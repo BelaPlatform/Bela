@@ -13,7 +13,7 @@ int BELA_RT_WRAP(nanosleep(const struct timespec *req, struct timespec *rem));
 int BELA_RT_WRAP(pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg));
 int BELA_RT_WRAP(pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param));
 int BELA_RT_WRAP(pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param));
-int BELA_RT_WRAP(pthread_yield(void));
+int BELA_RT_WRAP(sched_yield(void));
 
 int BELA_RT_WRAP(pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr));
 int BELA_RT_WRAP(pthread_mutex_destroy(pthread_mutex_t *mutex));
