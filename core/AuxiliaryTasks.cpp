@@ -103,7 +103,7 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 					SCHED_FIFO, &param));
 			// just in case we have the same priority, let the
 			// other go first
-			BELA_RT_WRAP(pthread_yield());
+			BELA_RT_WRAP(sched_yield());
 			if(!taskToSchedule->started)
 				fprintf(stderr, "Didn't work\n");
 			// by the time we are here, the other thread has run, set the
