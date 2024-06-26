@@ -196,11 +196,12 @@
 #define FLAG_BIT_MUX_CONFIG0	 8		// Mux capelet configuration:
 #define FLAG_BIT_MUX_CONFIG1	 9		// 00 = off, 01 = 2 ch., 10 = 4 ch., 11 = 8 ch.
 #define FLAG_MASK_MUX_CONFIG	 0x0300
-#define FLAG_BIT_BELA_MINI      10
+#define FLAG_BIT_POCKET_BEAGLE 10
 #define FLAG_BIT_CTAG_FACE      11
 #define FLAG_BIT_CTAG_BEAST     12
 #define FLAG_BIT_ADS816X        13
-		
+#define FLAG_BIT_SHOULD_SKIP_DAC 10
+
 // Registers used throughout
 
 // r1, r2, r3 are used for temporary storage
@@ -311,7 +312,7 @@ DIGITAL:
 //map GPIO to gpio1 pins,
 //r2 is gpio1_oe, r8 is gpio1_setdataout, r7 is gpio1_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r2,r7,r8
-QBBC BELA_SET_GPIO_BITS_0, reg_flags, FLAG_BIT_BELA_MINI
+QBBC BELA_SET_GPIO_BITS_0, reg_flags, FLAG_BIT_POCKET_BEAGLE
     SET_GPIO_BITS r2, r8, r7, 18, 0, r27
     SET_GPIO_BITS r2, r8, r7, 27, 1, r27
     SET_GPIO_BITS r2, r8, r7, 26, 2, r27
@@ -355,7 +356,7 @@ SET_GPIO_BITS_0_DONE:
 //map GPIO to gpio2 pins
 //r3 is gpio2_oe, r5 is gpio2_setdataout, r4 is gpio2_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r3,r4,r5
-QBBC BELA_SET_GPIO_BITS_1, reg_flags, FLAG_BIT_BELA_MINI
+QBBC BELA_SET_GPIO_BITS_1, reg_flags, FLAG_BIT_POCKET_BEAGLE
     SET_GPIO_BITS r3, r5, r4, 0, 7, r27
     SET_GPIO_BITS r3, r5, r4, 22, 12, r27
     SET_GPIO_BITS r3, r5, r4, 24, 13, r27
@@ -394,7 +395,7 @@ START_INTERMEDIATE_DONE:
     LBBO r3, r3, 0, 4
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
-QBBC BELA_READ_GPIO_BITS, reg_flags, FLAG_BIT_BELA_MINI
+QBBC BELA_READ_GPIO_BITS, reg_flags, FLAG_BIT_POCKET_BEAGLE
 //GPIO1
     READ_GPIO_BITS r2, 18, 0, r27
     READ_GPIO_BITS r2, 27, 1, r27
@@ -494,12 +495,12 @@ QBA DALOOP
 // Complete DAC write with chip select
 .macro DAC_WRITE
 .mparam reg
-QBBS SKIP_CS_ASSERT, reg_flags, FLAG_BIT_BELA_MINI
+QBBS SKIP_CS_ASSERT, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      DAC_CS_ASSERT
 SKIP_CS_ASSERT:
      DAC_TX reg
      DAC_WAIT_FOR_FINISH
-QBBS SKIP_CS_UNASSERT, reg_flags, FLAG_BIT_BELA_MINI
+QBBS SKIP_CS_UNASSERT, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      DAC_CS_UNASSERT
 SKIP_CS_UNASSERT:
      DAC_DISCARD_RX
@@ -563,7 +564,7 @@ DONE:
 
 .macro GET_ADC_CS
 .mparam REG_PIN, REG_ADDR, OFFSET
-     QBBC BELA, reg_flags, FLAG_BIT_BELA_MINI
+     QBBC BELA, reg_flags, FLAG_BIT_POCKET_BEAGLE
      MOV REG_PIN, ADC_CS_PIN_BELA_MINI
      MOV REG_ADDR, ADC_GPIO_BELA_MINI + OFFSET
      QBA DONE
@@ -787,10 +788,10 @@ PRU_NUMBER_CHECK_DONE:
      LDI reg_num_channels, 8
 
      LBBO r2, reg_comm_addr, COMM_BOARD_FLAGS, 4
-     // Find out whether we are on BELA_MINI
-     QBBC BELA_MINI_CHECK_DONE, r2, BOARD_FLAGS_BELA_MINI
-     SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
-BELA_MINI_CHECK_DONE:
+     // Find out whether we are on Pocket Beagle
+     QBBC POCKET_BEAGLE_CHECK_DONE, r2, BOARD_FLAGS_POCKET_BEAGLE
+     SET reg_flags, reg_flags, FLAG_BIT_POCKET_BEAGLE
+POCKET_BEAGLE_CHECK_DONE:
 
      // Find out whether we should use DIGITAL
      LBBO r2, reg_comm_addr, COMM_USE_DIGITAL, 4
@@ -1079,7 +1080,7 @@ WRITE_ONE_BUFFER:
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
      LMBD r2, reg_num_channels, 1		// 1, 2 or 3 for 2, 4 or 8 channels
-QBBC BELA_CHANNELS, reg_flags, FLAG_BIT_BELA_MINI
+QBBC BELA_CHANNELS, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      // there are 0 dac values, so ADC starts at the same point as DAC
      MOV reg_adc_current, reg_dac_current
      QBA CHANNELS_DONE
@@ -1181,7 +1182,7 @@ MCASP_WAIT_RSTAT_HIGH:
 MCASP_ADC_DONE:	
      QBBC SPI_SKIP_WRITE, reg_flags, FLAG_BIT_USE_SPI
 
-QBBS SPI_SKIP_DAC_WRITE_0, reg_flags, FLAG_BIT_BELA_MINI
+QBBS SPI_SKIP_DAC_WRITE_0, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      // DAC: transmit low word (first in little endian)
      MOV r2, 0xFFFF
      AND r7, reg_dac_data, r2
@@ -1212,7 +1213,7 @@ SPI_SKIP_DAC_WRITE_0:
      // Increment channel index
      ADD r1, r1, 1
 
-QBBS SPI_SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_BELA_MINI
+QBBS SPI_SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      // DAC: transmit high word (second in little endian)
      LSR r7, reg_dac_data, 16
      LSL r7, r7, AD5668_DATA_OFFSET
