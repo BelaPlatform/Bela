@@ -2,7 +2,7 @@
 #define PRU_ARM_COMMON_H
 
 // this file is included by both core/Pru.cpp and pru/pru_rtaudio*.p
-#define BOARD_FLAGS_BELA_MINI 0
+#define BOARD_FLAGS_POCKET_BEAGLE 0
 #define BOARD_FLAGS_CTAG_FACE 1
 #define BOARD_FLAGS_CTAG_BEAST 2
 #define BOARD_FLAGS_BELA_GENERIC_TDM 3

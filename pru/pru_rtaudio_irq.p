@@ -322,12 +322,13 @@
 #define FLAG_BIT_MUX_CONFIG0     8      // Mux capelet configuration:
 #define FLAG_BIT_MUX_CONFIG1     9      // 00 = off, 01 = 2 ch., 10 = 4 ch., 11 = 8 ch.
 #define FLAG_MASK_MUX_CONFIG     0x0300
-#define FLAG_BIT_BELA_MINI      10
+#define FLAG_BIT_POCKET_BEAGLE 10
 #define FLAG_BIT_CTAG           11
 #define FLAG_BIT_CTAG_FACE      12
 #define FLAG_BIT_CTAG_BEAST     13
 #define FLAG_BIT_BELA_MULTI_TLV	14
 #define FLAG_BIT_ADS816X        15
+#define FLAG_BIT_SHOULD_SKIP_DAC 10
 
 // reg_flags should hold the number of audio in/out channels, up to 32
 #define FLAG_BIT_AUDIO_IN_CHANNELS0 16
@@ -425,11 +426,17 @@ DONE:
 
 .macro IF_HAS_ANALOG_DAC_JMP_TO
 .mparam DEST
-     QBBS DONE, reg_flags, FLAG_BIT_BELA_MINI
+     QBBS DONE, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      QBA DEST
 DONE:
 .endm
-#define IF_HAS_BELA_SPI_ADC_CS_JMP_TO IF_HAS_ANALOG_DAC_JMP_TO
+
+.macro IF_HAS_BELA_SPI_ADC_CS_JMP_TO
+.mparam DEST
+     QBBS DONE, reg_flags, FLAG_BIT_POCKET_BEAGLE
+     QBA DEST
+DONE:
+.endm
 
 .macro IF_NOT_CTAG_JMP_TO
 .mparam DEST
@@ -648,9 +655,9 @@ DONE:
 //map GPIO to gpio1 pins,
 //r2 is gpio1_oe, r8 is gpio1_setdataout, r7 is gpio1_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r2,r7,r8
-QBBS BELA_SET_GPIO_BITS_0_MINI, reg_flags, FLAG_BIT_BELA_MINI
-QBA BELA_SET_GPIO_BITS_0_NOT_MINI
-BELA_SET_GPIO_BITS_0_MINI:
+QBBS BELA_SET_GPIO_BITS_0_POCKET_BEAGLE, reg_flags, FLAG_BIT_POCKET_BEAGLE
+QBA BELA_SET_GPIO_BITS_0_NOT_POCKET_BEAGLE
+BELA_SET_GPIO_BITS_0_POCKET_BEAGLE:
     SET_GPIO_BITS r2, r8, r7, 18, 0, r27
     SET_GPIO_BITS r2, r8, r7, 27, 1, r27
     SET_GPIO_BITS r2, r8, r7, 26, 2, r27
@@ -665,7 +672,7 @@ BELA_SET_GPIO_BITS_0_MINI:
     SET_GPIO_BITS r2, r8, r7, 10, 14, r27
     SET_GPIO_BITS r2, r8, r7, 11, 15, r27
 QBA SET_GPIO_BITS_0_DONE
-BELA_SET_GPIO_BITS_0_NOT_MINI:
+BELA_SET_GPIO_BITS_0_NOT_POCKET_BEAGLE:
     SET_GPIO_BITS r2, r8, r7, 13, 4, r27
     SET_GPIO_BITS r2, r8, r7, 12, 5, r27
     SET_GPIO_BITS r2, r8, r7, 28, 6, r27
@@ -694,14 +701,14 @@ SET_GPIO_BITS_0_DONE:
 //map GPIO to gpio2 pins
 //r3 is gpio2_oe, r5 is gpio2_setdataout, r4 is gpio2_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r3,r4,r5
-QBBS BELA_SET_GPIO_BITS_1_MINI, reg_flags, FLAG_BIT_BELA_MINI
-QBA BELA_SET_GPIO_BITS_1_NOT_MINI
-BELA_SET_GPIO_BITS_1_MINI:
+QBBS BELA_SET_GPIO_BITS_1_POCKET_BEAGLE, reg_flags, FLAG_BIT_POCKET_BEAGLE
+QBA BELA_SET_GPIO_BITS_1_NOT_POCKET_BEAGLE
+BELA_SET_GPIO_BITS_1_POCKET_BEAGLE:
     SET_GPIO_BITS r3, r5, r4, 0, 7, r27
     SET_GPIO_BITS r3, r5, r4, 22, 12, r27
     SET_GPIO_BITS r3, r5, r4, 24, 13, r27
     QBA SET_GPIO_BITS_1_DONE
-BELA_SET_GPIO_BITS_1_NOT_MINI:
+BELA_SET_GPIO_BITS_1_NOT_POCKET_BEAGLE:
     SET_GPIO_BITS r3, r5, r4, 2, 0, r27
     SET_GPIO_BITS r3, r5, r4, 3, 1, r27
     SET_GPIO_BITS r3, r5, r4, 5, 2, r27
@@ -735,9 +742,9 @@ START_INTERMEDIATE_DONE:
     LBBO r3, r3, 0, 4
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
-QBBS BELA_READ_GPIO_BITS_MINI, reg_flags, FLAG_BIT_BELA_MINI
-QBA BELA_READ_GPIO_BITS_NOT_MINI
-BELA_READ_GPIO_BITS_MINI:
+QBBS BELA_READ_GPIO_BITS_POCKET_BEAGLE, reg_flags, FLAG_BIT_POCKET_BEAGLE
+QBA BELA_READ_GPIO_BITS_NOT_POCKET_BEAGLE
+BELA_READ_GPIO_BITS_POCKET_BEAGLE:
 //GPIO1
     READ_GPIO_BITS r2, 18, 0, r27
     READ_GPIO_BITS r2, 27, 1, r27
@@ -757,7 +764,7 @@ BELA_READ_GPIO_BITS_MINI:
     READ_GPIO_BITS r3, 22, 12, r27
     READ_GPIO_BITS r3, 24, 13, r27
     QBA READ_GPIO_BITS_DONE
-BELA_READ_GPIO_BITS_NOT_MINI:
+BELA_READ_GPIO_BITS_NOT_POCKET_BEAGLE:
     READ_GPIO_BITS r2, 13, 4, r27
     READ_GPIO_BITS r2, 12, 5, r27
     READ_GPIO_BITS r2, 28, 6, r27
@@ -837,12 +844,12 @@ QBA DALOOP
 // Complete DAC write with chip select
 .macro DAC_WRITE
 .mparam reg
-     QBBS SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_BELA_MINI
+     QBBS SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      DAC_CS_ASSERT
-SKIP_DAC_WRITE_1:	 
+SKIP_DAC_WRITE_1:
      DAC_TX reg
      DAC_WAIT_FOR_FINISH
-     QBBS SKIP_DAC_WRITE_2, reg_flags, FLAG_BIT_BELA_MINI
+     QBBS SKIP_DAC_WRITE_2, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
      DAC_CS_UNASSERT
 SKIP_DAC_WRITE_2:
      DAC_DISCARD_RX
@@ -1185,11 +1192,11 @@ PRU_NUMBER_CHECK_DONE:
      LDI reg_num_channels, 8
 
      LBBO r2, reg_comm_addr, COMM_BOARD_FLAGS, 4
-     // Find out whether we are on BELA_MINI
-     QBBC BELA_MINI_CHECK_DONE, r2, BOARD_FLAGS_BELA_MINI
-     SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
-BELA_MINI_CHECK_DONE:
-	 // Find out whether we are on a multi-TLV Bela setup
+     // Find out whether we are on Pocket Beagle
+     QBBC POCKET_BEAGLE_CHECK_DONE, r2, BOARD_FLAGS_POCKET_BEAGLE
+     SET reg_flags, reg_flags, FLAG_BIT_POCKET_BEAGLE
+POCKET_BEAGLE_CHECK_DONE:
+     // Find out whether we are on a multi-TLV Bela setup
      QBBC BELA_MULTI_TLV_CHECK_DONE, r2, BOARD_FLAGS_BELA_GENERIC_TDM
      SET reg_flags, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 BELA_MULTI_TLV_CHECK_DONE: 
