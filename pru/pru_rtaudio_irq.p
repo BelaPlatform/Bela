@@ -328,7 +328,7 @@
 #define FLAG_BIT_CTAG_BEAST     13
 #define FLAG_BIT_BELA_MULTI_TLV	14
 #define FLAG_BIT_ADS816X        15
-#define FLAG_BIT_SHOULD_SKIP_DAC 10
+#define FLAG_BIT_SHOULD_SKIP_DAC 28
 
 // reg_flags should hold the number of audio in/out channels, up to 32
 #define FLAG_BIT_AUDIO_IN_CHANNELS0 16
@@ -1196,6 +1196,10 @@ PRU_NUMBER_CHECK_DONE:
      QBBC POCKET_BEAGLE_CHECK_DONE, r2, BOARD_FLAGS_POCKET_BEAGLE
      SET reg_flags, reg_flags, FLAG_BIT_POCKET_BEAGLE
 POCKET_BEAGLE_CHECK_DONE:
+     // Find out whether we should skip analog DAC
+     QBBC SHOULD_SKIP_DAC_CHECK_DONE, r2, BOARD_FLAGS_SHOULD_SKIP_DAC
+     SET reg_flags, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
+SHOULD_SKIP_DAC_CHECK_DONE:
      // Find out whether we are on a multi-TLV Bela setup
      QBBC BELA_MULTI_TLV_CHECK_DONE, r2, BOARD_FLAGS_BELA_GENERIC_TDM
      SET reg_flags, reg_flags, FLAG_BIT_BELA_MULTI_TLV

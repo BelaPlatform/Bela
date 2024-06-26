@@ -200,7 +200,7 @@
 #define FLAG_BIT_CTAG_FACE      11
 #define FLAG_BIT_CTAG_BEAST     12
 #define FLAG_BIT_ADS816X        13
-#define FLAG_BIT_SHOULD_SKIP_DAC 10
+#define FLAG_BIT_SHOULD_SKIP_DAC 14
 
 // Registers used throughout
 
@@ -792,6 +792,10 @@ PRU_NUMBER_CHECK_DONE:
      QBBC POCKET_BEAGLE_CHECK_DONE, r2, BOARD_FLAGS_POCKET_BEAGLE
      SET reg_flags, reg_flags, FLAG_BIT_POCKET_BEAGLE
 POCKET_BEAGLE_CHECK_DONE:
+     // Find out whether we should skip analog DAC
+     QBBC SHOULD_SKIP_DAC_CHECK_DONE, r2, BOARD_FLAGS_SHOULD_SKIP_DAC
+     SET reg_flags, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC
+SHOULD_SKIP_DAC_CHECK_DONE:
 
      // Find out whether we should use DIGITAL
      LBBO r2, reg_comm_addr, COMM_USE_DIGITAL, 4

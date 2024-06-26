@@ -621,7 +621,7 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 		break;
 	}
 	if(Bela_hwContains(belaHw, PocketBeagle))
-		board_flags |= 1 << BOARD_FLAGS_POCKET_BEAGLE;
+		board_flags |= 1 << BOARD_FLAGS_POCKET_BEAGLE | 1 << BOARD_FLAGS_SHOULD_SKIP_DAC;
 	pru_buffer_comm[PRU_COMM_BOARD_FLAGS] = board_flags;
     /* Set up flags */
 	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 0;
