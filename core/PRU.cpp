@@ -90,11 +90,14 @@ extern int gRTAudioVerbose;
 class PruMemory
 {
 public:
-	PruMemory(int pruNumber, InternalBelaContext* context, PruManager& pruManager, size_t audioOutChannels)
+	PruMemory(int pruNumber, const InternalBelaContext* context, PruManager& pruManager, size_t audioOutChannels)
 	{
 		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
 		audioOut.resize(audioOutChannels * context->audioFrames);
+		size_t analogOutChannelsToRemove = audioOutChannels >= context->audioOutChannels ? audioOutChannels - context->audioOutChannels : 0;
+		size_t analogOutChannels = context->analogOutChannels >= analogOutChannelsToRemove ? context->analogOutChannels - analogOutChannelsToRemove : context->analogOutChannels;
+
 		digital.resize(context->digitalFrames);
 		pruAudioOutStart[0] = pruSharedRam + PRU_MEM_MCASP_OFFSET;
 		pruAudioOutStart[1] = pruSharedRam + PRU_MEM_MCASP_OFFSET + audioOut.size() * sizeof(audioOut[0]);
@@ -105,7 +108,7 @@ public:
 		if(context->analogFrames > 0)
 		{
 			pruDataRam = static_cast<char*>(pruManager.getOwnMemory());
-			analogOut.resize(context->analogOutChannels * context->analogFrames);
+			analogOut.resize(analogOutChannels * context->analogFrames);
 			analogIn.resize(context->analogInChannels * context->analogFrames);
 			pruAnalogOutStart[0] = pruDataRam + PRU_MEM_DAC_OFFSET;
 			pruAnalogOutStart[1] = pruDataRam + PRU_MEM_DAC_OFFSET + analogOut.size() * sizeof(analogOut[0]);
@@ -606,10 +609,12 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_BelaMiniMultiI2s:
 	case BelaHw_CtagFace:
 	case BelaHw_CtagBeast:
-	case BelaHw_CtagFaceBela:
-	case BelaHw_CtagBeastBela:
 	case BelaHw_BelaEs9080:
 	case BelaHw_BelaRevC:
+		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM | 1 << BOARD_FLAGS_SHOULD_SKIP_DAC;
+		break;
+	case BelaHw_CtagFaceBela:
+	case BelaHw_CtagBeastBela:
 		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
 	case BelaHw_Bela:
