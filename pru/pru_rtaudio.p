@@ -255,16 +255,6 @@
 #define GPIO_OE 0x134 
 #define GPIO_DATAIN 0x138
 
-.macro BELA_MINI_AND_JMP_TO
-.mparam DEST
-    QBBS DEST, reg_flags, FLAG_BIT_BELA_MINI
-.endm
-
-.macro BELA_MINI_OR_JMP_TO
-.mparam DEST
-    QBBC DEST, reg_flags, FLAG_BIT_BELA_MINI
-.endm
-
 .macro READ_GPIO_BITS
 .mparam gpio_data, gpio_num_bit, digital_bit, digital
     QBBC DONE, digital, digital_bit //if the pin is set as an output, nothing to do here
@@ -571,29 +561,37 @@ QBBC DONE, reg_flags, FLAG_BIT_ADS816X
 DONE:
 .endm
 
-// Bring CS line low to write to ADC
-.macro ADC_CS_ASSERT
-     BELA_MINI_OR_JMP_TO BELA
-     MOV r27, ADC_CS_PIN_BELA_MINI
-     MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
+.macro GET_ADC_CS
+.mparam REG_PIN, REG_ADDR, OFFSET
+     QBBC BELA, reg_flags, FLAG_BIT_BELA_MINI
+     MOV REG_PIN, ADC_CS_PIN_BELA_MINI
+     MOV REG_ADDR, ADC_GPIO_BELA_MINI + OFFSET
      QBA DONE
 BELA:
-     MOV r27, ADC_CS_PIN
-     MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
+     MOV REG_PIN, ADC_CS_PIN
+     MOV REG_ADDR, ADC_GPIO + OFFSET
 DONE:
+.endm
+
+.macro GET_ADC_CS_CLEAR
+.mparam REG_PIN, REG_ADDR
+     GET_ADC_CS REG_PIN, REG_ADDR, GPIO_CLEARDATAOUT
+.endm
+
+.macro GET_ADC_CS_SET
+.mparam REG_PIN, REG_ADDR
+     GET_ADC_CS REG_PIN, REG_ADDR, GPIO_SETDATAOUT
+.endm
+
+// Bring CS line low to write to ADC
+.macro ADC_CS_ASSERT
+     GET_ADC_CS_CLEAR r27, r28
      SBBO r27, r28, 0, 4
 .endm
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
-     BELA_MINI_OR_JMP_TO BELA
-     MOV r27, ADC_CS_PIN_BELA_MINI
-     MOV r28, ADC_GPIO_BELA_MINI + GPIO_SETDATAOUT
-     QBA DONE
-BELA:
-     MOV r27, ADC_CS_PIN
-     MOV r28, ADC_GPIO + GPIO_SETDATAOUT
-DONE:
+     GET_ADC_CS_SET r27, r28
      SBBO r27, r28, 0, 4
 .endm
 
