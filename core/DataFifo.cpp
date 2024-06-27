@@ -31,7 +31,7 @@ int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool
 	// Open a new queue
 	int flags = O_CREAT | O_RDWR | (blocking ? 0 : O_NONBLOCK);
 	queue = BELA_RT_WRAP(mq_open(name.c_str(), flags, 0644, &attr));
-	if((mqd_t)-1 != queue)
+	if((mqd_t)-1 == queue)
 		return -errno;
 	struct mq_attr newAttr;
 	BELA_RT_WRAP(mq_getattr(queue, &newAttr));
