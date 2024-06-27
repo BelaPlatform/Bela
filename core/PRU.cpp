@@ -1318,7 +1318,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 					unsigned int analogN = n / div;
 					for(unsigned int c = 0; c < context->analogOutChannels; ++c)
 					{
-						unsigned int srcIdx = interleaved ? analogN * context->analogOutChannels + c : c * context->analogFrames + n;
+						unsigned int srcIdx = interleaved ? analogN * context->analogOutChannels + c : c * context->analogFrames + analogN;
 						// we assume that there are two seralizers, with audio out on the first one and analog out on the second one
 						unsigned int audioOutC = c < minCommonChannels ? c * minCommonChannels + 1 : c + minCommonChannels;
 						unsigned int dstIdx = n * pru_audio_out_channels + audioOutC;
