@@ -209,6 +209,8 @@ bool BelaContextSplitter::contextEqual(const InternalBelaContext* ctx1, const In
 template <typename T>
 static T* zeroedVals(unsigned int n)
 {
+	if(!n)
+		return nullptr;
 	T* ptr = new T[n];
 	memset(ptr, 0, sizeof(T) * n);
 	return ptr;
