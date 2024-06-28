@@ -204,7 +204,7 @@ PRU::PRU(InternalBelaContext *input_context)
   initialised(false),
   running(false),
   analog_enabled(false),
-  digital_enabled(false), gpio_enabled(false), led_enabled(false),
+  digital_enabled(false), led_enabled(false),
   analog_out_is_audio(false), pru_audio_out_channels(0),
   pru_buffer_comm(0),
   last_analog_out_frame(0), last_digital_buffer(0),
@@ -306,21 +306,15 @@ int PRU::prepareGPIO(int include_led)
 			// Using BeagleBone's USR3 LED
 			// Turn off system function for LED3 so it can be reused by PRU
 			led_set_trigger(kUserLedNumber, "none");
-			led_enabled = true;
 		}
 		led_enabled = true;
 	}
-
-	gpio_enabled = true;
-
 	return 0;
 }
 
 // Clean up the GPIO at the end
 void PRU::cleanupGPIO()
 {
-	if(!gpio_enabled)
-		return;
 	if(analog_enabled) {
 		gpio_unexport(kPruGPIODACSyncPin);
 		gpio_unexport(kPruGPIOADCSyncPin);
@@ -356,7 +350,6 @@ void PRU::cleanupGPIO()
 			led_set_trigger(kUserLedNumber, kUserLedDefaultTrigger);
 		}
 	}
-	gpio_enabled = false;
 }
 
 // Initialise and open the PRU
@@ -378,11 +371,6 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	}
 
 	hardware_analog_frames = context->analogFrames;
-
-	if(!gpio_enabled) {
-		fprintf(stderr, "PRU::initialise() called before GPIO enabled\n");
-		return 1;
-	}
 
 	pru_number = pru_num;
 
