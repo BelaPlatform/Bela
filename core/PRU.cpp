@@ -666,7 +666,11 @@ int PRU::start(const char * const filename, const McaspRegisters& mcaspRegisters
 		case BelaHw_BelaMini:
 			//nobreak
 		case BelaHw_Salt:
-			pruUsesMcaspIrq = false;
+			// this could actually be false,
+			// but in that case there are occasional channels swaps
+			// on the inputs, so we set it to true for peace of mind.
+			// This effectively makes pru_rtaudio.p unused
+			pruUsesMcaspIrq = true;
 			break;
 		case BelaHw_BelaMiniMultiAudio:
 			//nobreak
