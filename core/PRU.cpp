@@ -90,7 +90,16 @@ public:
 		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
 		audioOut.resize(audioOutChannels * context->audioFrames);
-		size_t analogOutChannelsToRemove = audioOutChannels >= context->audioOutChannels ? audioOutChannels - context->audioOutChannels : 0;
+		size_t analogOutChannelsToRemove = 0;
+		if(audioOutChannels >= context->audioOutChannels)
+		{
+			if(context->analogOutChannels)
+			{
+				      analogOutChannelsToRemove = audioOutChannels - context->audioOutChannels;
+			} else {
+				analogOutChannelsToRemove = 0;
+			}
+		}
 		size_t analogOutChannels = context->analogOutChannels >= analogOutChannelsToRemove ? context->analogOutChannels - analogOutChannelsToRemove : context->analogOutChannels;
 
 		digital.resize(context->digitalFrames);
@@ -361,7 +370,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 		analog_out_is_audio = true;
 		context->audioOutChannels = 2;
 	}
-	pru_audio_out_channels = analog_out_is_audio ? context->audioOutChannels + context->analogOutChannels : context->audioOutChannels;
+	pru_audio_out_channels = analog_out_is_audio ? std::max(context->audioOutChannels * 2, context->audioOutChannels + context->analogOutChannels) : context->audioOutChannels;
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(prepareGPIO(enableLed)) {
 		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
@@ -1444,9 +1453,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 		// Convert float back to short for audio
 		const bool handleSerialisersSplit = analog_out_is_audio;
-		const unsigned int minCommonChannelMult = handleSerialisersSplit ?
-			(context->audioOutChannels < context->analogOutChannels ? context->audioOutChannels : context->analogOutChannels)
-			: 1;
+		unsigned int minCommonChannelMult = 1;
+		if(handleSerialisersSplit)
+		{
+			if(context->analogOutChannels)
+			{
+				minCommonChannelMult = std::min(context->audioOutChannels, context->analogOutChannels);
+			} else {
+				minCommonChannelMult = context->audioOutChannels;
+			}
+		}
 		for(unsigned int n = 0; n < context->audioFrames; ++n)
 		{
 			for(unsigned int c = 0; c < context->audioOutChannels; ++c)
