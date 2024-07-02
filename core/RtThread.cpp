@@ -40,3 +40,65 @@ void RtThread::callCallback()
 {
 	callback(arg);
 }
+
+
+int WaitingTask::create(const std::string& _name, int priority, std::function<void()> callback, cpu_set_t* cpuset, size_t stackSize)
+{
+	this->callback = callback;
+	lShouldStop = false;
+	started = false;
+	int ret = thread.create(_name, priority, [this,_name](void*) {
+			started = true;
+			while(!lShouldStop)
+			{
+				sync.wait();
+				if(!lShouldStop)
+					this->callback();
+			}
+		}, NULL, cpuset, stackSize);
+	return ret;
+}
+
+int WaitingTask::schedule(bool force)
+{
+	if(!started)
+	{
+		printf("scheduled thread was not started yet\n");
+		// the task has not yet had a chance to run.
+		// let's enforce it now. This will block the current thread
+		// until the other starts.
+		struct sched_param param;
+		int policy;
+		pthread_t task = thread.native_handle();
+		int ret = BELA_RT_WRAP(pthread_getschedparam(task,
+				&policy, &param));
+		if(!ret)
+		{
+			// set the priority to maximum
+			int originalPriority = param.sched_priority;
+			param.sched_priority = BELA_RT_WRAP(sched_get_priority_max(SCHED_FIFO));
+			BELA_RT_WRAP(pthread_setschedparam(task,
+					SCHED_FIFO, &param));
+			// just in case we have the same priority, let the
+			// other go first
+			BELA_RT_WRAP(sched_yield());
+			if(!started)
+				fprintf(stderr, "Force starting scheduled thread didn't work\n");
+			// by the time we are here, the other thread has run, set the
+			// started flag, and is now waiting for the cond
+			// So, restore its schedparams
+			param.sched_priority = originalPriority;
+			BELA_RT_WRAP(pthread_setschedparam(task,
+					policy, &param));
+		}
+	}
+	return !sync.notify(force);
+}
+
+WaitingTask::~WaitingTask()
+{
+	lShouldStop = true;
+	// let the thread run if it's blocked so it can see the flag
+	schedule();
+	thread.join();
+}
