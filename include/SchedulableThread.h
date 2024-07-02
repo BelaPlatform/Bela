@@ -2,7 +2,7 @@
 
 #include <string>
 #include <functional>
-#include <pthread.h>
+#include "../include/RtThread.h"
 
 class SchedulableThread {
 public:
@@ -39,6 +39,6 @@ protected:
 
 	std::string name;
 	int mode;
-	pthread_t thread;
+	RtThread thread;
 	bool lShouldStop = false;
 };
