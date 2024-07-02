@@ -34,7 +34,7 @@ void BelaContextFifo::push(fifo_id_t fifo, const BelaContext* context)
 {
 	unsigned int& count = counts[fifo];
 	BelaContextSplitter& bcs = bcss[fifo][getCurrentBuffer(fifo)];
-	DataFifo& df = dfs[fifo];
+	RtMsgFifo& df = dfs[fifo];
 
 	bcs.push(context);
 	const BelaContext* ctx;
@@ -46,7 +46,7 @@ void BelaContextFifo::push(fifo_id_t fifo, const BelaContext* context)
 
 BelaContext* BelaContextFifo::pop(fifo_id_t fifo, double timeoutMs)
 {
-	DataFifo& df = dfs[fifo];
+	RtMsgFifo& df = dfs[fifo];
 
 	BelaContext* ctx;
 	size_t ret = df.receive((char*)&ctx, sizeof(ctx), timeoutMs);

@@ -1,20 +1,20 @@
-#include <DataFifo.h>
+#include <RtMsgFifo.h>
 #include <sys/errno.h>
 #include <time.h>
 #include "RtWrappers.h"
 #include <string.h>
 #include <errno.h>
 
-DataFifo::DataFifo()
+RtMsgFifo::RtMsgFifo()
 {
 }
 
-DataFifo::~DataFifo()
+RtMsgFifo::~RtMsgFifo()
 {
 	cleanup();
 }
 
-int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool blocking, bool recreate, bool fallback)
+int RtMsgFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool blocking, bool recreate, bool fallback)
 {
 	Bela_initRtBackend();
 	qName = std::string("/q_") + name + std::to_string((long long unsigned)(this));
@@ -69,7 +69,7 @@ int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool
 	return 0;
 }
 
-int DataFifo::send(const void* buf, size_t size)
+int RtMsgFifo::send(const void* buf, size_t size)
 {
 	int ret = BELA_RT_WRAP(mq_send(queue, (const char*)buf, size, 0));
 	if(ret != 0)
@@ -77,7 +77,7 @@ int DataFifo::send(const void* buf, size_t size)
 	return 0;
 }
 
-int DataFifo::receive(void* buf, size_t size, double timeoutMs)
+int RtMsgFifo::receive(void* buf, size_t size, double timeoutMs)
 {
 	unsigned int prio;
 	ssize_t ret;
@@ -121,7 +121,7 @@ int DataFifo::receive(void* buf, size_t size, double timeoutMs)
 	return ret;
 }
 
-void DataFifo::cleanup()
+void RtMsgFifo::cleanup()
 {
 	if(queueValid)
 	{
@@ -153,9 +153,9 @@ void fillArray(std::vector<T>& vec)
 	for(auto& a : vec)
 		a = rand();
 }
-bool DataFifo::test()
+bool RtMsgFifo::test()
 {
-	DataFifo df;
+	RtMsgFifo df;
 	ssize_t msgSize = 1000;
 	ssize_t numMsg = 100;
 	std::vector<char> sent(msgSize * numMsg);
