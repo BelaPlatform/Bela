@@ -4,6 +4,12 @@
 #include <functional>
 #include "../include/RtThread.h"
 
+/**
+ * The callback is called in the dedicated thread after another thread calls schedule().
+ *
+ * The number of times that the callback is called is the same as the number of
+ * calls to schedule().
+ */
 class SchedulableThread {
 public:
 	SchedulableThread(){};
