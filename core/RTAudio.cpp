@@ -841,7 +841,6 @@ int Bela_startAudio()
 		return -1;
 	}
 
-	ret = Bela_startAllAuxiliaryTasks();
 	return ret;
 }
 
@@ -871,7 +870,7 @@ void Bela_stopAudio()
 			fprintf(stderr, "Failed to join audio fifo thread: (%d) %s\n", ret, strerror(ret));
 	}
 
-	Bela_stopAllAuxiliaryTasks();
+	Bela_deleteAllAuxiliaryTasks();
 }
 
 // Free any resources associated with PRU real-time audio
@@ -886,9 +885,6 @@ void Bela_cleanupAudio()
 	// Shut down the prussdrv system
 	if(gPRU)
 		gPRU->exitPRUSS();
-
-	// Clean up the auxiliary tasks
-	Bela_deleteAllAuxiliaryTasks();
 
 	// Delete the audio task
 

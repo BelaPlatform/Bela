@@ -174,36 +174,6 @@ void auxiliaryTaskLoop(void *taskStruct)
 	}
 }
 
-
-int Bela_startAuxiliaryTask(AuxiliaryTask task){
-	InternalAuxiliaryTask *taskStruct;
-	taskStruct = (InternalAuxiliaryTask *)task;
-	if(taskStruct->started == true)
-		return 0;
-	// The task has already been started upon creation.
-	// It is currently waiting on a condition variable.
-	return 0;
-}
-
-// startAudio() should be called only after initAudio() successfully completes.
-// It launches the real-time Xenomai task which runs the audio loop. Returns 0
-// on success.
-
-int Bela_startAllAuxiliaryTasks()
-{
-	// The user may have created other tasks. Start those also.
-	vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-		int ret = Bela_startAuxiliaryTask(*it);
-		if(ret != 0)
-			return -2;
-	}
-	return 0;
-}
-
-void Bela_stopAllAuxiliaryTasks()
-{}
-
 void Bela_deleteAllAuxiliaryTasks()
 {
 	// Stop all the auxiliary in reverse order
