@@ -27,12 +27,14 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 13
+#define BELA_MINOR_VERSION 14
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
 // 1.14.0
 // - added disabledDigitalChannels to BelaInitSettings and corresponding command-line
+// - removed Bela_stopAllAuxiliaryTasks(), Bela_startAuxiliaryTask() and Bela_startAllAuxiliaryTasks()
+//
 // 1.13.0
 // - added Bela_setLineOutLevel() which replaces Bela_setDacLevel() (though
 // with different semantics).
@@ -1123,27 +1125,7 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
 #ifdef __cplusplus
 AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority = 0, void* arg = nullptr);
 #endif // __cplusplus
-/**
- * \brief Initialize an auxiliary task so that it can be scheduled.
- *
- * User normally do not need to call this function.
- *
- * This function will start an auxiliary task but will NOT schedule it.
- * This means that the callback function associated with the task will NOT be executed.
- *
- * It will also set a flag in the associate InternalAuxiliaryTask to flag the
- * task as "started", so that successive calls to the same function for a given AuxiliaryTask
- * have no effect.
- * The user should never be required to call this function directly, as it is called
- * by Bela_scheduleAuxiliaryTask if needed (e.g.: if a task is scheduled in setup() )
- * or immediately after starting the audio thread.
- *
-* \param task Task to start.
- */
 
-int Bela_startAuxiliaryTask(AuxiliaryTask task);
-int Bela_startAllAuxiliaryTasks();
-void Bela_stopAllAuxiliaryTasks();
 void Bela_deleteAllAuxiliaryTasks();
 
 /** @} */
