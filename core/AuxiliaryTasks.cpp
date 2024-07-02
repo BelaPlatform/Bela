@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <pthread.h>
+#include "../include/RtThread.h"
 #include "../include/RtWrappers.h"
 #include "../include/RtLock.h"
 
@@ -13,7 +14,7 @@ using namespace std;
 // Data structure to keep track of auxiliary tasks we
 // can schedule
 typedef struct {
-	pthread_t task;
+	RtThread task;
 	RtConditionVariable* cond;
 	RtMutex* mutex;
 	void (*argfunction)(void*);
@@ -28,7 +29,7 @@ vector<InternalAuxiliaryTask*> &getAuxTasks(){
 	return auxTasks;
 }
 
-void auxiliaryTaskLoop(void *taskStruct);
+static void auxiliaryTaskLoop(void *taskStruct);
 
 // Create a calculation loop which can run independently of the audio, at a different
 // (equal or lower) priority. Audio priority is defined in BELA_AUDIO_PRIORITY;
@@ -60,7 +61,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	// Upon calling this function, the thread will start and immediately wait
 	// on the condition variable.
 	if(!ret)
-		ret = create_and_start_thread(&(newTask->task), name, priority, stackSize, NULL, (pthread_callback_t*)auxiliaryTaskLoop, newTask);
+		ret = newTask->task.create(name, priority, auxiliaryTaskLoop, newTask, NULL, stackSize);
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
@@ -92,14 +93,15 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 		// until the other starts.
 		struct sched_param param;
 		int policy;
-		int ret = BELA_RT_WRAP(pthread_getschedparam(taskToSchedule->task,
+		pthread_t task = taskToSchedule->task.native_handle();
+		int ret = BELA_RT_WRAP(pthread_getschedparam(task,
 				&policy, &param));
 		if(!ret)
 		{
 			// set the priority to maximum
 			int originalPriority = param.sched_priority;
 			param.sched_priority = BELA_RT_WRAP(sched_get_priority_max(SCHED_FIFO));
-			BELA_RT_WRAP(pthread_setschedparam(taskToSchedule->task,
+			BELA_RT_WRAP(pthread_setschedparam(task,
 					SCHED_FIFO, &param));
 			// just in case we have the same priority, let the
 			// other go first
@@ -110,7 +112,7 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 			// started flag, and is now waiting for the cond
 			// So, restore its schedparams
 			param.sched_priority = originalPriority;
-			BELA_RT_WRAP(pthread_setschedparam(taskToSchedule->task,
+			BELA_RT_WRAP(pthread_setschedparam(task,
 					policy, &param));
 		}
 	}
@@ -223,9 +225,7 @@ void Bela_stopAllAuxiliaryTasks()
 		taskStruct->mutex->lock();
 		taskStruct->cond->notify_one();
 		taskStruct->mutex->unlock();
-
-		void* threadReturnValue;
-		BELA_RT_WRAP(pthread_join(taskStruct->task, &threadReturnValue));
+		taskStruct->task.join();
 	}
 }
 
@@ -237,7 +237,7 @@ void Bela_deleteAllAuxiliaryTasks()
 		InternalAuxiliaryTask *taskStruct = *it;
 
 		// Delete the task
-		pthread_cancel(taskStruct->task);
+		pthread_cancel(taskStruct->task.native_handle());
 		// Free the name string and the struct itself
 		delete taskStruct->mutex;
 		delete taskStruct->cond;

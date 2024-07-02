@@ -124,7 +124,7 @@ void Midi::setup() {
 void Midi::cleanup() {
 	shouldStop = true;
 	if(inputEnabled)
-		BELA_RT_WRAP(pthread_join(midiInputThread, NULL));
+		midiInputThread.join();
 	delete midiOutputTask;
 	midiOutputTask = nullptr;
 	if(alsaOut){
@@ -172,10 +172,9 @@ int Midi::attemptRecoveryRead()
 	return -1;
 }
 
-void* Midi::readInputLoopStatic(void* obj){
+void Midi::readInputLoopStatic(void* obj){
 	Midi* that = (Midi*)obj;
 	that->readInputLoop();
-	return NULL;
 }
 
 void Midi::readInputLoop(){
@@ -331,7 +330,7 @@ int Midi::readFrom(const char* port){
 		fprintf(stderr, "Unable to retrieve input port information for %s\n", port);
 		return 0;
 	}
-	ret = create_and_start_thread(&midiInputThread, inId.c_str(), 50, 0, NULL, Midi::readInputLoopStatic, (void*)this);
+	ret = midiInputThread.create(inId.c_str(), 50, Midi::readInputLoopStatic, (void*)this);
 	if(ret)
 		return 0;
 	inputEnabled = true;
