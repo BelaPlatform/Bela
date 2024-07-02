@@ -15,8 +15,7 @@ using namespace std;
 // can schedule
 typedef struct {
 	RtThread task;
-	RtConditionVariable* cond;
-	RtMutex* mutex;
+	RtSync* sync;
 	void (*argfunction)(void*);
 	char *name;
 	int priority;
@@ -51,8 +50,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	unsigned int stackSize = gAuxiliaryTaskStackSize;
 	int ret;
 	try {
-		newTask->cond = new RtConditionVariable;
-		newTask->mutex = new RtMutex;
+		newTask->sync = new RtSync;
 		ret = 0;
 	} catch (std::exception& e)
 	{
@@ -65,8 +63,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
-		delete newTask->cond;
-		delete newTask->mutex;
+		delete newTask->sync;
 		free(newTask);
 		return 0;
 	}
@@ -116,10 +113,8 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 					policy, &param));
 		}
 	}
-	if(taskToSchedule->mutex->try_lock())
+	if(taskToSchedule->sync->notify(false))
 	{
-		taskToSchedule->cond->notify_one();
-		taskToSchedule->mutex->unlock();
 		return 0;
 	} else {
 		// If we cannot get the lock, then the task is probably still running.
@@ -144,10 +139,8 @@ AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void*
 
 static void suspendCurrentTask(InternalAuxiliaryTask* task)
 {
-	task->mutex->lock();
 	task->started = true;
-	task->cond->wait(*task->mutex);
-	task->mutex->unlock();
+	task->sync->wait();
 }
 // Calculation loop that can be used for other tasks running at a lower
 // priority than the audio thread. Simple wrapper for Xenomai calls.
@@ -222,9 +215,7 @@ void Bela_stopAllAuxiliaryTasks()
 		// should return true at this point. Let's make sure it does:
 		Bela_requestStop();
 		// REALLY lock the lock: we really must call _cond_signal here
-		taskStruct->mutex->lock();
-		taskStruct->cond->notify_one();
-		taskStruct->mutex->unlock();
+		taskStruct->sync->notify(true);
 		taskStruct->task.join();
 	}
 }
@@ -239,8 +230,7 @@ void Bela_deleteAllAuxiliaryTasks()
 		// Delete the task
 		pthread_cancel(taskStruct->task.native_handle());
 		// Free the name string and the struct itself
-		delete taskStruct->mutex;
-		delete taskStruct->cond;
+		delete taskStruct->sync;
 		free(taskStruct->name);
 		free(taskStruct);
 	}
