@@ -2,7 +2,7 @@
 
 #include <array>
 #include <BelaContextSplitter.h>
-#include <DataFifo.h>
+#include <RtMsgFifo.h>
 
 class BelaContextFifo {
 public:
@@ -43,7 +43,7 @@ public:
 private:
 	unsigned int getCurrentBuffer(fifo_id_t fifo);
 	std::array<std::array<BelaContextSplitter, kNumBuffers>, kNumFifos> bcss;
-	std::array<DataFifo, kNumFifos> dfs;
+	std::array<RtMsgFifo, kNumFifos> dfs;
 	std::array<unsigned int, kNumFifos> counts;
 	unsigned int factor;
 };

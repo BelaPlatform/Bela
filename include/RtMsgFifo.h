@@ -5,11 +5,11 @@
 * Uni-directional RT-safe-queue.
 * A light wrapper around mq_...
 */
-class DataFifo
+class RtMsgFifo
 {
 public:
-	DataFifo();
-	~DataFifo();
+	RtMsgFifo();
+	~RtMsgFifo();
 	/**
 	* Set queue
 	*

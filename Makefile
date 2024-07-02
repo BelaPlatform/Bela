@@ -412,7 +412,7 @@ build/core/Mcasp.o \
 CORE_CORE_OBJS := \
 build/core/BelaContextFifo.o \
 build/core/BelaContextSplitter.o \
-build/core/DataFifo.o \
+build/core/RtMsgFifo.o \
 build/core/FormatConvert.o \
 build/core/GPIOcontrol.o \
 build/core/Gpio.o \
