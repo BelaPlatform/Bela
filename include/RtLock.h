@@ -37,3 +37,14 @@ private:
 	struct Private;
 	std::unique_ptr<Private> p;
 };
+
+class RtSync {
+public:
+	RtSync();
+	~RtSync();
+	void wait();
+	bool notify(bool force = false);
+private:
+	struct Private;
+	std::unique_ptr<Private> p;
+};
