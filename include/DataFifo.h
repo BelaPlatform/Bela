@@ -19,12 +19,14 @@ public:
 	* @param blocking set to 1 if queue should block when reading and not
 	* data is available, 0 for non-blocking
 	* @param recreate if a queue with the same name already exists, destroy
-	* it and create a new one (this is the only way the msgSize  and maxMsg
+	* it and create a new one (this is the only way the msgSize and maxMsg
 	* parameters can be enforced).
+	* @param fallabck if it fails to create with our desired settings,
+	* attempt to create with system defaults.
 	*
 	* @return 0 on success, `-errno` otherwise
 	*/
-	int setup(const std::string& name, size_t msgSize, size_t maxMsg, bool blocking, bool recreate = true);
+	int setup(const std::string& name, size_t msgSize = 100000, size_t maxMsg = 100, bool blocking = true, bool recreate = false, bool fallback = false);
 
 	/**
 	* Send buffer to queue
@@ -34,7 +36,7 @@ public:
 	*
 	* @return 0 on success, `-errno` otherwise
 	*/
-	int send(const char* buf, size_t size);
+	int send(const void* buf, size_t size);
 
 	/**
 	* Receive buffer from queue
@@ -44,18 +46,16 @@ public:
 	*
 	* @return size of message on success, `-errno` otherwise
 	*/
-	int receive(char* buf, double timeoutMs = 0);
+	int receive(void* buf, size_t size, double timeoutMs = 0);
 
 	/**
 	* Cleanup queue
-	*
-	* @return 0 on success, `-errno` otherwise
 	*/
-	int cleanup();
+	void cleanup();
 	static bool test();
 
 private:
 	mqd_t queue;
-	size_t msgSize;
 	std::string qName;
+	bool queueValid = false;
 };
