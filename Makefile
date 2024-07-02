@@ -421,6 +421,7 @@ build/core/Mmap.o \
 build/core/RTAudio.o \
 build/core/RTAudioCommandLine.o \
 build/core/RtWrappers.o \
+build/core/RtThread.o \
 build/core/math_runfast.o \
 build/core/board_detect.o \
 build/core/AuxiliaryTasks.o \
