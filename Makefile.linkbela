@@ -23,10 +23,10 @@
 #either via a default Makefile.libraries, or using the library's custom one (if available)
 .EXPORT_ALL_VARIABLES:
 libraries/%.o:
-	$(AT) { echo "$@" | grep -q "\*" && exit 0; } ; \
+	$(AT) { echo "$@" | grep -q '\*' && exit 0; } ; \
 	LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
 	{ [ -z "$$LIBRARYNAME" ] && exit 0; } ;  \
-	{ echo "$$LIBRARYNAME" | grep -q "\*" && exit 0; } ; \
+	{ echo "$$LIBRARYNAME" | grep -q '\*' && exit 0; } ; \
 	echo Building library $$LIBRARYNAME; \
 	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
 	[ ! -f $$MAKEFILE ] && MAKEFILE=Makefile.libraries; \
