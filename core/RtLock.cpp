@@ -214,3 +214,41 @@ void RtConditionVariable::notify_one() noexcept {
 void RtConditionVariable::notify_all() noexcept {
 	tryOrRetry([this]() { return cond_broadcast(&this->p->m_cond); }, m_enabled);
 }
+
+struct RtSync::Private {
+	// the mutex is only for the condition variable, which requires it.
+	// since there is only supposed to be one signaller and one waiter
+	// there is nothing to mutually exclude.
+	RtConditionVariable cond;
+	RtMutex mutex;
+};
+
+RtSync::RtSync() :
+	p(std::unique_ptr<Private>(new Private))
+{}
+
+RtSync::~RtSync(){}
+
+
+void RtSync::wait()
+{
+	p->mutex.lock();
+	p->cond.wait(p->mutex);
+	p->mutex.unlock();
+}
+
+bool RtSync::notify(bool force)
+{
+	bool locked;
+	if(force) {
+		p->mutex.lock();
+		locked = true;
+	} else {
+		locked = p->mutex.try_lock();
+	}
+	if(locked) {
+		p->cond.notify_one();
+		p->mutex.unlock();
+	}
+	return locked;
+}
