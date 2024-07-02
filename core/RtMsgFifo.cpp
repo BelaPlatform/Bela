@@ -69,9 +69,39 @@ int RtMsgFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, boo
 	return 0;
 }
 
-int RtMsgFifo::send(const void* buf, size_t size)
+static inline struct timespec getTimeout(double timeoutMs)
 {
-	int ret = BELA_RT_WRAP(mq_send(queue, (const char*)buf, size, 0));
+	struct timespec timeout;
+	if(0 == timeoutMs)
+	{
+		timeout = {0, 0};
+	} else {
+		BELA_RT_WRAP(clock_gettime(CLOCK_REALTIME, &timeout));
+		//struct timespec timeoutbak = timeout;
+		long oneSecondNs = 1000000000;
+		time_t timeoutS = (time_t)(timeoutMs / 1000);
+		long timeoutNs = (timeoutMs - timeoutS * 1000) * 1000000;
+		timeout.tv_sec -= timeoutS;
+		timeout.tv_nsec += timeoutNs;
+		while(timeout.tv_nsec > oneSecondNs)
+		{
+			timeout.tv_nsec -= oneSecondNs;
+			timeout.tv_sec += 1;
+		}
+	}
+	return timeout;
+}
+
+int RtMsgFifo::send(const void* buf, size_t size, double timeoutMs)
+{
+	ssize_t ret;
+	if(timeoutMs >= 0)
+	{
+		struct timespec timeout = getTimeout(timeoutMs);
+		ret = BELA_RT_WRAP(mq_timedsend(queue, (const char*)buf, size, 0, &timeout));
+	} else {
+		ret = BELA_RT_WRAP(mq_send(queue, (const char*)buf, size, 0));
+	}
 	if(ret != 0)
 		return -errno;
 	return 0;
@@ -83,34 +113,7 @@ int RtMsgFifo::receive(void* buf, size_t size, double timeoutMs)
 	ssize_t ret;
 	if(timeoutMs >= 0)
 	{
-		struct timespec timeout;
-		if(0 == timeoutMs)
-		{
-			timeout = {0, 0};
-		} else {
-			BELA_RT_WRAP(clock_gettime(CLOCK_REALTIME, &timeout));
-			//struct timespec timeoutbak = timeout;
-			long oneSecondNs = 1000000000;
-			time_t timeoutS = (time_t)(timeoutMs / 1000);
-			long timeoutNs = (timeoutMs - timeoutS * 1000) * 1000000;
-			timeout.tv_sec -= timeoutS;
-			timeout.tv_nsec += timeoutNs;
-			while(timeout.tv_nsec > oneSecondNs)
-			{
-				timeout.tv_nsec -= oneSecondNs;
-				timeout.tv_sec += 1;
-			}
-		}
-#if 0
-		time_t actualS = timeoutbak.tv_sec - timeout.tv_sec;
-		long actualNs = timeoutbak.tv_nsec - timeout.tv_nsec;
-		double actual = actualS * 1000 + actualNs / 1000000.0;
-		if(actual - timeoutMs > 0.001)
-			printf("Unexpected timeout: ms: %f, bak: %lus %luns , actual: %lus %luns \n",
-					timeoutMs, timeoutbak.tv_sec, timeoutbak.tv_nsec,
-					timeout.tv_sec, timeout.tv_nsec
-					);
-#endif
+		struct timespec timeout = getTimeout(timeoutMs);
 		ret = BELA_RT_WRAP(mq_timedreceive(queue, (char*)buf, size, &prio, &timeout));
 	} else {
 		ret = BELA_RT_WRAP(mq_receive(queue, (char*)buf, size, &prio));

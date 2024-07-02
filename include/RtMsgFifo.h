@@ -32,21 +32,27 @@ public:
 	* Send buffer to queue
 	*
 	* @param buf buffer containing data to send
-	* @param size maximum size of each message
+	* @param size size of the buffer. This must be no larger than
+	* getMsgSize()
+	* @param timeoutMs a timeout in milliseconds in case the fifo is full.
+	* A negative value means block indefinitely.
 	*
 	* @return 0 on success, `-errno` otherwise
 	*/
-	int send(const void* buf, size_t size);
+	int send(const void* buf, size_t size, double timeoutMs = -1);
 
 	/**
 	* Receive buffer from queue
 	*
 	* @param buf buffer to write the received data into.
-	* This must have space for at least size bytes, as passed to setup()
+	* @param size the size of the buffer. This must be at least as large as
+	* getMsgSize().
+	* @param timeoutMs a timeout in milliseconds in case the fifo is full.
+	* A negative value means block indefinitely.
 	*
 	* @return size of message on success, `-errno` otherwise
 	*/
-	int receive(void* buf, size_t size, double timeoutMs = 0);
+	int receive(void* buf, size_t size, double timeoutMs = -1);
 
 	/**
 	* Cleanup queue
