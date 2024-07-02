@@ -15,9 +15,9 @@ using namespace std;
 // can schedule
 typedef struct {
 	RtThread task;
-	RtSync* sync;
+	RtSync sync;
 	void (*argfunction)(void*);
-	char *name;
+	std::string name;
 	int priority;
 	bool started;
 	void* args;
@@ -38,11 +38,11 @@ extern unsigned int gAuxiliaryTaskStackSize;
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
 	Bela_initRtBackend();
-	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)calloc(1, sizeof(InternalAuxiliaryTask));
+	InternalAuxiliaryTask* newTask = new InternalAuxiliaryTask;
 
 	// Populate the rest of the data structure
 	newTask->argfunction = functionToCall;
-	newTask->name = strdup(name);
+	newTask->name = name;
 	newTask->priority = priority;
 	newTask->started = false;
 	newTask->args = args;
@@ -50,7 +50,6 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	unsigned int stackSize = gAuxiliaryTaskStackSize;
 	int ret;
 	try {
-		newTask->sync = new RtSync;
 		ret = 0;
 	} catch (std::exception& e)
 	{
@@ -63,8 +62,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
-		delete newTask->sync;
-		free(newTask);
+		delete newTask;
 		return 0;
 	}
 
@@ -113,7 +111,7 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 					policy, &param));
 		}
 	}
-	if(taskToSchedule->sync->notify(false))
+	if(taskToSchedule->sync.notify(false))
 	{
 		return 0;
 	} else {
@@ -140,7 +138,7 @@ AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void*
 static void suspendCurrentTask(InternalAuxiliaryTask* task)
 {
 	task->started = true;
-	task->sync->wait();
+	task->sync.wait();
 }
 // Calculation loop that can be used for other tasks running at a lower
 // priority than the audio thread. Simple wrapper for Xenomai calls.
@@ -204,35 +202,21 @@ int Bela_startAllAuxiliaryTasks()
 }
 
 void Bela_stopAllAuxiliaryTasks()
-{
-	// Stop all the auxiliary threads too
-	vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-		InternalAuxiliaryTask *taskStruct = *it;
-
-		// Wake up each thread and join it
-		// each thread should be checking on Bela_stopRequested(), which
-		// should return true at this point. Let's make sure it does:
-		Bela_requestStop();
-		// REALLY lock the lock: we really must call _cond_signal here
-		taskStruct->sync->notify(true);
-		taskStruct->task.join();
-	}
-}
+{}
 
 void Bela_deleteAllAuxiliaryTasks()
 {
-	// Clean up the auxiliary tasks
-	vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-		InternalAuxiliaryTask *taskStruct = *it;
-
-		// Delete the task
-		pthread_cancel(taskStruct->task.native_handle());
-		// Free the name string and the struct itself
-		delete taskStruct->sync;
-		free(taskStruct->name);
-		free(taskStruct);
+	// Stop all the auxiliary in reverse order
+	// each thread should be checking on Bela_stopRequested(), which
+	// should return true at this point. Let's make sure it does:
+	Bela_requestStop();
+	for(size_t n = getAuxTasks().size() - 1; n != -1; --n) {
+		InternalAuxiliaryTask *taskStruct = getAuxTasks()[n];
+		// Wake up each thread and join it
+		// REALLY lock the lock: we really must call _cond_signal here
+		taskStruct->sync.notify(true);
+		taskStruct->task.join();
+		delete taskStruct;
 	}
 	getAuxTasks().clear();
 }
