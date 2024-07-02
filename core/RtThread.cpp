@@ -10,7 +10,7 @@ void* RtThread::internalCallback(void* p)
 	return NULL;
 }
 
-int RtThread::create(const std::string& name, int priority, void (*callback)(void*), void* arg, cpu_set_t* cpuset, int stackSize)
+int RtThread::create(const std::string& name, int priority, std::function<void(void*)> callback, void* arg, cpu_set_t* cpuset, int stackSize)
 {
 	this->arg = arg;
 	this->callback = callback;

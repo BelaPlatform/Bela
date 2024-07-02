@@ -1,11 +1,12 @@
 #pragma once
 #include <string>
+#include <functional>
 #include <pthread.h>
 
 class RtThread
 {
 public:
-	int create(const std::string& name, int priority, void (*callback)(void*), void* arg, cpu_set_t* cpuset = nullptr, int stackSize = 0);
+	int create(const std::string& name, int priority, std::function<void(void*)> callback, void* arg = nullptr, cpu_set_t* cpuset = nullptr, int stackSize = 0);
 	int join();
 	pthread_t native_handle();
 private:
@@ -14,5 +15,5 @@ private:
 	pthread_t thread;
 	std::string name;
 	void* arg;
-	void (*callback)(void*);
+	std::function<void(void*)> callback;
 };
