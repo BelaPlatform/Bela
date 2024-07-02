@@ -43,8 +43,7 @@ int SchedulableThread::create(const std::string& _name, int priority)
 	}
 	
 	// start the xenomai task
-	int stackSize = 0;
-	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, NULL, (pthread_callback_t*)this->thread_func, this))
+	if(thread.create(name, priority, this->thread_func, this))
 	{
 		fprintf(stderr, "SchedulableThread: Unable to start thread %s: %i\n", name.c_str(), ret);
 		return 1;
@@ -70,10 +69,7 @@ int SchedulableThread::schedule()
 
 void SchedulableThread::join()
 {
-	// unblock and join thread
-	int ret = BELA_RT_WRAP(pthread_join(thread, NULL));
-	if (ret < 0)
-		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
+	thread.join();
 }
 
 void SchedulableThread::thread_func(void* ptr)

@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <AuxTaskNonRT.h>
+#include <RtThread.h>
 #include <tuple>
 #include <Bela.h>
 
@@ -415,7 +416,7 @@ private:
 	Port outPortFull;
 	int _getInput();
 	int attemptRecoveryRead();
-	static void* readInputLoopStatic(void* obj);
+	static void readInputLoopStatic(void* obj);
 	void readInputLoop();
 	int attemptRecoveryWrite();
 	void doWriteOutput(const void* data, int size);
@@ -428,7 +429,7 @@ private:
 	bool inputEnabled;
 	bool outputEnabled;
 	volatile bool shouldStop;
-	pthread_t midiInputThread;
+	RtThread midiInputThread;
 	AuxTaskNonRT* midiOutputTask;
 	std::string inId;
 	std::string outId;
