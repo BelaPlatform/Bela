@@ -65,3 +65,143 @@ private:
 	std::string qName;
 	bool queueValid = false;
 };
+
+/**
+* Bi-directional queue with an RT endpoint and a non-RT endpoint.
+* If available, it's a light wrapper around Xenomai XDDP sockets,
+* otherwise it's a wrapper for UNIX sockets.
+* Message boundaries are preserved.
+*/
+class RtNonRtMsgFifo
+{
+public:
+	RtNonRtMsgFifo() {};
+	RtNonRtMsgFifo(const std::string& pipeName, size_t size = 65536 * 128, bool newBlockingRt = false, bool newBlockingNonRt = false);
+	~RtNonRtMsgFifo() {cleanup();}
+	RtNonRtMsgFifo(RtNonRtMsgFifo&&) = delete;
+	/**
+	 * Initialise the RtNonRtMsgFifo.
+	 *
+	 * @param the name of the RtNonRtMsgFifo. Pipes with the same name share data.
+	 * @param the size of the RtNonRtMsgFifo. This is the amount of data that can be stored in the pipe. If the
+	 * pipe is full, writes will fail.
+	 * @param whether reads at the RT side should be blocking (can be modified later)
+	 * @param whether reads at the non-RT side should be blocking (can be modified later)
+	 * @return true on success, false otherwise
+	 */
+	bool setup(const std::string& pipeName = defaultName, size_t size = 65536 * 128, bool newBlockingRt = false, bool newBlockingNonRt = false);
+	void cleanup();
+	/**
+	 * Set whether reads at the RT side should be blocking
+	 */
+	void setBlockingRt(bool blocking);
+	/**
+	 * Set whether reads at the non-RT side should be blocking
+	 */
+	void setBlockingNonRt(bool blocking);
+	/**
+	 * Set timeout for blocking reads at the RT side.
+	 */
+	void setTimeoutMsRt(double timeoutMs);
+	/**
+	 * Set timeout for blocking reads at the non-RT side.
+	 */
+	void setTimeoutMsNonRt(double timeoutMs);
+	/**
+	 * Send data from the non-RT side.
+	 */
+	template<typename T> bool writeNonRt(const T& data);
+	/**
+	 * Send data from the non-RT side.
+	 */
+	template<typename T> bool writeNonRt(T* ptr, size_t count);
+	/**
+	 * Send data from the RT side.
+	 */
+	template<typename T> bool writeRt(const T& data);
+	/**
+	 * Send data from the RT side.
+	 */
+	template<typename T> bool writeRt(T* ptr, size_t count);
+	/**
+	 * Read data from the non-RT side.
+	 */
+	template<typename T> ssize_t readNonRt(T & dest);
+	/**
+	 * Read data from the non-RT side.
+	 */
+	template<typename T> ssize_t readNonRt(T* dest, size_t count);
+	/**
+	 * Read data from the RT side.
+	 */
+	template<typename T> ssize_t readRt(T & dest);
+	/**
+	 * Read data from the RT side.
+	 */
+	template<typename T> ssize_t readRt(T* dest, size_t count);
+private:
+	bool _writeNonRt(void* ptr, size_t size);
+	bool _writeRt(void* ptr, size_t size);
+	ssize_t _readRtNonRt(void* ptr, size_t size, bool rt);
+	ssize_t _readNonRt(void* ptr, size_t size);
+	ssize_t _readRt(void* ptr, size_t size);
+	static std::string defaultName;
+	std::string name;
+	int pipeSocket;
+	int fd = 0;
+	size_t pipeSize;
+	double timeoutMsRt = 0;
+	double timeoutMsNonRt = 0;
+	bool blockingRt = false;
+	bool blockingNonRt = false;
+};
+
+template<typename T> bool RtNonRtMsgFifo::writeNonRt(const T& data)
+{
+	return writeNonRt(&data, 1);
+}
+
+template <typename T> bool RtNonRtMsgFifo::writeNonRt(T* data, size_t count)
+{
+	size_t size = count * sizeof(*data);
+	return _writeNonRt((void*)data, size);
+}
+
+template<typename T> bool RtNonRtMsgFifo::writeRt(const T& data)
+{
+	return writeRt(&data, 1);
+}
+
+template <typename T> bool RtNonRtMsgFifo::writeRt(T* ptr, size_t count)
+{
+	size_t size = count * sizeof(*ptr);
+	return _writeRt((void*)ptr, size);
+}
+
+template<typename T> ssize_t RtNonRtMsgFifo::readRt(T & dest)
+{
+	return readRt(&dest, 1);
+}
+
+template<typename T> ssize_t RtNonRtMsgFifo::readRt(T* dest, size_t count)
+{
+	ssize_t ret = _readRt((void*)dest, count * sizeof(*dest));
+	if(ret >= 0)
+		return ret / sizeof(*dest);
+	else
+		return ret;
+}
+
+template<typename T> ssize_t RtNonRtMsgFifo::readNonRt(T & dest)
+{
+	return readNonRt(&dest, 1);
+}
+
+template<typename T> ssize_t RtNonRtMsgFifo::readNonRt(T* dest, size_t count)
+{
+	ssize_t ret = _readNonRt((void*)dest, count * sizeof(*dest));
+	if(ret >= 0)
+		return ret / sizeof(*dest);
+	else
+		return ret;
+}
