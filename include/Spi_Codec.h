@@ -1,13 +1,4 @@
-/*
- * Spi_Codec.h
- *
- * @brief Used for configuration of AD1938 codec for CTAG face2|4 Audio Card via spi-gpio
- *
- * Copyright (C) 2017 Henrik Langer henni19790@googlemail.com
- */
-
-#ifndef SPI_CODEC_H_
-#define SPI_CODEC_H_
+#pragma once
 
 #include "AudioCodec.h"
 #include <cstdlib>
@@ -70,5 +61,3 @@ private:
 	bool _verbose;
 	bool _shouldPinmux;
 };
-
-#endif /* SPI_CODEC_H_ */

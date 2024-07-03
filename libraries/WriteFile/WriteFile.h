@@ -1,12 +1,4 @@
-/*
- * WriteFile.h
- *
- *  Created on: 5 Oct 2015
- *      Author: giulio
- */
-
-#ifndef WRITEFILE_H_
-#define WRITEFILE_H_
+#pragma once
 #include <vector>
 #include <string>
 #include <stdint.h>
@@ -168,5 +160,3 @@ public:
 	 */
 	static std::string generateUniqueFilename(const std::string& original);
 };
-
-#endif /* WRITEFILE_H_ */

@@ -1,3 +1,4 @@
+#pragma once
 namespace NonIrqPruCode
 {
 	const unsigned int* getBinary();
