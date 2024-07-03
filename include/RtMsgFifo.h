@@ -114,7 +114,7 @@ public:
 	/**
 	 * Send data from the non-RT side.
 	 */
-	template<typename T> bool writeNonRt(T* ptr, size_t count);
+	template<typename T> bool writeNonRt(const T* ptr, size_t count);
 	/**
 	 * Send data from the RT side.
 	 */
@@ -122,7 +122,7 @@ public:
 	/**
 	 * Send data from the RT side.
 	 */
-	template<typename T> bool writeRt(T* ptr, size_t count);
+	template<typename T> bool writeRt(const T* ptr, size_t count);
 	/**
 	 * Read data from the non-RT side.
 	 */
@@ -140,8 +140,8 @@ public:
 	 */
 	template<typename T> ssize_t readRt(T* dest, size_t count);
 private:
-	bool _writeNonRt(void* ptr, size_t size);
-	bool _writeRt(void* ptr, size_t size);
+	bool _writeNonRt(const void* ptr, size_t size);
+	bool _writeRt(const void* ptr, size_t size);
 	ssize_t _readRtNonRt(void* ptr, size_t size, bool rt);
 	ssize_t _readNonRt(void* ptr, size_t size);
 	ssize_t _readRt(void* ptr, size_t size);
@@ -161,7 +161,7 @@ template<typename T> bool RtNonRtMsgFifo::writeNonRt(const T& data)
 	return writeNonRt(&data, 1);
 }
 
-template <typename T> bool RtNonRtMsgFifo::writeNonRt(T* data, size_t count)
+template <typename T> bool RtNonRtMsgFifo::writeNonRt(const T* data, size_t count)
 {
 	size_t size = count * sizeof(*data);
 	return _writeNonRt((void*)data, size);
@@ -172,7 +172,7 @@ template<typename T> bool RtNonRtMsgFifo::writeRt(const T& data)
 	return writeRt(&data, 1);
 }
 
-template <typename T> bool RtNonRtMsgFifo::writeRt(T* ptr, size_t count)
+template <typename T> bool RtNonRtMsgFifo::writeRt(const T* ptr, size_t count)
 {
 	size_t size = count * sizeof(*ptr);
 	return _writeRt((void*)ptr, size);

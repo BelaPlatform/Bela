@@ -303,7 +303,7 @@ void RtNonRtMsgFifo::cleanup()
 	BELA_RT_WRAP(close(rtFd));
 }
 
-bool RtNonRtMsgFifo::_writeNonRt(void* ptr, size_t size)
+bool RtNonRtMsgFifo::_writeNonRt(const void* ptr, size_t size)
 {
 	ssize_t ret = write(nonRtFd, (void*)ptr, size);
 	if(ret < 0 || ret != size)
@@ -313,7 +313,7 @@ bool RtNonRtMsgFifo::_writeNonRt(void* ptr, size_t size)
 	return true;
 }
 
-bool RtNonRtMsgFifo::_writeRt(void* ptr, size_t size)
+bool RtNonRtMsgFifo::_writeRt(const void* ptr, size_t size)
 {
 	ssize_t ret = BELA_RT_WRAP(send(rtFd, (void*)ptr, size, 0));
 	if(ret < 0 || ret != size)
@@ -337,7 +337,7 @@ ssize_t RtNonRtMsgFifo::_readRtNonRt(void* ptr, size_t size, bool rt)
 {
 	bool blocking = rt ? blockingRt : blockingNonRt;
 	double timeoutMs = rt ? timeoutMsRt : timeoutMsNonRt;
-	int (*_select)(int, fd_set*, fd_set*, fd_set*, struct timeval*) = rt ? BELA_RT_WRAP(select : select);
+	int (*_select)(int, fd_set*, fd_set*, fd_set*, struct timeval*) = rt ? BELA_RT_WRAP(select) : select;
 	int file = rt ? rtFd : nonRtFd;
 	bool doIt = false;
 	int ret = 0;
