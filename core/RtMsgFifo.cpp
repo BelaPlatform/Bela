@@ -240,6 +240,10 @@ bool RtNonRtMsgFifo::setup(const std::string& pipeName, size_t size, bool newBlo
 	pipeSize = size;
 
 	name = "p_" + pipeName;
+	// sanitise: this could be used in paths to create pipes
+	for(auto& c : name)
+		if('/' == c || '\\' == c  || ':' == c || ' ' == c || '\t' == c || '\n' ==c || '\r' == c || '\0' == c)
+			c = '_';
 	int ret = createBelaRtPipe(name.c_str(), pipeSize, &pipeSocket, &fd);
 	if(ret)
 	{
