@@ -10,11 +10,11 @@
  * The number of times that the callback is called is the same as the number of
  * calls to schedule().
  */
-class SchedulableThread {
+class SchedulableTask {
 public:
-	SchedulableThread(){};
+	SchedulableTask(){};
 	template<typename T>
-	SchedulableThread(const std::string& _name, T callback, int priority = 0){ create(_name, callback, priority); }
+	SchedulableTask(const std::string& _name, T callback, int priority = 0){ create(_name, callback, priority); }
 
 	int create(const std::string& _name, std::function<void()> callback, int priority = 0);
 	int create(const std::string& _name, std::function<void(const char*)> callback, int priority = 0);
