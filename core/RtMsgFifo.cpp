@@ -234,9 +234,9 @@ RtNonRtMsgFifo::RtNonRtMsgFifo(const std::string& pipeName, size_t size, bool ne
 
 bool RtNonRtMsgFifo::setup(const std::string& pipeName, size_t size, bool newBlockingRt, bool newBlockingNonRt)
 {
-	if(fd)
+	if(nonRtFd)
 		cleanup();
-	fd = -1;
+	nonRtFd = -1;
 	pipeSize = size;
 
 	name = "p_" + pipeName;
@@ -244,7 +244,7 @@ bool RtNonRtMsgFifo::setup(const std::string& pipeName, size_t size, bool newBlo
 	for(auto& c : name)
 		if('/' == c || '\\' == c  || ':' == c || ' ' == c || '\t' == c || '\n' ==c || '\r' == c || '\0' == c)
 			c = '_';
-	int ret = createBelaRtPipe(name.c_str(), pipeSize, &pipeSocket, &fd);
+	int ret = createBelaRtPipe(name.c_str(), pipeSize, &rtFd, &nonRtFd);
 	if(ret)
 	{
 		fprintf(stderr, "Unable to create pipe %s with %zu bytes: (%i) %s\n", name.c_str(), pipeSize, ret, strerror(ret));
@@ -258,14 +258,14 @@ bool RtNonRtMsgFifo::setup(const std::string& pipeName, size_t size, bool newBlo
 void RtNonRtMsgFifo::setBlockingRt(bool blocking)
 {
 	blockingRt = blocking;
-	int flags = BELA_RT_WRAP(fcntl(pipeSocket, F_GETFL));
+	int flags = BELA_RT_WRAP(fcntl(rtFd, F_GETFL));
 	if(blocking)
 	{
 		flags ^= O_NONBLOCK;
 	} else {
 		flags |= O_NONBLOCK;
 	}
-	if(int ret = BELA_RT_WRAP(fcntl(pipeSocket, F_SETFL, flags)))
+	if(int ret = BELA_RT_WRAP(fcntl(rtFd, F_SETFL, flags)))
 	{
 		fprintf(stderr, "Unable to set socket non blocking\n");
 	}
@@ -274,14 +274,14 @@ void RtNonRtMsgFifo::setBlockingRt(bool blocking)
 void RtNonRtMsgFifo::setBlockingNonRt(bool blocking)
 {
 	blockingNonRt = blocking;
-	int flags = fcntl(fd, F_GETFL);
+	int flags = fcntl(nonRtFd, F_GETFL);
 	if(blocking)
 	{
 		flags ^= O_NONBLOCK;
 	} else {
 		flags |= O_NONBLOCK;
 	}
-	if(int ret = fcntl(fd, F_SETFL, flags))
+	if(int ret = fcntl(nonRtFd, F_SETFL, flags))
 	{
 		fprintf(stderr, "Unable to set socket non blocking\n");
 	}
@@ -299,13 +299,13 @@ void RtNonRtMsgFifo::setTimeoutMsNonRt(double timeoutMs)
 
 void RtNonRtMsgFifo::cleanup()
 {
-	close(fd);
-	BELA_RT_WRAP(close(pipeSocket));
+	close(nonRtFd);
+	BELA_RT_WRAP(close(rtFd));
 }
 
 bool RtNonRtMsgFifo::_writeNonRt(void* ptr, size_t size)
 {
-	ssize_t ret = write(fd, (void*)ptr, size);
+	ssize_t ret = write(nonRtFd, (void*)ptr, size);
 	if(ret < 0 || ret != size)
 	{
 		return false;
@@ -315,7 +315,7 @@ bool RtNonRtMsgFifo::_writeNonRt(void* ptr, size_t size)
 
 bool RtNonRtMsgFifo::_writeRt(void* ptr, size_t size)
 {
-	ssize_t ret = BELA_RT_WRAP(send(pipeSocket, (void*)ptr, size, 0));
+	ssize_t ret = BELA_RT_WRAP(send(rtFd, (void*)ptr, size, 0));
 	if(ret < 0 || ret != size)
 	{
 		return false;
@@ -338,7 +338,7 @@ ssize_t RtNonRtMsgFifo::_readRtNonRt(void* ptr, size_t size, bool rt)
 	bool blocking = rt ? blockingRt : blockingNonRt;
 	double timeoutMs = rt ? timeoutMsRt : timeoutMsNonRt;
 	int (*_select)(int, fd_set*, fd_set*, fd_set*, struct timeval*) = rt ? BELA_RT_WRAP(select : select);
-	int file = rt ? pipeSocket : fd;
+	int file = rt ? rtFd : nonRtFd;
 	bool doIt = false;
 	int ret = 0;
 	if(blocking)
