@@ -7,28 +7,19 @@
 #include <pthread.h>
 #include "../include/RtThread.h"
 #include "../include/RtWrappers.h"
-#include "../include/RtLock.h"
 
 using namespace std;
 //
 // Data structure to keep track of auxiliary tasks we
 // can schedule
 typedef struct {
-	RtThread task;
-	RtSync sync;
-	void (*argfunction)(void*);
-	std::string name;
-	int priority;
-	bool started;
-	void* args;
+	WaitingTask task;
 } InternalAuxiliaryTask;
 
 vector<InternalAuxiliaryTask*> &getAuxTasks(){
 	static vector<InternalAuxiliaryTask*> auxTasks;
 	return auxTasks;
 }
-
-static void auxiliaryTaskLoop(void *taskStruct);
 
 // Create a calculation loop which can run independently of the audio, at a different
 // (equal or lower) priority. Audio priority is defined in BELA_AUDIO_PRIORITY;
@@ -41,11 +32,6 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	InternalAuxiliaryTask* newTask = new InternalAuxiliaryTask;
 
 	// Populate the rest of the data structure
-	newTask->argfunction = functionToCall;
-	newTask->name = name;
-	newTask->priority = priority;
-	newTask->started = false;
-	newTask->args = args;
 	// Attempt to create the task
 	unsigned int stackSize = gAuxiliaryTaskStackSize;
 	int ret;
@@ -58,7 +44,9 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	// Upon calling this function, the thread will start and immediately wait
 	// on the condition variable.
 	if(!ret)
-		ret = newTask->task.create(name, priority, auxiliaryTaskLoop, newTask, NULL, stackSize);
+		ret = newTask->task.create(name, priority, [functionToCall, args](){
+				functionToCall(args);
+			}, NULL, stackSize);
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
@@ -77,47 +65,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 {
 	InternalAuxiliaryTask *taskToSchedule = (InternalAuxiliaryTask *)task;
-	if(taskToSchedule->started == false){ // Note: this is not the safest method to check if a task
-		Bela_startAuxiliaryTask(task); // is started (or ready to be resumed), but it probably is the fastest.
-                                           // A safer approach would use rt_task_inquire()
-	}
-	if(!taskToSchedule->started)
-	{
-		// the task has not yet had a chance to run.
-		// let's enforce it now. This will block the current thread
-		// until the other starts.
-		struct sched_param param;
-		int policy;
-		pthread_t task = taskToSchedule->task.native_handle();
-		int ret = BELA_RT_WRAP(pthread_getschedparam(task,
-				&policy, &param));
-		if(!ret)
-		{
-			// set the priority to maximum
-			int originalPriority = param.sched_priority;
-			param.sched_priority = BELA_RT_WRAP(sched_get_priority_max(SCHED_FIFO));
-			BELA_RT_WRAP(pthread_setschedparam(task,
-					SCHED_FIFO, &param));
-			// just in case we have the same priority, let the
-			// other go first
-			BELA_RT_WRAP(sched_yield());
-			if(!taskToSchedule->started)
-				fprintf(stderr, "Didn't work\n");
-			// by the time we are here, the other thread has run, set the
-			// started flag, and is now waiting for the cond
-			// So, restore its schedparams
-			param.sched_priority = originalPriority;
-			BELA_RT_WRAP(pthread_setschedparam(task,
-					policy, &param));
-		}
-	}
-	if(taskToSchedule->sync.notify(false))
-	{
-		return 0;
-	} else {
-		// If we cannot get the lock, then the task is probably still running.
-		return 1;
-	}
+	return taskToSchedule->task.schedule(false);
 }
 
 AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void* arg)
@@ -135,45 +83,6 @@ AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void*
 	return task;
 }
 
-static void suspendCurrentTask(InternalAuxiliaryTask* task)
-{
-	task->started = true;
-	task->sync.wait();
-}
-// Calculation loop that can be used for other tasks running at a lower
-// priority than the audio thread. Simple wrapper for Xenomai calls.
-// Treat the argument as containing the task structure
-//
-// The purpose of this loop is to keep the task alive between schedulings,
-// so to avoid the overhead of creating and starting the task every time:
-// this way we only require a "rt_task_resume" to start doing some work
-void auxiliaryTaskLoop(void *taskStruct)
-{
-	InternalAuxiliaryTask *task = ((InternalAuxiliaryTask *)taskStruct);
-    
-	// Get function to call from the argument
-	void (*auxiliary_argfunction)(void* args) = task->argfunction;
-    
-	// Wait for a notification
-	suspendCurrentTask(task);
-
-	while(!Bela_stopRequested()) {
-		// Then run the calculations
-		auxiliary_argfunction(task->args);
-
-		// we only suspend if the program is still running
-		// otherwise, if we are during cleanup, the task would hang indefinitely
-		// if rt_task_suspend is called after rt_task_join (below) has
-		// already been called
-		if(!Bela_stopRequested()){
-		// Wait for a notification from Bela_scheduleAuxiliaryTask
-			suspendCurrentTask(task);
-		} else {
-			break;
-		}
-	}
-}
-
 void Bela_deleteAllAuxiliaryTasks()
 {
 	// Stop all the auxiliary in reverse order
@@ -182,10 +91,6 @@ void Bela_deleteAllAuxiliaryTasks()
 	Bela_requestStop();
 	for(size_t n = getAuxTasks().size() - 1; n != -1; --n) {
 		InternalAuxiliaryTask *taskStruct = getAuxTasks()[n];
-		// Wake up each thread and join it
-		// REALLY lock the lock: we really must call _cond_signal here
-		taskStruct->sync.notify(true);
-		taskStruct->task.join();
 		delete taskStruct;
 	}
 	getAuxTasks().clear();
