@@ -147,8 +147,8 @@ private:
 	ssize_t _readRt(void* ptr, size_t size);
 	static std::string defaultName;
 	std::string name;
-	int pipeSocket;
-	int fd = 0;
+	int rtFd;
+	int nonRtFd = 0;
 	size_t pipeSize;
 	double timeoutMsRt = -1;
 	double timeoutMsNonRt = -1;
