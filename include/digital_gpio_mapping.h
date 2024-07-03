@@ -1,5 +1,4 @@
-#ifndef DIGITAL_MAPPING_H
-#define DIGITAL_MAPPING_H
+#pragma once
 
 enum {NUM_DIGITALS = 16};
 //GPIO_INPUT and GPIO_OUTPUT values when calling the setDigitalDirection() macro.
@@ -134,5 +133,3 @@ enum {
 	P8_29 = 14,
 	P8_30 = 15,
 };
-
-#endif

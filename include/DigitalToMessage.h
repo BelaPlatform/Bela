@@ -1,13 +1,4 @@
-/*
- * DigitalStream.h
- *
- *  Created on: 7 Jun 2016
- *      Author: giulio
- */
-
-#ifndef DIGITALTOMESSAGE_H_
-#define DIGITALTOMESSAGE_H_
-#include <Bela.h>
+#pragma once
 
 //class ProcessedDigitalChannel{
 //	ProcessedDigitalChannel(){
@@ -65,5 +56,3 @@ private:
 	void (*stateChangedCallback)(bool, unsigned int, void*);
 	bool lastState;
 };
-
-#endif /* DIGITALTOMESSAGE_H_ */

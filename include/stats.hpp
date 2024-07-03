@@ -1,5 +1,4 @@
-#ifndef STATS_HPP_INCLUDED
-#define STATS_HPP_INCLUDED
+#pragma once
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -72,5 +71,3 @@ public:
 	  bufferFull=false;
   }
 };
-
-#endif /* STATS_HPP_INCLUDED */

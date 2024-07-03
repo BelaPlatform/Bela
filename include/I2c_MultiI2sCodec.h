@@ -1,3 +1,4 @@
+#pragma once
 #include "I2c_Codec.h"
 
 class I2c_MultiI2sCodec : public I2c_Codec

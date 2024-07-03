@@ -1,12 +1,5 @@
-/*
- * DigitalStream.h
- *
- *  Created on: 7 Jun 2016
- *      Author: giulio
- */
+#pragma once
 
-#ifndef DIGITALCHANNELMANAGER_H_
-#define DIGITALCHANNELMANAGER_H_
 #include <Bela.h>
 
 /**
@@ -245,5 +238,3 @@ private:
 	uint16_t signalRate;
 	bool verbose;
 };
-
-#endif /* DIGITALCHANNELMANAGER_H_ */
