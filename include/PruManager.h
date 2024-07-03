@@ -1,13 +1,4 @@
-/*
- * PruManager.h
- *
- * Support for interaction with PRU via
- * (rproc+mmap) and/or (uio+libprussdrv)
- *
- *	Created on: Jul 3, 2021
- *		Author: Dhruva Gole
- */
-
+#pragma once
 #include <string>
 
 #if ENABLE_PRU_UIO == 1

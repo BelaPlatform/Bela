@@ -1,12 +1,4 @@
-/*
- * IirFilter.h
- *
- *  Created on: 17 Sep 2015
- *      Author: giulio
- */
-
-#ifndef IIRFILTER_H_
-#define IIRFILTER_H_
+#pragma once
 
 #define IIR_FILTER_STAGE_COEFFICIENTS (5)
 #define IIR_FILTER_STAGE_STATES (IIR_FILTER_STAGE_COEFFICIENTS - 1)
@@ -81,8 +73,3 @@ public:
 		}
 	}
 };
-
-
-//void IirFilter::process(double* in, double* out, int length);
-
-#endif /* IIRFILTER_H_ */

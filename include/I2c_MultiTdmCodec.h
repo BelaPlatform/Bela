@@ -1,3 +1,4 @@
+#pragma once
 #include "I2c_MultiTLVCodec.h"
 
 class I2c_MultiTdmCodec : public I2c_MultiTLVCodec
