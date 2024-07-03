@@ -9,7 +9,7 @@
 class WSServer;
 class JSONValue;
 // typedef std::map<std::wstring, JSONValue*> JSONObject;
-class AuxTaskRT;
+class WaitingTask;
 
 /**
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
@@ -93,7 +93,7 @@ private:
 	typedef uint32_t Timestamp;
 	static constexpr size_t kTimestampSlots = sizeof(Timestamp) / sizeof(float);
 	std::unique_ptr<WSServer> ws_server;
-	std::unique_ptr<AuxTaskRT> scopeTriggerTask;
+	std::unique_ptr<WaitingTask> scopeTriggerTask;
 
 	// settings
 	size_t numChannels;
