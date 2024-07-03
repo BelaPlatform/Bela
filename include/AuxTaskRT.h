@@ -1,10 +1,10 @@
 #pragma once
-#include "SchedulableThread.h"
+#include "SchedulableTask.h"
 #include "RtMsgFifo.h"
 #include <mqueue.h>
 #include <string>
 
-class AuxTaskRT : public SchedulableThread
+class AuxTaskRT : public SchedulableTask
 {
 public:
 	AuxTaskRT(){};
