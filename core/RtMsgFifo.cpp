@@ -343,13 +343,21 @@ ssize_t RtNonRtMsgFifo::_readRtNonRt(void* ptr, size_t size, bool rt)
 	int ret = 0;
 	if(blocking)
 	{
+		struct timeval* timeout;
 		struct timeval tv;
-		tv.tv_sec = ((unsigned int)timeoutMs) / 1000;
-		tv.tv_usec = (timeoutMs - tv.tv_sec * 1000.f) * 1000.f;
+		if(timeoutMs >= 0)
+		{
+			tv.tv_sec = ((unsigned int)timeoutMs) / 1000;
+			tv.tv_usec = (timeoutMs - tv.tv_sec * 1000.f) * 1000.f;
+			timeout = &tv;
+		} else {
+			// block indefinitely
+			timeout = nullptr;
+		}
 		fd_set fdSet;
 		FD_ZERO(&fdSet);
 		FD_SET(file, &fdSet);
-		ret = _select(file + 1, &fdSet, NULL, NULL, &tv);
+		ret = _select(file + 1, &fdSet, NULL, NULL, timeout);
 		if(1 == ret && FD_ISSET(file, &fdSet))
 			doIt = true;
 	}
