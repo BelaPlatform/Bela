@@ -49,7 +49,11 @@ public:
 	 * Get the absolute value of the frequency-domain representation at index `n`.
 	 * The value is computed on the fly at each call and is not cached.
 	 */
-	float fda(unsigned int n) { return sqrtf_neon(fdr(n) * fdr(n) + fdi(n) * fdi(n)); };
+	float fda(unsigned int n) {
+		if(0 == fdr(n) && 0 == fdi(n))
+			return 0;
+		return sqrtf_neon(fdr(n) * fdr(n) + fdi(n) * fdi(n));
+	};
 	/**
 	 * Get the time-domain representation at index `n`.
 	 */
