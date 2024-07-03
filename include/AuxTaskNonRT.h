@@ -1,8 +1,8 @@
 #pragma once
-#include "SchedulableThread.h"
+#include "SchedulableTask.h"
 #include "RtMsgFifo.h"
 
-class AuxTaskNonRT : public SchedulableThread
+class AuxTaskNonRT : public SchedulableTask
 {
 public:
 	AuxTaskNonRT(){};
