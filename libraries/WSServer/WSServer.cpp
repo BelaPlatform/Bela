@@ -44,6 +44,8 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 void WSServer::sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread){
 	if(!handler)
 		return;
+	if(!size)
+		return;
 	// make a copy of the data before we send it out
 	if(handler->connections.size())
 	{
