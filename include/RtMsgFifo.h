@@ -150,8 +150,8 @@ private:
 	int pipeSocket;
 	int fd = 0;
 	size_t pipeSize;
-	double timeoutMsRt = 0;
-	double timeoutMsNonRt = 0;
+	double timeoutMsRt = -1;
+	double timeoutMsNonRt = -1;
 	bool blockingRt = false;
 	bool blockingNonRt = false;
 };
