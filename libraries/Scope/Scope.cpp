@@ -80,8 +80,8 @@ int Scope::setup(unsigned int _numChannels, float _sampleRate)
 			});
 
 	// setup the auxiliary tasks
-	scopeTriggerTask = std::unique_ptr<AuxTaskRT>(new AuxTaskRT());
-	if((ret = scopeTriggerTask->create("scope-trigger-task", [this](){ c.triggerTask(); })))
+	scopeTriggerTask = std::unique_ptr<WaitingTask>(new WaitingTask());
+	if((ret = scopeTriggerTask->create("scope-trigger-task", 0, [this](){ c.triggerTask(); })))
 	{
 		fprintf(stderr, "Scope: failed to create trigger task: %d\n", ret);
 		return 1;
