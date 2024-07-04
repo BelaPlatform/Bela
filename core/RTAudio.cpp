@@ -234,20 +234,17 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 		.tv_nsec = int(int(intervalMs * kNsInSec / 1000) % kNsInSec),
 	};
 	long long unsigned int maxTimeNs = maxTime * kNsInSec;
-	struct sched_param p = {
-		.sched_priority = priority,
-	};
-	BELA_RT_WRAP(pthread_setschedparam(pthread_self(), SCHED_FIFO, &p));
+	RtThread::setThisThreadPriority(priority);
 
-	// clock_gettime is relatively expensive. We read it less often to
+	// Bela_gettime() is relatively expensive. We read it less often to
 	// minimise overhead. This means we lose a bit of accuracy in duration,
 	// but normally that's no big deal.
 	const unsigned int kGetTimeIters = 10;
 	unsigned int nextGetTime = kGetTimeIters;
 	struct timespec begin, end;
-	if(BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &begin)))
+	if(Bela_gettime(&begin))
 	{
-		fprintf(stderr, "Error in clock_gettime(): %d %s\n", errno, strerror(errno));
+		fprintf(stderr, "Error in Bela_gettime(): %d %s\n", errno, strerror(errno));
 		return 1;
 	}
 	while(!Bela_stopRequested()) {
@@ -259,7 +256,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 			if(!nextGetTime--)
 			{
 				nextGetTime = kGetTimeIters;
-				BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &end));
+				Bela_gettime(&end);
 				long long unsigned int elapsed = timespec_sub(&end, &begin);
 				if(elapsed > maxTimeNs)
 					break;
@@ -272,10 +269,10 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 				break;
 		}
 		if(intervalMs)
-			BELA_RT_WRAP(nanosleep(&ts, NULL));
+			Bela_nanosleep(&ts);
 	}
 	if(!maxTimeNs) // we may have already gotten a more accurate timestamp above
-		BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &end));
+		Bela_gettime(&end);
 	long long unsigned int timeNs = timespec_sub(&end, &begin);
 	if(printStats)
 	{
@@ -728,7 +725,7 @@ void fifoRender(BelaContext* context, void* userData)
 				.tv_sec = 0,
 				.tv_nsec = 5 * 1000 * 1000,
 			};
-			BELA_RT_WRAP(nanosleep(&ts, NULL));
+			Bela_nanosleep(&ts);
 		}
 	}
 	if(rctx)
@@ -932,7 +929,7 @@ void Bela_cpuTic(BelaCpuData* data)
 	if(!data || !data->count)
 		return;
 	struct timespec tic;
-	BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &tic));
+	Bela_gettime(&tic);
 	long long unsigned int diff = timespec_sub(&tic, &data->tic);
 	data->tic = tic;
 	data->total += diff;
@@ -950,7 +947,7 @@ void Bela_cpuToc(BelaCpuData* data)
 {
 	if(!data || !data->count)
 		return;
-	BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &data->toc));
+	Bela_gettime(&data->toc);
 	long long unsigned int diff = timespec_sub(&data->toc, &data->tic);
 	data->busy += diff;
 }

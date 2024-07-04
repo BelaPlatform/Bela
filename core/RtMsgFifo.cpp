@@ -76,7 +76,7 @@ static inline struct timespec getTimeout(double timeoutMs)
 	{
 		timeout = {0, 0};
 	} else {
-		BELA_RT_WRAP(clock_gettime(CLOCK_REALTIME, &timeout));
+		Bela_gettime(&timeout);
 		//struct timespec timeoutbak = timeout;
 		long oneSecondNs = 1000000000;
 		time_t timeoutS = (time_t)(timeoutMs / 1000);
