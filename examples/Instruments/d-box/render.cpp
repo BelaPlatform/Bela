@@ -7,6 +7,7 @@
 
 #include <Bela.h>
 #include <PRU.h>
+#include <RtWrappers.h>
 
 #include "StatusLED.h"
 #include "config.h"
@@ -646,7 +647,7 @@ void render_medium_prio(void*)
 		long long int ns = 0;
 		long long int delta;
 		struct timespec tp;
-		int ret = BELA_RT_WRAP(clock_gettime(CLOCK_REALTIME, &tp));
+		int ret = Bela_gettime(&tp);
 		if(ret){
 			// if something goes wrong reading the clock, let's not
 			// make that stop us

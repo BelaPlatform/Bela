@@ -120,18 +120,11 @@ int WaitingTask::schedule(bool force)
 		// the task has not yet had a chance to run.
 		// let's enforce it now. This will block the current thread
 		// until the other starts.
-		struct sched_param param;
-		int policy;
-		pthread_t task = thread.native_handle();
-		int ret = BELA_RT_WRAP(pthread_getschedparam(task,
-				&policy, &param));
-		if(!ret)
+		int originalPriority = thread.getPriority();
+		if(originalPriority >= 0)
 		{
 			// set the priority to maximum
-			int originalPriority = param.sched_priority;
-			param.sched_priority = BELA_RT_WRAP(sched_get_priority_max(SCHED_FIFO));
-			BELA_RT_WRAP(pthread_setschedparam(task,
-					SCHED_FIFO, &param));
+			thread.setPriority(sched_get_priority_max(SCHED_FIFO));
 			// just in case we have the same priority, let the
 			// other go first
 			BELA_RT_WRAP(sched_yield());
@@ -140,9 +133,7 @@ int WaitingTask::schedule(bool force)
 			// by the time we are here, the other thread has run, set the
 			// started flag, and is now waiting for the cond
 			// So, restore its schedparams
-			param.sched_priority = originalPriority;
-			BELA_RT_WRAP(pthread_setschedparam(task,
-					policy, &param));
+			thread.setPriority(originalPriority);
 		}
 	}
 	return !sync.notify(force);
