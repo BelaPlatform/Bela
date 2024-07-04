@@ -13,7 +13,7 @@ int task_sleep_ns(long long int timens)
 	struct timespec req;
 	req.tv_sec = timens/1000000000;
 	req.tv_nsec = timens - req.tv_sec * 1000000000;
-	return BELA_RT_WRAP(nanosleep(&req, NULL));
+	return Bela_nanosleep(&req);
 }
 
 #include <error.h>
@@ -387,6 +387,16 @@ bool Bela_isAlreadyRunning()
 	// can't check, assume it's not
 	return false;
 #endif
+}
+
+int Bela_gettime(struct timespec* t)
+{
+	return BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, t));
+}
+
+int Bela_nanosleep(const struct timespec *req, struct timespec *rem)
+{
+	return BELA_RT_WRAP(nanosleep(req, rem));
 }
 
 #include <Bela.h>
