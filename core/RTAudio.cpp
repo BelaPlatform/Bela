@@ -31,6 +31,7 @@
 #include "../include/BelaContextFifo.h"
 #include "../include/MiscUtilities.h"
 #include "../include/InternalBelaContext.h"
+#include "../include/RtThread.h"
 
 #include <pthread.h>
 
@@ -116,8 +117,8 @@ void Bela_HwConfig_delete(BelaHwConfig* cfg)
 }
 
 // Real-time tasks and objects
-pthread_t gRTAudioThread;
-static pthread_t gFifoThread;
+static RtThread gRTAudioThread;
+static RtThread gFifoThread;
 extern const char gRTAudioThreadName[] = "bela-audio";
 static const char gFifoThreadName[] = "bela-audio-fifo";
 
@@ -735,7 +736,7 @@ void fifoRender(BelaContext* context, void* userData)
 }
 
 // when using fifo, this is where the user-defined render() is called
-void fifoLoop(void* userData)
+void fifoLoop(void*)
 {
 	if(gRTAudioVerbose)
 		printf("_________________Fifo Thread!\n");
@@ -825,7 +826,7 @@ int Bela_startAudio()
 		//if there is a fifo, the core audio thread below will need a higher priority
 		audioPriority = BELA_AUDIO_PRIORITY + 1;
 		// and we start an extra thread with usual audio priority in which the user's render() will run
-		ret = create_and_start_thread(&gFifoThread, gFifoThreadName, audioPriority - 1, stackSize, NULL, (pthread_callback_t*)fifoLoop, NULL);
+		ret = gFifoThread.create(gFifoThreadName, audioPriority - 1, fifoLoop, nullptr, nullptr, stackSize);
 		if(ret)
 		{
 			fprintf(stderr, "Error: unable to start Xenomai fifo audio thread: %d %s\n", ret, strerror(-ret));
@@ -834,7 +835,7 @@ int Bela_startAudio()
 	} else {
 		audioPriority = BELA_AUDIO_PRIORITY;
 	}
-	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, audioPriority, stackSize, NULL, (pthread_callback_t*)audioLoop, NULL);
+	ret = gRTAudioThread.create(gRTAudioThreadName, audioPriority, audioLoop, nullptr, nullptr, stackSize);
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to start Xenomai audio thread: %d %s\n", ret, strerror(-ret));
@@ -857,15 +858,14 @@ void Bela_stopAudio()
 		return;
 
 	// Now wait for threads to respond and actually stop...
-	void* threadReturnValue;
-	int ret = BELA_RT_WRAP(pthread_join(gRTAudioThread, &threadReturnValue));
+	int ret = gRTAudioThread.join();
 	if(ret)
 	{
 		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));
 	}
 	if(gBcf)
 	{
-		ret = BELA_RT_WRAP(pthread_join(gFifoThread, &threadReturnValue));
+		ret = gFifoThread.join();
 		if(ret)
 			fprintf(stderr, "Failed to join audio fifo thread: (%d) %s\n", ret, strerror(ret));
 	}
