@@ -1,5 +1,4 @@
 #include <SchedulableTask.h>
-#include <Bela.h>
 #include <fcntl.h>
 #include <RtWrappers.h>
 #include <stdlib.h>
@@ -10,7 +9,7 @@ extern int volatile gRTAudioVerbose;
 
 bool SchedulableTask::shouldStop()
 {
-	return (Bela_stopRequested() || lShouldStop);
+	return lShouldStop;
 }
 
 int SchedulableTask::create(const std::string& name, std::function<void()> callback, int priority)
@@ -107,7 +106,7 @@ void SchedulableTask::loop()
 			return;
 		}
 		if(shouldStop())
-			return;
+			break;
 		if(0 == mode)
 		{
 			empty_callback();
