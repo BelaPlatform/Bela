@@ -7,6 +7,7 @@
 class RtThread
 {
 public:
+	~RtThread();
 	int create(const std::string& name, int priority, std::function<void(void*)> callback, void* arg = nullptr, cpu_set_t* cpuset = nullptr, int stackSize = 0);
 	int join();
 	pthread_t native_handle();
@@ -17,6 +18,7 @@ private:
 	std::string name;
 	void* arg;
 	std::function<void(void*)> callback;
+	bool joinable = false;
 };
 
 /**

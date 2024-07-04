@@ -3,6 +3,12 @@
 #include <string.h>
 #include <error.h>
 
+RtThread::~RtThread()
+{
+	if(joinable)
+		join();
+}
+
 void* RtThread::internalCallback(void* p)
 {
 	RtThread* that = (RtThread*)p;
@@ -12,6 +18,11 @@ void* RtThread::internalCallback(void* p)
 
 int RtThread::create(const std::string& name, int priority, std::function<void(void*)> callback, void* arg, cpu_set_t* cpuset, int stackSize)
 {
+	if(joinable)
+	{
+		fprintf(stderr, "RtThread: thread %s is alraedy running when creating it with name %s\n", this->name.c_str(), name.c_str());
+		return 1;
+	}
 	this->arg = arg;
 	this->callback = callback;
 	this->name = name;
@@ -20,6 +31,7 @@ int RtThread::create(const std::string& name, int priority, std::function<void(v
 		fprintf(stderr, "RtThread: Unable to start thread %s: %i\n", name.c_str(), ret);
 		return 1;
 	}
+	joinable = true;
 	return 0;
 }
 
@@ -29,6 +41,7 @@ int RtThread::join()
 	int ret = BELA_RT_WRAP(pthread_join(thread, NULL));
 	if (ret < 0)
 		fprintf(stderr, "RtThread %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
+	joinable = false;
 	return ret;
 }
 
