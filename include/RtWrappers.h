@@ -65,6 +65,10 @@ void Bela_initRtBackend();
 
 bool Bela_isAlreadyRunning();
 
+int Bela_gettime(struct timespec*);
+
+int Bela_nanosleep(const struct timespec *req, struct timespec *rem = nullptr);
+
 bool turnIntoRtThread();
 
 #ifdef __cplusplus
