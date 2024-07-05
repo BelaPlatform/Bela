@@ -12,6 +12,7 @@ namespace seasocks{
 	class WebSocket;
 }
 class AuxTaskNonRT;
+class RtThread;
 struct WSServerDataHandler;
 class WSServerDetails;
 
@@ -51,7 +52,7 @@ class WSServer{
 			std::shared_ptr<WSServerDataHandler> handler;
 		};
 		std::map<std::string, AddressBookItem> address_book;
-		std::unique_ptr<AuxTaskNonRT> server_task;
+		std::unique_ptr<RtThread> server_thread;
 		
 		void sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread);
 };
