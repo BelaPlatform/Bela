@@ -85,10 +85,9 @@ int WSServer::setup(int _port) {
 	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	server = std::make_shared<seasocks::Server>(logger);
 
-	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	if(server_task->create(std::string("WSServer_")+std::to_string(_port), [this](){ server->serve("/dev/null", port); }))
+	server_thread = std::unique_ptr<RtThread>(new RtThread());
+	if(server_thread->create(std::string("WSServer_")+std::to_string(_port), 0, [this](void*){ server->serve("/dev/null", port); }))
 		return 1;
-	server_task->schedule();
 	return 0;
 }
 
@@ -155,5 +154,5 @@ void WSServer::cleanup(){
 	server->terminate();
 	// wait for server to terminate and call all callbacks before
 	// destroying the objects it may depend on
-	server_task.reset();
+	server_thread.reset();
 }
