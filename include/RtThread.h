@@ -11,6 +11,10 @@ public:
 	int create(const std::string& name, int priority, std::function<void(void*)> callback, void* arg = nullptr, cpu_set_t* cpuset = nullptr, int stackSize = 0);
 	int join();
 	pthread_t native_handle();
+	int setPriority(int priority);
+	int getPriority();
+	static int setThisThreadPriority(int priority);
+	static int getThisThreadPriority();
 private:
 	static void* internalCallback(void*);
 	void callCallback();
