@@ -49,6 +49,46 @@ pthread_t RtThread::native_handle()
 {
 	return thread;
 }
+
+static int setPriority(pthread_t thread, int priority)
+{
+	int sched = priority > 0 ? SCHED_FIFO : SCHED_OTHER;
+	struct sched_param p = {
+		.sched_priority = priority,
+	};
+	return BELA_RT_WRAP(pthread_setschedparam(thread, sched, &p));
+}
+
+int RtThread::setThisThreadPriority(int priority)
+{
+	return ::setPriority(pthread_self(), priority);
+}
+
+int RtThread::setPriority(int priority)
+{
+	return ::setPriority(thread, priority);
+}
+
+static int getPriority(pthread_t thread)
+{
+	struct sched_param param;
+	int policy;
+	int ret = BELA_RT_WRAP(pthread_getschedparam(thread, &policy, &param));
+	if(ret)
+		return -1;
+	return param.sched_priority;
+}
+
+int RtThread::getThisThreadPriority()
+{
+	return ::getPriority(pthread_self());
+}
+
+int RtThread::getPriority()
+{
+	return ::getPriority(thread);
+}
+
 void RtThread::callCallback()
 {
 	callback(arg);
