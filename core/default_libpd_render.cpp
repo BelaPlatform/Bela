@@ -166,20 +166,31 @@ bool guiControlDataCallback(JSONObject& root, void* arg)
 #ifdef BELA_LIBPD_SERIAL
 #include <libraries/Serial/Serial.h>
 #include <libraries/Pipe/Pipe.h>
+#include <RtLock.h>
 #include <string>
 
-Pipe gSerialPipe;
-Serial gSerial;
-std::string gSerialId;
-int gSerialEom;
+static Pipe gSerialPipe;
 enum SerialType {
 	kSerialFloats,
 	kSerialBytes,
 	kSerialSymbol,
 	kSerialSymbols,
-} gSerialType = kSerialFloats;
-AuxiliaryTask gSerialInputTask;
-AuxiliaryTask gSerialOutputTask;
+};
+
+struct SerialStruct {
+	Serial* serial;
+	std::string id;
+	int eom;
+	enum SerialType type;
+};
+// this is a vector of pointers so that updating it won't affect the address of
+// pre-existing SerialStruct objects. This is necessary because these pointers
+// are passed to each input threads on creation and need to be constant
+// throughout the lifetime of the program.
+static std::vector<SerialStruct*> gSerial;
+// used to protect the gSerial vector, which is modified from the audio thread
+// and accessed from the writing thread
+static RtMutex gSerialMutex;
 
 struct serialMessageHeader
 {
@@ -198,15 +209,15 @@ struct SerialPipeState {
 	char id[100];
 };
 
-static void processSerialPipe(bool rt, SerialPipeState& s)
+static void processSerialPipe(bool rt, SerialPipeState& state)
 {
 	// Not sure we actually need while() below. We were using it earlier
 	// when this was coded inside render() in order to be able to perform early returns
 	while(1)
 	{
-		auto& h = s.h;
-		auto& waitingFor = s.waitingFor;
-		auto& id = s.id;
+		auto& h = state.h;
+		auto& waitingFor = state.waitingFor;
+		auto& id = state.id;
 		if(kHeader == waitingFor)
 		{
 			int ret = rt ? gSerialPipe.readRt(h) : gSerialPipe.readNonRt(h);
@@ -243,6 +254,24 @@ static void processSerialPipe(bool rt, SerialPipeState& s)
 				rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.dataSize, ret);
 				break;
 			}
+			// changes to gSerial happen from within the audio
+			// thread, so only the non-rt thread needs to lock
+			std::unique_lock<RtMutex> lock(gSerialMutex, std::defer_lock);
+			if(!rt)
+				lock.lock();
+			SerialStruct* s = nullptr;
+			for(auto ss : gSerial)
+			{
+				if(ss->id == id)
+					s = ss;
+			}
+			if(!rt)
+				lock.unlock();
+			if(!s)
+			{
+				rt_fprintf(stderr, "Couldn't find serial id \"%s\" in gSerial\n", id);
+				return;
+			}
 			if(rt)
 			{
 				// rt: forward data from pipe to Pd
@@ -250,11 +279,11 @@ static void processSerialPipe(bool rt, SerialPipeState& s)
 				if(h.dataSize)
 				{
 					const char* rec = "bela_serialIn";
-					if(kSerialSymbol == gSerialType)
+					if(kSerialSymbol == s->type)
 					{
 						libpd_symbol(rec, data);
-					} else if(kSerialBytes == gSerialType) {
-						if(gSerialEom >= 0) {
+					} else if(kSerialBytes == s->type) {
+						if(s->eom >= 0) {
 							// messages are separated: send as a list
 							libpd_start_message(h.dataSize);
 							for(size_t n = 0; n < h.dataSize; ++n)
@@ -304,9 +333,9 @@ static void processSerialPipe(bool rt, SerialPipeState& s)
 							if(end)
 							{
 								data[n] = '\0'; // ensure the string is null-terminated so the next line works
-								if(kSerialSymbols == gSerialType)
+								if(kSerialSymbols == s->type)
 									libpd_add_symbol(data + start);
-								else if (kSerialFloats == gSerialType)
+								else if (kSerialFloats == s->type)
 									libpd_add_float(atof(data + start));
 								start = n + 1;
 							}
@@ -317,7 +346,7 @@ static void processSerialPipe(bool rt, SerialPipeState& s)
 			} else {
 				// non-rt: forward data from pipe to serial
 				if(h.dataSize)
-					gSerial.write(data, h.dataSize);
+					s->serial->write(data, h.dataSize);
 			}
 			waitingFor = kHeader;
 		}
@@ -339,21 +368,22 @@ static void serialOutputLoop(void* arg) {
 }
 
 static void serialInputLoop(void* arg) {
+	SerialStruct& s = *(SerialStruct*)arg;
 	char serialBuffer[10000];
 	unsigned int i = 0;
 	serialMessageHeader h;
-	h.idSize = strlen(gSerialId.c_str()) + 1;
+	h.idSize = strlen(s.id.c_str()) + 1;
 	while(!Bela_stopRequested())
 	{
 		// read from the serial port with a timeout of 100ms
-		int ret = gSerial.read(serialBuffer + i, sizeof(serialBuffer) - i, 100);
+		int ret = s.serial->read(serialBuffer + i, sizeof(serialBuffer) - i, 100);
 		if (ret > 0) {
-			if(gSerialEom < 0)
+			if(s.eom < 0)
 			{
 				h.dataSize = ret;
 				// send everything immediately
 				gSerialPipe.writeNonRt(h);
-				gSerialPipe.writeNonRt(gSerialId.c_str(), h.idSize);
+				gSerialPipe.writeNonRt(s.id.c_str(), h.idSize);
 				gSerialPipe.writeNonRt(serialBuffer, h.dataSize);
 			} else {
 				// find EOM in new data
@@ -367,7 +397,7 @@ static void serialInputLoop(void* arg) {
 					found = false;
 					for(n = searchStart; n < searchStop; ++n)
 					{
-						if(serialBuffer[n] == gSerialEom)
+						if(serialBuffer[n] == s.eom)
 						{
 							found = true;
 							break;
@@ -380,7 +410,7 @@ static void serialInputLoop(void* arg) {
 						if(h.dataSize)
 						{
 							gSerialPipe.writeNonRt(h);
-							gSerialPipe.writeNonRt(gSerialId.c_str(), h.idSize);
+							gSerialPipe.writeNonRt(s.id.c_str(), h.idSize);
 							gSerialPipe.writeNonRt(serialBuffer + lastSent, h.dataSize);
 						}
 						searchStart = n + 1;
@@ -961,31 +991,47 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				"and `type` is one of `bytes`, `floats`, `symbol`, `symbols`\n");
 				return;
 			}
-			gSerialId = libpd_get_symbol(argv + 0);
+			const char* id = libpd_get_symbol(argv + 0);
 			const char* device = libpd_get_symbol(argv + 1);
 			unsigned int baudrate = libpd_get_float(argv + 2);
-			gSerialEom = -1;
+			int eom = -1;
 			if(libpd_is_symbol(argv + 3)) {
-				const char* eom = libpd_get_symbol(argv + 3);
-				if(0 == strcmp(eom, "newline"))
-					gSerialEom = '\n';
+				const char* eomChar = libpd_get_symbol(argv + 3);
+				if(0 == strcmp(eomChar, "newline"))
+					eom = '\n';
 			} else if(libpd_is_float(argv + 3)) {
-				gSerialEom = libpd_get_float(argv + 3);
+				eom = libpd_get_float(argv + 3);
 			}
-			const char* type = libpd_get_symbol(argv + 4);
-			if(0 == strcmp("floats", type))
-				gSerialType = kSerialFloats;
-			else if(0 == strcmp("bytes", type))
-				gSerialType = kSerialBytes;
-			else if(0 == strcmp("symbol", type))
-				gSerialType = kSerialSymbol;
-			else if(0 == strcmp("symbols", type))
-				gSerialType = kSerialSymbols;
-
-			if(gSerial.setup(device, baudrate))
+			const char* typeChar = libpd_get_symbol(argv + 4);
+			enum SerialType type = kSerialFloats;
+			if(0 == strcmp("floats", typeChar))
+				type = kSerialFloats;
+			else if(0 == strcmp("bytes", typeChar))
+				type = kSerialBytes;
+			else if(0 == strcmp("symbol", typeChar))
+				type = kSerialSymbol;
+			else if(0 == strcmp("symbols", typeChar))
+				type = kSerialSymbols;
+			Serial* serial = new Serial;
+			if(serial->setup(device, baudrate))
+			{
+				delete serial;
 				return;
-			gSerialInputTask = Bela_runAuxiliaryTask(serialInputLoop, 0);
-			gSerialOutputTask = Bela_runAuxiliaryTask(serialOutputLoop, 0);
+			}
+			SerialStruct* serialStruct = new SerialStruct {
+				serial,
+				id,
+				eom,
+				type,
+			};
+			std::unique_lock<RtMutex> lock(gSerialMutex);
+			gSerial.push_back(serialStruct);
+			lock.unlock();
+			// a dedicated input loop for each serial device
+			Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(serialInputLoop, 0, ("in." + std::string(device)).c_str(), (void*)serialStruct));
+			// a single output loop for all serial devices, started when the first one is created
+			if(gSerial.size() == 1)
+				Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(serialOutputLoop, 0, "serial-output-loop"));
 		}
 	}
 	if(0 == strcmp(source, "bela_serialOut"))
@@ -1470,7 +1516,7 @@ void render(BelaContext *context, void *userData)
 #endif // BELA_LIBPD_GUI
 #ifdef BELA_LIBPD_SERIAL
 	static SerialPipeState serialPipeStateRt {};
-	if(gSerialInputTask)
+	if(gSerial.size())
 		processSerialPipe(true, serialPipeStateRt);
 #endif // BELA_LIBPD_SERIAL
 #ifdef BELA_LIBPD_TRILL
@@ -1784,5 +1830,12 @@ void cleanup(BelaContext *context, void *userData)
 		delete t.second;
 	}
 #endif // BELA_LIBPD_TRILL
+#ifdef BELA_LIBPD_SERIAL
+	for(auto s : gSerial)
+	{
+		delete s->serial;
+		delete s;
+	}
+#endif // BELA_LIBPD_SERIAL
 	libpd_closefile(gPatch);
 }
