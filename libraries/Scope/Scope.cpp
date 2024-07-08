@@ -2,7 +2,7 @@
 #include <math.h>
 #include <libraries/WSServer/WSServer.h>
 #include <JSON.h>
-#include <AuxTaskRT.h>
+#include <RtThread.h>
 #include <stdexcept>
 #include <stdarg.h>
 #include <MiscUtilities.h>
