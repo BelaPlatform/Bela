@@ -229,10 +229,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 			intervalMs = atof(value.c_str());
 	}
 	gRTAudioVerbose && printf("Running %llu iterations or up to %.3f seconds with priority %d, sleeping %f ms in between\n", i, maxTime, priority, intervalMs);
-	struct timespec ts = {
-		.tv_sec = int(intervalMs / 1000),
-		.tv_nsec = int(int(intervalMs * kNsInSec / 1000) % kNsInSec),
-	};
+	long long int intervalNs = intervalMs * 1000000;
 	long long unsigned int maxTimeNs = maxTime * kNsInSec;
 	RtThread::setThisThreadPriority(priority);
 
@@ -247,6 +244,8 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 		fprintf(stderr, "Error in Bela_gettime(): %d %s\n", errno, strerror(errno));
 		return 1;
 	}
+	// dummy sleep to ensure that if we have a RT backend we are out of band
+	task_sleep_ns(1000);
 	while(!Bela_stopRequested()) {
 		render((BelaContext*)context, userData);
 		context->audioFramesElapsed += context->audioFrames;
@@ -268,8 +267,15 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 			if(!i--)
 				break;
 		}
-		if(intervalMs)
-			Bela_nanosleep(&ts);
+		if(intervalNs)
+		{
+			int ret = task_sleep_ns(intervalNs);
+			if(ret)
+			{
+				fprintf(stderr, "task_sleep_ns() returned %d %s\n", -ret, strerror(-ret));
+				return 1;
+			}
+		}
 	}
 	if(!maxTimeNs) // we may have already gotten a more accurate timestamp above
 		Bela_gettime(&end);
