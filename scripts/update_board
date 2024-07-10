@@ -257,16 +257,14 @@ fi
 
 if [ "$UPDATE_IDE" -eq 1 ]
 then
-	ls ./scripts/update_IDE >/dev/null 2>/dev/null
-	if [ $? -eq 0 ]
+	if [ -f ./scripts/update_IDE ]
 	then
 	  export BBB_ADDRESS BBB_BELA_HOME
 	  ./scripts/update_IDE -y --no-frills
       [ "$FULL" -eq 1 ] && ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" --no-print-directory idestart" 
 	else
 	  # run the IDE 
-	   printf "\nThe Bela core files were updated on the board, but a valid IDE folder was not found in $IDE_FOLDER/, so the IDE was not updated
-	You can get a copy of the most up-to-date IDE files from https://github.com/LBDonovan/bela-ide\n"
+	   printf "\nThe Bela core files were updated on the board, but a valid IDE folder was not found in $IDE_FOLDER/, so the IDE was not updated\n"
 	  [ $FULL -eq 1 ] && printf "If there was an older version of the IDE on the board, it is being restarted.\n\n" &&\
 	    ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" --no-print-directory idestart &> /dev/null" 
 	fi
