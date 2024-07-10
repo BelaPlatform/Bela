@@ -25,6 +25,7 @@
 #include <sys/mman.h>
 
 #include "../include/Bela.h"
+#include "../include/Gpio.h"
 #include "../include/bela_hw_settings.h"
 #include "../include/bela_sw_settings.h"
 #include "../include/board_detect.h"
@@ -46,10 +47,9 @@
 #include "../include/I2c_MultiI2sCodec.h"
 #include "../include/Es9080_Codec.h"
 #include "../include/Tlv320_Es9080_Codec.h"
-#include "../include/GPIOcontrol.h"
 PRU* gPRU = NULL;
 static AudioCodec* gDisabledCodec = NULL;
-static int gAmplifierMutePin = -1;
+static Gpio gAmplifierMutePin;
 static int gAmplifierShouldBeginMuted = 0;
 
 extern "C" void enable_runfast();
@@ -361,23 +361,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Prepare GPIO pins for amplifier mute and status LED
 	if(settings->ampMutePin >= 0) {
-		gAmplifierMutePin = settings->ampMutePin;
+		gAmplifierMutePin.open(settings->ampMutePin, Gpio::OUTPUT);
+		Bela_muteSpeakers(1);
 		gAmplifierShouldBeginMuted = settings->beginMuted;
-
-		if(gpio_export(settings->ampMutePin)) {
-			if(gRTAudioVerbose)
-				fprintf(stderr, "Warning: couldn't export amplifier mute pin %d\n", settings->ampMutePin);
-		}
-		if(gpio_set_dir(settings->ampMutePin, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				fprintf(stderr, "Couldn't set direction on amplifier mute pin\n");
-			return -1;
-		}
-		if(gpio_set_value(settings->ampMutePin, LOW)) {
-			if(gRTAudioVerbose)
-				fprintf(stderr, "Couldn't set value on amplifier mute pin\n");
-			return -1;
-		}
 	}
 
 	if(settings->numAnalogInChannels != settings->numAnalogOutChannels){
@@ -784,10 +770,7 @@ static int startAudioInline(){
 
 	if(!gAmplifierShouldBeginMuted) {
 		// First unmute the amplifier
-		if(Bela_muteSpeakers(0)) {
-			if(gRTAudioVerbose)
-				printf("Warning: couldn't set value (high) on amplifier mute pin\n");
-		}
+		Bela_muteSpeakers(0);
 	}
 
 	// ready to go
@@ -889,9 +872,6 @@ void Bela_cleanupAudio()
 	delete gAudioCodec;
 	delete gDisabledCodec;
 
-	if(gAmplifierMutePin >= 0)
-		gpio_unexport(gAmplifierMutePin);
-	gAmplifierMutePin = -1;
 	delete gBcf;
 }
 
@@ -1019,12 +999,8 @@ int Bela_muteSpeakers(int mute)
 {
 	//TODO: Nothing to be done for CTAG audio cards
 	int pinValue = mute ? LOW : HIGH;
-
-	// Check that we have an enabled pin for controlling the mute
-	if(gAmplifierMutePin < 0)
-		return -1;
-
-	return gpio_set_value(gAmplifierMutePin, pinValue);
+	gAmplifierMutePin.write(pinValue);
+	return 0;
 }
 
 void Bela_getVersion(int* major, int* minor, int* bugfix)
