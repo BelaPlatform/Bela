@@ -7,7 +7,7 @@
 http://bela.io
 */
 /**
-\example Audio/record-audio/render.cpp
+\example Audio/file-recorder-fixed/render.cpp
 
 Recording the audio input and output to file
 --------------------------------------------
