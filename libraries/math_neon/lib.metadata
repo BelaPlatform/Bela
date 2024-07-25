@@ -2,4 +2,4 @@ name=math_neon
 description=A convenience wrapper for math_neon, a fast, optimized, approximated, math library.
 examples=Fundamentals/sinetone-optimized-bank, Fundamentals/scope-advanced, Salt/pink-trombone
 license=MIT
-LDLIBS=$$(bash -c "[ `arch` == armv7l ] && printf \-lmathneon" )
+LDLIBS=$$(bash -c "[ `arch` == armv7l ] && printf -- -lmathneon" )
