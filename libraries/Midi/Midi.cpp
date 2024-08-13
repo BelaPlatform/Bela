@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <glob.h>
-#include "../include/RtWrappers.h"
 #include <alsa/asoundlib.h>
 
 static const std::string defaultPort = "hw:1,0,0";
@@ -259,8 +258,6 @@ void Midi::doWriteOutput(const void* data, int size) {
 	if(ret < 0)
 		attemptRecoveryWrite();
 }
-
-#include <RtWrappers.h>
 
 static Midi::Port getPort(snd_rawmidi_info_t* info)
 {
