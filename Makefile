@@ -351,6 +351,7 @@ ifeq ($(DISTCC),1)
   CC = /usr/local/bin/distcc-clang
   CXX = /usr/local/bin/distcc-clang++
 endif
+ASSEMBLER?=gcc
 
 ifneq ($(PROJECT),)
 find_files = $(if $(if $(PROJECT_DIR),$(if $(1),_)), $(shell find $(PROJECT_DIR)/ -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp"))
@@ -494,7 +495,7 @@ build/core/%.o: ./core/%.S
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
-	$(AT) gcc -c -o "$@" "$<" -MMD -MP -MT"$@" -MF"$(@:%.o=%.d)"
+	$(AT) $(ASSEMBLER) -c -o "$@" "$<" -MMD -MP -MT"$@" -MF"$(@:%.o=%.d)"
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '
