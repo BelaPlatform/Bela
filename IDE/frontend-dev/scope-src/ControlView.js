@@ -34,6 +34,9 @@ class ControlView extends View{
       this.emit('settings-event', 'scopePause');
       e.preventDefault();
     }
+    if ('k' === e.key && (e.ctrlKey || e.metaKey)) {
+      this.emit('clear');
+    }
   }
 
   // UI events

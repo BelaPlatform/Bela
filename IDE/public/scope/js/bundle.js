@@ -878,6 +878,9 @@ var ControlView = function (_View) {
         this.emit('settings-event', 'scopePause');
         e.preventDefault();
       }
+      if ('k' === e.key && (e.ctrlKey || e.metaKey)) {
+        this.emit('clear');
+      }
     }
 
     // UI events
@@ -1552,6 +1555,9 @@ controlView.on('settings-event', function (key, value) {
   } else if (key === 'showLabels') {
     tabSettings.setKey('showLabels', !tabSettings.getKey('showLabels'));
     return; // do not send via websocket
+  } else if (key === 'scopeClear') {
+    controlView.emit('clear');
+    return; // do not send via websocket
   }
   if (value === undefined) return;
   var obj = {};
@@ -1598,6 +1604,11 @@ channelView.on('channelConfig', function (channelConfig) {
     channelConfig: channelConfig
   });
   legend.update(channelConfig);
+});
+controlView.on('clear', function () {
+  worker.postMessage({
+    event: 'clear'
+  });
 });
 
 belaSocket.on('cpu-usage', CPU);

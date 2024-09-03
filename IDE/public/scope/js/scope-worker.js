@@ -32,6 +32,8 @@ var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, in
 
 const plotModeTimeDomain = 0;
 const plotModeFft = 1;
+let globalArray = new Array();
+let rollPtr = 0;
 
 onmessage = function(e){
 	if (!e.data || !e.data.event) return;
@@ -65,12 +67,15 @@ onmessage = function(e){
 		//console.log(channelConfig);
 	} else if (e.data.event === 'wsConnect') {
 		wsConnect(e.data.remote);
+	} else if ('clear' === e.data.event) {
+		// this clears in incDrawing mode
+		globalArray.fill(undefined);
+		rollPtr = 0;
+		// TODO: post a message to the drawing thread so that the
+		// canvas is cleared immediately and not on the next ws_onmessage()
+		// TODO: clear in regular drawing mode (e.g.: when setting up from trigger one shot)
 	}
 }
-
-let rollPtr = 0;
-let globalArray = new Array();
-let counter = 0;
 
 function inToOut(c, val) {
 	return zero * (1 - (channelConfig[c].yOffset + val) * channelConfig[c].yAmplitude);
