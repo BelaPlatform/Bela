@@ -216,6 +216,9 @@ controlView.on('settings-event', (key, value) => {
   } else if (key === 'showLabels') {
     tabSettings.setKey('showLabels', !tabSettings.getKey('showLabels'));
     return; // do not send via websocket
+  } else if (key === 'scopeClear') {
+    controlView.emit('clear');
+    return; // do not send via websocket
   }
   if (value === undefined) return;
   var obj = {};
@@ -263,6 +266,11 @@ channelView.on('channelConfig', (channelConfig) => {
     channelConfig
   });
   legend.update(channelConfig);
+});
+controlView.on('clear', () => {
+  worker.postMessage({
+    event: 'clear'
+  });
 });
 
 belaSocket.on('cpu-usage', CPU);
