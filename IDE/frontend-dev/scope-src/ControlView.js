@@ -38,6 +38,27 @@ class ControlView extends View{
       this.emit('clear');
     }
   }
+  doUpSampling() {
+    if (downSampling > 1){
+      downSampling /= 2;
+      this.emit('settings-event', 'downSampling', downSampling);
+    } else {
+      if(upSampling < 64) {
+        // an arbitrary limit: higher than this and pileups start happening
+        upSampling *= 2;
+        this.emit('settings-event', 'upSampling', upSampling);
+      }
+    }
+  }
+  doDownSampling() {
+    if (upSampling > 1){
+      upSampling /= 2;
+      this.emit('settings-event', 'upSampling', upSampling);
+    } else {
+      downSampling *= 2;
+      this.emit('settings-event', 'downSampling', downSampling);
+    }
+  }
 
   // UI events
   selectChanged($element, e){
@@ -55,26 +76,9 @@ class ControlView extends View{
   }
   buttonClicked($element, e){
     if ($element.data().key === 'upSampling'){
-      if (downSampling > 1){
-        downSampling /= 2;
-        this.emit('settings-event', 'downSampling', downSampling);
-      } else {
-        if(upSampling < 64) {
-          // an arbitrary limit: higher than this and pileups start happening
-          upSampling *= 2;
-          this.emit('settings-event', 'upSampling', upSampling);
-        }
-      }
-      // this._upSampling();
+      this.doUpSampling();
     } else if ($element.data().key === 'downSampling'){
-      if (upSampling > 1){
-        upSampling /= 2;
-        this.emit('settings-event', 'upSampling', upSampling);
-      } else {
-        downSampling *= 2;
-        this.emit('settings-event', 'downSampling', downSampling);
-      }
-      // this._downSampling();
+      this.doDownSampling();
     } else {
       this.emit('settings-event', $element.data().key);
     }
