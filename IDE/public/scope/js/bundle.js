@@ -1428,6 +1428,7 @@ function sendToWs(obj) {
 }
 
 var ws_onerror = function ws_onerror(e) {
+  setScopeStatus(kScopeDisabled);
   setTimeout(function () {
     ws = new WebSocket(wsUrl);
     setWsCbs(ws);
