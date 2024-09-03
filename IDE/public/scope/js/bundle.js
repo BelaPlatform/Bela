@@ -871,6 +871,7 @@ var ControlView = function (_View) {
   }, {
     key: 'keyHandler',
     value: function keyHandler(e) {
+      var editable = e.target.nodeName == "INPUT" || e.target.nodeName == "TEXTAREA" || e.target.isContentEditable;
       if (e.key === 'Escape') {
         this.toggleControls();
       }
@@ -880,6 +881,14 @@ var ControlView = function (_View) {
       }
       if ('k' === e.key && (e.ctrlKey || e.metaKey)) {
         this.emit('clear');
+      }
+      if (!editable) {
+        if ('+' === e.key || '=' === e.key) {
+          this.doUpSampling();
+        }
+        if ('-' === e.key) {
+          this.doDownSampling();
+        }
       }
     }
   }, {
