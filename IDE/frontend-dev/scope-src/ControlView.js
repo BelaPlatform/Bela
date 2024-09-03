@@ -30,6 +30,10 @@ class ControlView extends View{
     if (e.key === 'Escape') {
       this.toggleControls();
     }
+    if (' ' === e.key) {
+      this.emit('settings-event', 'scopePause');
+      e.preventDefault();
+    }
   }
 
   // UI events
