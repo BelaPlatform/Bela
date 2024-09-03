@@ -27,6 +27,7 @@ class ControlView extends View{
   }
 
   keyHandler(e){
+    let editable = e.target.nodeName == "INPUT" || e.target.nodeName == "TEXTAREA"  || e.target.isContentEditable;
     if (e.key === 'Escape') {
       this.toggleControls();
     }
@@ -36,6 +37,14 @@ class ControlView extends View{
     }
     if ('k' === e.key && (e.ctrlKey || e.metaKey)) {
       this.emit('clear');
+    }
+    if(!editable) {
+      if ('+' === e.key || '=' === e.key) {
+        this.doUpSampling();
+      }
+      if ('-' === e.key) {
+        this.doDownSampling();
+      }
     }
   }
   doUpSampling() {
