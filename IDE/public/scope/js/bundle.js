@@ -874,6 +874,10 @@ var ControlView = function (_View) {
       if (e.key === 'Escape') {
         this.toggleControls();
       }
+      if (' ' === e.key) {
+        this.emit('settings-event', 'scopePause');
+        e.preventDefault();
+      }
     }
 
     // UI events
@@ -1511,7 +1515,7 @@ function setScopeStatus(status) {
       break;
     case kScopePaused:
       d.addClass(waitCls);
-      d.html('paused');
+      d.html('paused (spacebar to resume)');
       break;
     case kScopeWaitingOneShot:
       d.addClass(waitCls);

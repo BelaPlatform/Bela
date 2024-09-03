@@ -179,7 +179,7 @@ function setScopeStatus(status) {
       break;
     case(kScopePaused):
       d.addClass(waitCls);
-      d.html('paused');
+      d.html('paused (spacebar to resume)');
       break;
     case(kScopeWaitingOneShot):
       d.addClass(waitCls);
