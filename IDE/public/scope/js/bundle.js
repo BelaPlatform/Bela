@@ -882,6 +882,31 @@ var ControlView = function (_View) {
         this.emit('clear');
       }
     }
+  }, {
+    key: 'doUpSampling',
+    value: function doUpSampling() {
+      if (downSampling > 1) {
+        downSampling /= 2;
+        this.emit('settings-event', 'downSampling', downSampling);
+      } else {
+        if (upSampling < 64) {
+          // an arbitrary limit: higher than this and pileups start happening
+          upSampling *= 2;
+          this.emit('settings-event', 'upSampling', upSampling);
+        }
+      }
+    }
+  }, {
+    key: 'doDownSampling',
+    value: function doDownSampling() {
+      if (upSampling > 1) {
+        upSampling /= 2;
+        this.emit('settings-event', 'upSampling', upSampling);
+      } else {
+        downSampling *= 2;
+        this.emit('settings-event', 'downSampling', downSampling);
+      }
+    }
 
     // UI events
 
@@ -906,26 +931,9 @@ var ControlView = function (_View) {
     key: 'buttonClicked',
     value: function buttonClicked($element, e) {
       if ($element.data().key === 'upSampling') {
-        if (downSampling > 1) {
-          downSampling /= 2;
-          this.emit('settings-event', 'downSampling', downSampling);
-        } else {
-          if (upSampling < 64) {
-            // an arbitrary limit: higher than this and pileups start happening
-            upSampling *= 2;
-            this.emit('settings-event', 'upSampling', upSampling);
-          }
-        }
-        // this._upSampling();
+        this.doUpSampling();
       } else if ($element.data().key === 'downSampling') {
-        if (upSampling > 1) {
-          upSampling /= 2;
-          this.emit('settings-event', 'upSampling', upSampling);
-        } else {
-          downSampling *= 2;
-          this.emit('settings-event', 'downSampling', downSampling);
-        }
-        // this._downSampling();
+        this.doDownSampling();
       } else {
         this.emit('settings-event', $element.data().key);
       }
