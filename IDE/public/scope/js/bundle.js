@@ -994,7 +994,10 @@ var ControlView = function (_View) {
       } else if (data.plotMode == 1) {
         unitDisplay = this.hzDiv();
       }
-      $('.xUnit-display').html(unitDisplay);
+      var ms = xTime * downSampling / upSampling;
+      var integerDecimalPositions = Math.floor(Math.log10(ms));
+      var fixed = Math.max(0, 3 - integerDecimalPositions);
+      $('.xUnit-display').html('<p>' + ms.toFixed(fixed) + '</p>');
     }
   }, {
     key: 'plotMode',
@@ -1034,7 +1037,7 @@ var ControlView = function (_View) {
       xTime = data.xTimeBase;
       sampleRate = data.sampleRate;
       if (data.plotMode == 0) {
-        $('.xUnit-display').html('<p>' + (xTime * downSampling / upSampling).toPrecision(2) + '</p>');;
+        this.updateUnitDisplay(data);
       }
     }
   }, {
