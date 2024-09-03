@@ -120,7 +120,10 @@ class ControlView extends View{
     } else if (data.plotMode == 1){
       unitDisplay = this.hzDiv();
     }
-    $('.xUnit-display').html(unitDisplay);
+    let ms = (xTime * downSampling/upSampling);
+    let integerDecimalPositions = Math.floor(Math.log10(ms));
+    let fixed = Math.max(0, 3 - integerDecimalPositions);
+    $('.xUnit-display').html('<p>'+ ms.toFixed(fixed) +'</p>');
   }
 
   plotMode(val, data){
@@ -154,7 +157,7 @@ class ControlView extends View{
     xTime = data.xTimeBase;
     sampleRate = data.sampleRate;
     if (data.plotMode == 0){
-      $('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');;
+      this.updateUnitDisplay(data);
     }
   }
 
