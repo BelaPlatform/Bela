@@ -3,6 +3,7 @@
  * using libpd.
  */
 #include <Bela.h>
+#include "BelaLibpd.h"
 
 // Enable features here. These may be undef'ed below if the corresponding
 // BELA_LIBPD_DISABLE_* flag is passed
@@ -1245,7 +1246,7 @@ std::vector<float> gScopeOut;
 void* gPatch;
 bool gDigitalEnabled = 0;
 
-bool setup(BelaContext *context, void *userData)
+bool BelaLibpd_setup(BelaContext *context, void *userData)
 {
 #ifdef BELA_LIBPD_GUI
 	gui.setup(context->projectName);
@@ -1439,7 +1440,7 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
-void render(BelaContext *context, void *userData)
+void BelaLibpd_render(BelaContext *context, void *userData)
 {
 #ifdef BELA_LIBPD_GUI
 	while(gGuiControlBuffers.size()) // this won't change within the loop, but it's good not to have to use a separate flag
@@ -1813,7 +1814,7 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
-void cleanup(BelaContext *context, void *userData)
+void BelaLibpd_cleanup(BelaContext *context, void *userData)
 {
 #ifdef BELA_LIBPD_MIDI
 	if(gMidiDiscoveryThread.joinable())
