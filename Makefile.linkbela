@@ -44,7 +44,7 @@ $(OUTPUT_FILE): $(LIBRARIES_OBJS) $(ALL_OBJS)
 ifeq ($(PROJECT_TYPE),libpd)
 #If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo "$(DEFAULT_PD_OBJS)" || : ' ))
 endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
 # we filter-out DEFAULT_ALL_OBJS because they are conditionally added one by one and %.h because they could be added by P_OBJS
