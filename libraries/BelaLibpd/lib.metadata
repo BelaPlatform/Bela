@@ -1,0 +1,5 @@
+name=BelaLibpd
+description=A wrapper for all things Bela and libpd
+examples=
+license=
+dependencies=libpd Trill Midi Gui Scope Serial
