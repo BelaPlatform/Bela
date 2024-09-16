@@ -63,11 +63,11 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				receivingSysex = true;
 				if(!isSysexCallbackEnabled())
 					rt_printf("Receiving sysex\n");
-				continue;
 			} else { // other system common
 				continue;
 			}
-		} else if (receivingSysex){
+		}
+		if (receivingSysex){
 			if(isSysexCallbackEnabled())
 				sysexCallback(input[n], sysexCallbackArg);
 			else
