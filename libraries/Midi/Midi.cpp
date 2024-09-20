@@ -327,7 +327,7 @@ int Midi::readFrom(const char* port){
 		fprintf(stderr, "Unable to retrieve input port information for %s\n", port);
 		return 0;
 	}
-	ret = midiInputThread.create(inId.c_str(), 50, Midi::readInputLoopStatic, (void*)this);
+	ret = midiInputThread.create(inId.c_str(), 1, Midi::readInputLoopStatic, (void*)this);
 	if(ret)
 		return 0;
 	inputEnabled = true;
@@ -351,10 +351,9 @@ int Midi::writeTo(const char* port){
 		fprintf(stderr, "Unable to retrieve output port information for %s\n", port);
 		return 0;
 	}
-	midiOutputTask = new AuxTaskNonRT();
-	midiOutputTask->create(outId, [this](const void* buf, int size) {
+	midiOutputTask = new AuxTaskNonRT(outId, [this](const void* buf, int size) {
 		this->doWriteOutput(buf, size);
-	}, 45);
+	}, 1);
 	outputEnabled = true;
 	return 1;
 }
