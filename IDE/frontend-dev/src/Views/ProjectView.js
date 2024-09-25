@@ -82,7 +82,7 @@ class ProjectView extends View {
   }
 
   popup.requestValidInput({
-    getDisallowedValues: this.getProjectList,
+    getExistingValues: this.getProjectList,
     strings: json.popups.create_new,
     sanitise: sanitise,
   }, (newProject) => {
@@ -118,7 +118,7 @@ class ProjectView extends View {
 
 	async saveAs(func){
 		let newName = await popup.requestValidInputAsync({
-			getDisallowedValues: this.getProjectList,
+			getExistingValues: this.getProjectList,
 			strings: json.popups.save_as,
 			sanitise: sanitise,
 		});
