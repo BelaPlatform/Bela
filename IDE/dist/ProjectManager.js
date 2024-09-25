@@ -662,14 +662,29 @@ function uploadFile(data) {
 exports.uploadFile = uploadFile;
 function uploadZipProject(data) {
     return __awaiter(this, void 0, void 0, function () {
+        var target_path;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    target_path = paths.projects + data.newProject;
+                    return [4 /*yield*/, uploadZipArchive(data, target_path, true)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.uploadZipProject = uploadZipProject;
+function uploadZipArchive(data, target_path, isProject) {
+    return __awaiter(this, void 0, void 0, function () {
         var _this = this;
-        var tmp_path, tmp_target_path, target_path, file_exists, _a, _cleanup;
+        var tmp_path, tmp_target_path, file_exists, _a, _cleanup;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     tmp_path = paths.tmp + data.newFile;
                     tmp_target_path = tmp_path.replace(/\.zip$/, "/");
-                    target_path = paths.projects + data.newProject;
                     return [4 /*yield*/, file_manager.file_exists(target_path)];
                 case 1:
                     _a = (_b.sent());
@@ -681,7 +696,7 @@ function uploadZipProject(data) {
                 case 3:
                     file_exists = (_a);
                     if (file_exists && !data.force) {
-                        data.error = 'Failed to create project ' + data.newProject + ': it already exists!';
+                        data.error = 'Failed to create ' + (isProject ? 'project ' + data.newProject : target_path) + ': it already exists!';
                         data.fileData = null;
                         data.fileName = null;
                         return [2 /*return*/];
@@ -723,9 +738,12 @@ function uploadZipProject(data) {
                                             return [4 /*yield*/, file_manager.copy_directory(source_path, target_path)];
                                         case 2:
                                             _a.sent();
+                                            if (!isProject) return [3 /*break*/, 4];
                                             return [4 /*yield*/, postNewProject(data)];
                                         case 3:
                                             _a.sent();
+                                            _a.label = 4;
+                                        case 4:
                                             _cleanup();
                                             resolve();
                                             return [2 /*return*/];
@@ -758,7 +776,6 @@ function uploadZipProject(data) {
         });
     });
 }
-exports.uploadZipProject = uploadZipProject;
 function cleanFile(project, file) {
     return __awaiter(this, void 0, void 0, function () {
         var split_file, ext, file_root, file_path;
