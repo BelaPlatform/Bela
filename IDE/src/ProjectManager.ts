@@ -305,12 +305,16 @@ export async function uploadFile(data: any){
 }
 
 export async function uploadZipProject(data: any){
+	let target_path = paths.projects + data.newProject;
+	await uploadZipArchive(data, target_path, true);
+}
+
+async function uploadZipArchive(data: any, target_path: string, isProject: boolean){
 	let tmp_path = paths.tmp + data.newFile;
 	let tmp_target_path = tmp_path.replace(/\.zip$/, "/");
-	let target_path = paths.projects + data.newProject;
 	let file_exists = (await file_manager.file_exists(target_path) || await file_manager.directory_exists(target_path));
 	if (file_exists && !data.force){
-		data.error = 'Failed to create project '+data.newProject+': it already exists!';
+		data.error = 'Failed to create ' + (isProject ? 'project ' + data.newProject : target_path) + ': it already exists!';
 		data.fileData = null;
 		data.fileName = null;
 		return;
@@ -345,7 +349,8 @@ export async function uploadZipProject(data: any){
 				console.log("Strip off the top-level folder: ", source_path);
 			}
 			await file_manager.copy_directory(source_path, target_path);
-			await postNewProject(data);
+			if(isProject)
+				await postNewProject(data);
 			_cleanup();
 			resolve();
 		});
