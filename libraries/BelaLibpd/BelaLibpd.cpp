@@ -40,6 +40,7 @@
 #include <libraries/libpd/libpd.h>
 #include <DigitalChannelManager.h>
 #include <stdio.h>
+static BelaLibpdSettings settings;
 
 #ifdef BELA_LIBPD_MIDI
 #include <algorithm>
@@ -101,8 +102,8 @@ void readTouchSensors(void*)
 #ifdef BELA_LIBPD_GUI
 #include <libraries/Gui/Gui.h>
 
-Pipe gGuiPipe;
-Gui gui;
+static Pipe gGuiPipe;
+static Gui gui;
 struct bufferDescription
 {
 	std::string name;
@@ -440,11 +441,6 @@ static void serialInputLoop(void* arg) {
 enum { minFirstDigitalChannel = 10 };
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
-#ifdef BELA_LIBPD_SCOPE
-static unsigned int gScopeChannelsInUse = 4;
-#else // BELA_LIBPD_SCOPE
-static unsigned int gScopeChannelsInUse = 0;
-#endif // BELA_LIBPD_SCOPE
 static unsigned int gLibpdBlockSize;
 static unsigned int gChannelsInUse;
 //static const unsigned int gFirstAudioChannel = 0;
@@ -784,6 +780,11 @@ static void belaSystem(const char* first, int argc, t_atom* argv)
 
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
+	if(settings.listHook)
+	{
+		if(0 == settings.listHook(source, argc, argv))
+			return;
+	}
 #ifdef BELA_LIBPD_GUI
 	if(0 == strcmp(source, "bela_guiOut"))
 	{
@@ -831,6 +832,11 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 	}
 }
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
+	if(settings.messageHook)
+	{
+		if(0 == settings.messageHook(source, symbol, argc, argv))
+			return;
+	}
 #ifdef BELA_LIBPD_MIDI
 	if(strcmp(source, "bela_setMidi") == 0)
 	{
@@ -1185,6 +1191,11 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 }
 
 void Bela_floatHook(const char *source, float value){
+	if(settings.floatHook)
+	{
+		if(0 == settings.floatHook(source, value))
+			return;
+	}
 	// let's make this as optimized as possible for built-in digital Out parsing
 	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between gLibpdDigitalChannelOffset and (gLibpdDigitalCHannelOffset+gDigitalChannelsInUse)
 	static int prefixLength = strlen("bela_digitalOut");
@@ -1249,12 +1260,16 @@ std::vector<float> gScopeOut;
 void* gPatch;
 bool gDigitalEnabled = 0;
 
-bool BelaLibpd_setup(BelaContext *context, void *userData)
+bool BelaLibpd_setup(BelaContext *context, void *userData, const BelaLibpdSettings& settings)
 {
+	::settings = settings;
 #ifdef BELA_LIBPD_GUI
-	gui.setup(context->projectName);
-	gui.setControlDataCallback(guiControlDataCallback, nullptr);
-	gGuiPipe.setup("guiControlPipe", 16384);
+	if(settings.useGui)
+	{
+		gui.setup(context->projectName);
+		gui.setControlDataCallback(guiControlDataCallback, nullptr);
+		gGuiPipe.setup("guiControlPipe", 16384);
+	}
 #endif // BELA_LIBPD_GUI
 #ifdef BELA_LIBPD_SERIAL
 	gSerialPipe.setup("serialPipe", 16384);
@@ -1287,8 +1302,11 @@ bool BelaLibpd_setup(BelaContext *context, void *userData)
 	//midiPortNames.push_back("hw:0,0,0");
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_SCOPE
-	scope.setup(gScopeChannelsInUse, context->audioSampleRate);
-	gScopeOut.resize(gScopeChannelsInUse);
+	if(settings.scopeChannels)
+	{
+		scope.setup(settings.scopeChannels, context->audioSampleRate);
+		gScopeOut.resize(settings.scopeChannels);
+	}
 #endif // BELA_LIBPD_SCOPE
 
 	// Check first of all if the patch file exists. Will actually open it later.
@@ -1316,7 +1334,7 @@ bool BelaLibpd_setup(BelaContext *context, void *userData)
 	gLibpdDigitalChannelOffset = gFirstDigitalChannel + 1;
 	gFirstScopeChannel = gFirstDigitalChannel + gDigitalChannelsInUse;
 
-	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
+	gChannelsInUse = gFirstScopeChannel + settings.scopeChannels;
 	
 	// Create receiverNames for digital channels
 	generateDigitalNames(gDigitalChannelsInUse, gLibpdDigitalChannelOffset, gReceiverInputNames, gReceiverOutputNames);
@@ -1404,6 +1422,8 @@ bool BelaLibpd_setup(BelaContext *context, void *userData)
 #ifdef BELA_LIBPD_TRILL
 	libpd_bind("bela_setTrill");
 #endif // BELA_LIBPD_TRILL
+	for(auto& s : settings.bindSymbols)
+		libpd_bind(s.c_str());
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
@@ -1429,10 +1449,13 @@ bool BelaLibpd_setup(BelaContext *context, void *userData)
 	// Tell Pd that we will manage the io loop,
 	// and we do so in an Auxiliary Task
 #ifdef BELA_LIBPD_IO_THREADED
-	sys_dontmanageio(1);
-	AuxiliaryTask fdTask;
-	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
-	Bela_scheduleAuxiliaryTask(fdTask);
+	if(settings.useIoThreaded)
+	{
+		sys_dontmanageio(1);
+		AuxiliaryTask fdTask;
+		fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
+		Bela_scheduleAuxiliaryTask(fdTask);
+	}
 #endif // BELA_LIBPD_IO_THREADED
 
 	dcm.setVerbose(false);
@@ -1446,76 +1469,79 @@ bool BelaLibpd_setup(BelaContext *context, void *userData)
 void BelaLibpd_render(BelaContext *context, void *userData)
 {
 #ifdef BELA_LIBPD_GUI
-	while(gGuiControlBuffers.size()) // this won't change within the loop, but it's good not to have to use a separate flag
+	if(settings.useGui)
 	{
-		static struct guiControlMessageHeader header;
-		static bool waitingForHeader = true;
-		if(waitingForHeader)
+		while(gGuiControlBuffers.size()) // this won't change within the loop, but it's good not to have to use a separate flag
 		{
-			int ret = gGuiPipe.readRt(header);
-			if(1 != ret)
-				break;
-			else
-				waitingForHeader = false;
-		}
-		if(!waitingForHeader)
-		{
-			char payload[header.size + ('s' == header.type)]; // + 1 to add null termination if needed
-			int ret = gGuiPipe.readRt(&payload[0], header.size);
-			if(int(header.size) != ret)
+			static struct guiControlMessageHeader header;
+			static bool waitingForHeader = true;
+			if(waitingForHeader)
 			{
-				break;
+				int ret = gGuiPipe.readRt(header);
+				if(1 != ret)
+					break;
+				else
+					waitingForHeader = false;
 			}
-			const char* name = gGuiControlBuffers[header.id].c_str();
-			if('f' == header.type)
+			if(!waitingForHeader)
 			{
-				if(header.size != sizeof(float))
+				char payload[header.size + ('s' == header.type)]; // + 1 to add null termination if needed
+				int ret = gGuiPipe.readRt(&payload[0], header.size);
+				if(int(header.size) != ret)
 				{
-					rt_fprintf(stderr, "Unexpected message length for float: %u\n", header.size);
-					continue;
+					break;
 				}
-				float value;
-				memcpy(&value, payload, sizeof(value));
-				libpd_start_message(1);
-				libpd_add_float(value);
-				libpd_finish_message("bela_guiControl", name);
+				const char* name = gGuiControlBuffers[header.id].c_str();
+				if('f' == header.type)
+				{
+					if(header.size != sizeof(float))
+					{
+						rt_fprintf(stderr, "Unexpected message length for float: %u\n", header.size);
+						continue;
+					}
+					float value;
+					memcpy(&value, payload, sizeof(value));
+					libpd_start_message(1);
+					libpd_add_float(value);
+					libpd_finish_message("bela_guiControl", name);
+				}
+				if('s' == header.type)
+				{
+					// add null termination
+					payload[header.size] = '\0';
+					// send to Pd
+					libpd_start_message(1);
+					libpd_add_symbol(payload);
+					libpd_finish_message("bela_guiControl", name);
+				}
+				waitingForHeader = true;
 			}
-			if('s' == header.type)
-			{
-				// add null termination
-				payload[header.size] = '\0';
-				// send to Pd
-				libpd_start_message(1);
-				libpd_add_symbol(payload);
-				libpd_finish_message("bela_guiControl", name);
-			}
-			waitingForHeader = true;
 		}
-	}
-	for(auto& b : gGuiDataBuffers)
-	{
-		int id = b.id;
-		int size = b.size;
-		const char* name = b.name.c_str();
-		if(id < 0)
+		for(auto& b : gGuiDataBuffers)
 		{
-			// initialize
-			size = libpd_arraysize(name);
-			if(size <= 0)
+			int id = b.id;
+			int size = b.size;
+			const char* name = b.name.c_str();
+			if(id < 0)
 			{
-				continue;
-			} else {
-				// this is thread-unsafe: what happens if this causes reallocation while the Gui thread is writing to a buffer?
-				id = gui.setBuffer('f', size);
-				b.id = id;
-				b.size = size;
-				DataBuffer& dataBuffer = gui.getDataBuffer(id);
-				// initialize gui buffer with the initial content of the array
-				libpd_read_array(dataBuffer.getAsFloat(), b.name.c_str(), 0, size);
+				// initialize
+				size = libpd_arraysize(name);
+				if(size <= 0)
+				{
+					continue;
+				} else {
+					// this is thread-unsafe: what happens if this causes reallocation while the Gui thread is writing to a buffer?
+					id = gui.setBuffer('f', size);
+					b.id = id;
+					b.size = size;
+					DataBuffer& dataBuffer = gui.getDataBuffer(id);
+					// initialize gui buffer with the initial content of the array
+					libpd_read_array(dataBuffer.getAsFloat(), b.name.c_str(), 0, size);
+				}
 			}
+			DataBuffer& dataBuffer = gui.getDataBuffer(b.id);
+			libpd_write_array(b.name.c_str(), 0, dataBuffer.getAsFloat(), dataBuffer.getNumElements());
 		}
-		DataBuffer& dataBuffer = gui.getDataBuffer(b.id);
-		libpd_write_array(b.name.c_str(), 0, dataBuffer.getAsFloat(), dataBuffer.getNumElements());
 	}
 #endif // BELA_LIBPD_GUI
 #ifdef BELA_LIBPD_SERIAL
@@ -1786,12 +1812,15 @@ void BelaLibpd_render(BelaContext *context, void *userData)
 		}
 
 #ifdef BELA_LIBPD_SCOPE
-		// scope output
-		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
-			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeOut.size(); k++, p1 += gLibpdBlockSize) {
-				gScopeOut[k] = *p1;
+		if(settings.scopeChannels)
+		{
+			// scope output
+			for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
+				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeOut.size(); k++, p1 += gLibpdBlockSize) {
+					gScopeOut[k] = *p1;
+				}
+				scope.log(gScopeOut.data());
 			}
-			scope.log(gScopeOut.data());
 		}
 #endif // BELA_LIBPD_SCOPE
 
