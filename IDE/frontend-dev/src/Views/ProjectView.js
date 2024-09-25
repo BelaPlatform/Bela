@@ -19,6 +19,12 @@ class ProjectView extends View {
       else
         return [];
     }
+    this.getLibraryList = () => {
+      if(this.libraryList)
+        return this.libraryList;
+      else
+        return [];
+    }
   }
 
   // UI events
@@ -300,7 +306,7 @@ _exampleList(examplesDir){
   }
 
   _libraryList(librariesDir){
-
+    this.libraryList = [];
     var $libraries = $('[data-libraries-list]');
     var counter = 0;
     $libraries.empty(librariesDir);
@@ -340,12 +346,13 @@ _exampleList(examplesDir){
       counter++;
 
       let name = item.name;
+      this.libraryList.push(name);
       let parentButton = $('<button></button>').addClass('accordion')
                                                .attr('data-accordion-for', name)
                                                .html(name)
                                                .attr('data-parent', 'libraries');
       addAccordionEvent(parentButton);
-      let libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+      let libraryUl = $('<ul></ul>'); // This is the list of library items headed by dropdowns
       let libraryItem = $('<li></li>'); // Individual library dropdown
 
       let libraryPanel = $('<div></div>').addClass('panel')
@@ -543,7 +550,7 @@ _exampleList(examplesDir){
       infoContainer.appendTo(libraryPanel);
 
       libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
-      libraryItem.appendTo(libraryList);  // Append the whole item to the list of library items
+      libraryItem.appendTo(libraryUl);  // Append the whole item to the list of library items
       libraryItem.appendTo($libraries);
 
     }
