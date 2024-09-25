@@ -760,8 +760,9 @@ class FileView extends View {
 		let basePath = file.folder ? file.folder + '/' : '';
 		let obj = await this.promptForOverwrite(basePath + sanitise(file.name));
 		let saveas = null;
+		let force = obj.force;
 		if(obj.do) {
-			let isProject;
+			let serverFunc;
 			if (file.name.search(/\.zip$/) != -1) {
 				let newProject = sanitise(file.name.replace(/\.zip$/, ""));
 				let strings = Object.assign({}, json.popups.create_new_project_from_zip);
@@ -772,13 +773,12 @@ class FileView extends View {
 					strings: strings,
 					sanitise: sanitise,
 				});
-				isProject = true;
+				serverFunc = "uploadZipProject";
 			} else {
 				saveas = basePath + sanitise(file.name);
-				isProject = false
 			}
 			if(null !== saveas)
-				this.actuallyDoFileUpload(file, saveas, obj.force, isProject);
+				this.actuallyDoFileUpload(file, saveas, force, serverFunc);
 		}
 		lastOverlay = file.overlay;
 		if(null === saveas) {
@@ -794,7 +794,7 @@ class FileView extends View {
 	}
 
 
-	async actuallyDoFileUpload(file, saveas, force, isProject){
+	async actuallyDoFileUpload(file, saveas, force, serverFunc){
 		var reader = new FileReader();
 		let onloadend = (func, args, ev) => {
 				if(func && ev){
@@ -816,8 +816,8 @@ class FileView extends View {
 		// cannot be written, whatev), the rest of the queue may not be handled
 		// properly because the popup from the error will overwrite any active popup.
 		// A reset may be required.
-		if (isProject) {
-			reader.onloadend = onloadend.bind(this, 'uploadZipProject', {
+		if (serverFunc) {
+			reader.onloadend = onloadend.bind(this, serverFunc, {
 				newProject: saveas,
 				newFile: saveas + '.zip',
 			});
