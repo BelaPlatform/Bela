@@ -449,7 +449,7 @@ projectView.on('message', function (event, data) {
 });
 
 // file view
-var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings], projectView.getProjectList);
+var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings], projectView.getProjectList, projectView.getLibraryList);
 fileView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -2370,12 +2370,13 @@ $.fn.removeClassSVG = function (className) {
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
-	function FileView(className, models, getProjectList) {
+	function FileView(className, models, getProjectList, getLibraryList) {
 		_classCallCheck(this, FileView);
 
 		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
 
 		_this.getProjectList = getProjectList;
+		_this.getLibraryList = getLibraryList;
 		_this.currentProject = null;
 		_this.listOfFiles = [];
 
@@ -3122,17 +3123,34 @@ var FileView = function (_View) {
 			if (obj.do) {
 				var serverFunc = void 0;
 				if (file.name.search(/\.zip$/) != -1) {
-					var newProject = sanitise(file.name.replace(/\.zip$/, ""));
-					var strings = Object.assign({}, json.popups.create_new_project_from_zip);
-					strings.title += file.name;
-					saveas = await popup.requestValidInputAsync({
-						initialValue: newProject,
-						getExistingValues: this.getProjectList,
-						strings: strings,
-						allowExisting: true,
-						sanitise: sanitise
-					});
-					serverFunc = "uploadZipProject";
+					var librariesPrefix = /^libraries__/;
+					if (file.name.search(librariesPrefix) == 0) {
+						var newLibrary = sanitise(file.name.replace(/\.zip$/, "").replace(librariesPrefix, ""));
+						var strings = Object.assign({}, json.popups.create_new_library_from_zip);
+						strings.title += file.name;
+						saveas = await popup.requestValidInputAsync({
+							initialValue: newLibrary,
+							getExistingValues: this.getLibraryList,
+							strings: strings,
+							sanitise: sanitise,
+							allowExisting: true
+						});
+						force = true;
+						// TODO: we are squatting the project-event receiver
+						serverFunc = "uploadZipLibrary";
+					} else {
+						var newProject = sanitise(file.name.replace(/\.zip$/, ""));
+						var _strings = Object.assign({}, json.popups.create_new_project_from_zip);
+						_strings.title += file.name;
+						saveas = await popup.requestValidInputAsync({
+							initialValue: newProject,
+							getExistingValues: this.getProjectList,
+							strings: _strings,
+							allowExisting: true,
+							sanitise: sanitise
+						});
+						serverFunc = "uploadZipProject";
+					}
 				} else {
 					saveas = basePath + sanitise(file.name);
 				}
@@ -6759,6 +6777,15 @@ module.exports={
 			"exists": "This project already exists",
 			"sanitised": "This project will be saved as"
 		},
+		"create_new_library_from_zip": {
+			"title": "Create library from ",
+			"text": "Choose a name for this library:",
+			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
+			"input": "New library name",
+			"button": "Create library",
+			"exists": "This library already exists and will be overwritten",
+			"sanitised": "This library will be saved as"
+		},
 		"create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
@@ -6961,6 +6988,7 @@ module.exports={
   "funcKeys": {
     "openProject"	: "Open project",
 	"uploadZipProject" : "Create project from zip archive",
+	"uploadZipLibrary" : "Create library from zip archive",
   	"openExample"	: "Open example",
   	"newProject"	: "Create project",
   	"saveAs"		: "Save project",

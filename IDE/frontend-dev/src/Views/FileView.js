@@ -61,9 +61,10 @@ $.fn.removeClassSVG = function(className){
 
 class FileView extends View {
 
-	constructor(className, models, getProjectList){
+	constructor(className, models, getProjectList, getLibraryList){
 		super(className, models);
 		this.getProjectList = getProjectList;
+		this.getLibraryList = getLibraryList;
 		this.currentProject = null;
 		this.listOfFiles = [];
 
@@ -764,17 +765,34 @@ class FileView extends View {
 		if(obj.do) {
 			let serverFunc;
 			if (file.name.search(/\.zip$/) != -1) {
-				let newProject = sanitise(file.name.replace(/\.zip$/, ""));
-				let strings = Object.assign({}, json.popups.create_new_project_from_zip);
-				strings.title += file.name;
-				saveas = await popup.requestValidInputAsync({
-					initialValue: newProject,
-					getExistingValues: this.getProjectList,
-					strings: strings,
-					allowExisting: true,
-					sanitise: sanitise,
-				});
-				serverFunc = "uploadZipProject";
+				let librariesPrefix = /^libraries__/;
+				if(file.name.search(librariesPrefix) == 0) {
+					let newLibrary = sanitise(file.name.replace(/\.zip$/, "").replace(librariesPrefix, ""));
+					let strings = Object.assign({}, json.popups.create_new_library_from_zip);
+					strings.title += file.name;
+					saveas = await popup.requestValidInputAsync({
+						initialValue: newLibrary,
+						getExistingValues: this.getLibraryList,
+						strings: strings,
+						sanitise: sanitise,
+						allowExisting: true,
+					});
+					force = true;
+					// TODO: we are squatting the project-event receiver
+					serverFunc = "uploadZipLibrary";
+				} else {
+					let newProject = sanitise(file.name.replace(/\.zip$/, ""));
+					let strings = Object.assign({}, json.popups.create_new_project_from_zip);
+					strings.title += file.name;
+					saveas = await popup.requestValidInputAsync({
+						initialValue: newProject,
+						getExistingValues: this.getProjectList,
+						strings: strings,
+						allowExisting: true,
+						sanitise: sanitise,
+					});
+					serverFunc = "uploadZipProject";
+				}
 			} else {
 				saveas = basePath + sanitise(file.name);
 			}

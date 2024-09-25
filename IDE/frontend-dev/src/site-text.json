@@ -43,6 +43,15 @@
 			"exists": "This project already exists",
 			"sanitised": "This project will be saved as"
 		},
+		"create_new_library_from_zip": {
+			"title": "Create library from ",
+			"text": "Choose a name for this library:",
+			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
+			"input": "New library name",
+			"button": "Create library",
+			"exists": "This library already exists and will be overwritten",
+			"sanitised": "This library will be saved as"
+		},
 		"create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
@@ -245,6 +254,7 @@
   "funcKeys": {
     "openProject"	: "Open project",
 	"uploadZipProject" : "Create project from zip archive",
+	"uploadZipLibrary" : "Create library from zip archive",
   	"openExample"	: "Open example",
   	"newProject"	: "Create project",
   	"saveAs"		: "Save project",
