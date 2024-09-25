@@ -3,7 +3,7 @@
 
 bool setup(BelaContext *context, void *userData)
 {
-	return BelaLibpd_setup(context, userData);
+	return BelaLibpd_setup(context, userData, {});
 }
 
 void render(BelaContext *context, void *userData)
