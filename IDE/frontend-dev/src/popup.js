@@ -207,6 +207,7 @@ var popup = {
 		let getExistingValues = args.getExistingValues;
 		let strings = Object.assign({}, args.strings);
 		let sanitise = args.sanitise;
+		let allowExisting = args.allowExisting;
 		// defaults
 		if(typeof(initialValue) !== "string")
 			initialValue = "";
@@ -232,7 +233,7 @@ var popup = {
 		});
 		let newValueInput =
 			'<input type="text" data-name="newValue" placeholder="' + strings.input + '" value="' + initialValue + '" />'
-			+ '<span class="input-already-existing"></span>'
+			+ '<div class="input-already-existing"></div>'
 			+ '<div class="input-sanitised"></div>';
 		if(strings.sub_text)
 			newValueInput += '<p class="create_file_subtext">' + strings.sub_text + '</p>'
@@ -251,7 +252,8 @@ var popup = {
 			if(getExistingValues().includes(sanValue)) {
 				if(strings.exists)
 					existingWarning.html(strings.exists);
-				popup.disableSubmit();
+				if(!allowExisting)
+					popup.disableSubmit();
 			}
 			else {
 				existingWarning.html('');

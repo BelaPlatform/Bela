@@ -771,6 +771,7 @@ class FileView extends View {
 					initialValue: newProject,
 					getExistingValues: this.getProjectList,
 					strings: strings,
+					allowExisting: true,
 					sanitise: sanitise,
 				});
 				serverFunc = "uploadZipProject";
