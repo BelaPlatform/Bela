@@ -3444,6 +3444,9 @@ var ProjectView = function (_View) {
     _this.getProjectList = function () {
       if (_this.projectList) return _this.projectList;else return [];
     };
+    _this.getLibraryList = function () {
+      if (_this.libraryList) return _this.libraryList;else return [];
+    };
     return _this;
   }
 
@@ -3789,6 +3792,7 @@ var ProjectView = function (_View) {
     value: function _libraryList(librariesDir) {
       var _this7 = this;
 
+      this.libraryList = [];
       var $libraries = $('[data-libraries-list]');
       var counter = 0;
       $libraries.empty(librariesDir);
@@ -3830,9 +3834,10 @@ var ProjectView = function (_View) {
           counter++;
 
           var name = item.name;
+          _this7.libraryList.push(name);
           var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name).attr('data-parent', 'libraries');
           addAccordionEvent(parentButton);
-          var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+          var libraryUl = $('<ul></ul>'); // This is the list of library items headed by dropdowns
           var libraryItem = $('<li></li>'); // Individual library dropdown
 
           var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
@@ -4095,7 +4100,7 @@ var ProjectView = function (_View) {
           infoContainer.appendTo(libraryPanel);
 
           libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
-          libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
+          libraryItem.appendTo(libraryUl); // Append the whole item to the list of library items
           libraryItem.appendTo($libraries);
         };
 
