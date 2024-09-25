@@ -1579,23 +1579,7 @@ var ConsoleView = function (_View) {
 
 module.exports = ConsoleView;
 
-var funcKey = {
-	'openProject': json.funcKeys.openProject,
-	'uploadZipProject': json.funcKeys.uploadZipProject,
-	'openExample': json.funcKeys.openExample,
-	'newProject': json.funcKeys.newProject,
-	'saveAs': json.funcKeys.saveAs,
-	'deleteProject': json.funcKeys.deleteProject,
-	'cleanProject': json.funcKeys.cleanProject,
-	'openFile': json.funcKeys.openFile,
-	'newFile': json.funcKeys.newFile,
-	'uploadFile': json.funcKeys.uploadFile,
-	'renameFile': json.funcKeys.renameFile,
-	'deleteFile': json.funcKeys.deleteFile,
-	'init': json.funcKeys.init,
-	'stop': json.funcKeys.stop,
-	'fileRejected': json.funcKeys.fileRejected
-};
+var funcKey = json.funcKeys;
 
 },{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
 'use strict';

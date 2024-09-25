@@ -244,20 +244,4 @@ class ConsoleView extends View{
 
 module.exports = ConsoleView;
 
-var funcKey = {
-	'openProject'	  : json.funcKeys.openProject,
-	'uploadZipProject' : json.funcKeys.uploadZipProject,
-	'openExample'	  : json.funcKeys.openExample,
-	'newProject'  	: json.funcKeys.newProject,
-	'saveAs'    		: json.funcKeys.saveAs,
-	'deleteProject'	: json.funcKeys.deleteProject,
-	'cleanProject'	: json.funcKeys.cleanProject,
-	'openFile'		  : json.funcKeys.openFile,
-	'newFile'		    : json.funcKeys.newFile,
-	'uploadFile'	  : json.funcKeys.uploadFile,
-	'renameFile'	  : json.funcKeys.renameFile,
-	'deleteFile'	  : json.funcKeys.deleteFile,
-	'init'			    : json.funcKeys.init,
-	'stop'			    : json.funcKeys.stop,
-	'fileRejected'	: json.funcKeys.fileRejected
-};
+var funcKey = json.funcKeys;
