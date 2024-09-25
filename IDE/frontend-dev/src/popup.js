@@ -200,18 +200,18 @@ var popup = {
 	// a popup with two buttons and an input field. The input field can be
 	// checked against an array of disallowedValues. If the name is disallowed,
 	// the submit button will be grayed out.
-	// args has: initialValue(string), getDisallowedValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
+	// args has: initialValue(string), getExistingValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
 	// callback takes a single argument: a valid value or null if the popup was cancelled or the input field was empty
 	requestValidInput(args, callback){
 		let initialValue = args.initialValue;
-		let getDisallowedValues = args.getDisallowedValues;
+		let getExistingValues = args.getExistingValues;
 		let strings = Object.assign({}, args.strings);
 		let sanitise = args.sanitise;
 		// defaults
 		if(typeof(initialValue) !== "string")
 			initialValue = "";
-		if(typeof(getDisallowedValues) !== 'function')
-			getDisallowedValues = () => { return []; }
+		if(typeof(getExistingValues) !== 'function')
+			getExistingValues = () => { return []; }
 		if(typeof(strings) !== "object")
 			strings = {};
 		if(typeof(sanitise) !== "function")
@@ -248,7 +248,7 @@ var popup = {
 				sanitisedWarning.html(strings.sanitised + " '" + sanValue + "'");
 			else
 				sanitisedWarning.html('');
-			if(getDisallowedValues().includes(sanValue)) {
+			if(getExistingValues().includes(sanValue)) {
 				if(strings.exists)
 					existingWarning.html(strings.exists);
 				popup.disableSubmit();

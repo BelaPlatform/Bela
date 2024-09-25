@@ -270,7 +270,7 @@ class FileView extends View {
 	async newFile(func, base){
 		let name = await popup.requestValidInputAsync({
 			initialValue: base ? base + '/' : '',
-			getDisallowedValues: () => { return this._getFlattenedFileList(false); },
+			getExistingValues: () => { return this._getFlattenedFileList(false); },
 			strings: json.popups.create_new_file,
 			sanitise: sanitisePath,
 		});
@@ -282,7 +282,7 @@ class FileView extends View {
 	async newFolder(func) {
 		let name = await popup.requestValidInputAsync({
 			initialValue: '',
-			getDisallowedValues: () => { return this._getFlattenedFileList(true); },
+			getExistingValues: () => { return this._getFlattenedFileList(true); },
 			strings: json.popups.create_new_folder,
 			sanitise: sanitisePath,
 		});
@@ -392,7 +392,7 @@ class FileView extends View {
 		popupStrings.title = 'Rename `' + path + '`?';
 		let newName = await popup.requestValidInputAsync({
 			initialValue: path,
-			getDisallowedValues: () => {
+			getExistingValues: () => {
 				// remove current name (i.e.: allow rename to same, which
 				// yields NOP)
 				let arr = this._getFlattenedFileList(false);
@@ -769,7 +769,7 @@ class FileView extends View {
 				strings.title += file.name;
 				saveas = await popup.requestValidInputAsync({
 					initialValue: newProject,
-					getDisallowedValues: this.getProjectList,
+					getExistingValues: this.getProjectList,
 					strings: strings,
 					sanitise: sanitise,
 				});

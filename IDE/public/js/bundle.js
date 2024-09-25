@@ -2623,7 +2623,7 @@ var FileView = function (_View) {
 
 			var name = await popup.requestValidInputAsync({
 				initialValue: base ? base + '/' : '',
-				getDisallowedValues: function getDisallowedValues() {
+				getExistingValues: function getExistingValues() {
 					return _this3._getFlattenedFileList(false);
 				},
 				strings: json.popups.create_new_file,
@@ -2639,7 +2639,7 @@ var FileView = function (_View) {
 
 			var name = await popup.requestValidInputAsync({
 				initialValue: '',
-				getDisallowedValues: function getDisallowedValues() {
+				getExistingValues: function getExistingValues() {
 					return _this4._getFlattenedFileList(true);
 				},
 				strings: json.popups.create_new_folder,
@@ -2763,7 +2763,7 @@ var FileView = function (_View) {
 			popupStrings.title = 'Rename `' + path + '`?';
 			var newName = await popup.requestValidInputAsync({
 				initialValue: path,
-				getDisallowedValues: function getDisallowedValues() {
+				getExistingValues: function getExistingValues() {
 					// remove current name (i.e.: allow rename to same, which
 					// yields NOP)
 					var arr = _this7._getFlattenedFileList(false);
@@ -3127,7 +3127,7 @@ var FileView = function (_View) {
 					strings.title += file.name;
 					saveas = await popup.requestValidInputAsync({
 						initialValue: newProject,
-						getDisallowedValues: this.getProjectList,
+						getExistingValues: this.getProjectList,
 						strings: strings,
 						sanitise: sanitise
 					});
@@ -3520,7 +3520,7 @@ var ProjectView = function (_View) {
       }
 
       popup.requestValidInput({
-        getDisallowedValues: this.getProjectList,
+        getExistingValues: this.getProjectList,
         strings: json.popups.create_new,
         sanitise: sanitise
       }, function (newProject) {
@@ -3556,7 +3556,7 @@ var ProjectView = function (_View) {
     key: 'saveAs',
     value: async function saveAs(func) {
       var newName = await popup.requestValidInputAsync({
-        getDisallowedValues: this.getProjectList,
+        getExistingValues: this.getProjectList,
         strings: json.popups.save_as,
         sanitise: sanitise
       });
@@ -6586,16 +6586,16 @@ var popup = {
 	// a popup with two buttons and an input field. The input field can be
 	// checked against an array of disallowedValues. If the name is disallowed,
 	// the submit button will be grayed out.
-	// args has: initialValue(string), getDisallowedValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
+	// args has: initialValue(string), getExistingValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
 	// callback takes a single argument: a valid value or null if the popup was cancelled or the input field was empty
 	requestValidInput: function requestValidInput(args, callback) {
 		var initialValue = args.initialValue;
-		var getDisallowedValues = args.getDisallowedValues;
+		var getExistingValues = args.getExistingValues;
 		var strings = Object.assign({}, args.strings);
 		var sanitise = args.sanitise;
 		// defaults
 		if (typeof initialValue !== "string") initialValue = "";
-		if (typeof getDisallowedValues !== 'function') getDisallowedValues = function getDisallowedValues() {
+		if (typeof getExistingValues !== 'function') getExistingValues = function getExistingValues() {
 			return [];
 		};
 		if ((typeof strings === 'undefined' ? 'undefined' : _typeof(strings)) !== "object") strings = {};
@@ -6625,7 +6625,7 @@ var popup = {
 			var origValue = input[0].value.trim();
 			var sanValue = sanitise ? sanitise(origValue) : origValue;
 			if (sanValue !== origValue && strings.sanitised) sanitisedWarning.html(strings.sanitised + " '" + sanValue + "'");else sanitisedWarning.html('');
-			if (getDisallowedValues().includes(sanValue)) {
+			if (getExistingValues().includes(sanValue)) {
 				if (strings.exists) existingWarning.html(strings.exists);
 				popup.disableSubmit();
 			} else {
