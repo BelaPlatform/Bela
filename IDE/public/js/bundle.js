@@ -3129,6 +3129,7 @@ var FileView = function (_View) {
 						initialValue: newProject,
 						getExistingValues: this.getProjectList,
 						strings: strings,
+						allowExisting: true,
 						sanitise: sanitise
 					});
 					serverFunc = "uploadZipProject";
@@ -6593,6 +6594,7 @@ var popup = {
 		var getExistingValues = args.getExistingValues;
 		var strings = Object.assign({}, args.strings);
 		var sanitise = args.sanitise;
+		var allowExisting = args.allowExisting;
 		// defaults
 		if (typeof initialValue !== "string") initialValue = "";
 		if (typeof getExistingValues !== 'function') getExistingValues = function getExistingValues() {
@@ -6614,7 +6616,7 @@ var popup = {
 		}, function onCancel() {
 			callback(null);
 		});
-		var newValueInput = '<input type="text" data-name="newValue" placeholder="' + strings.input + '" value="' + initialValue + '" />' + '<span class="input-already-existing"></span>' + '<div class="input-sanitised"></div>';
+		var newValueInput = '<input type="text" data-name="newValue" placeholder="' + strings.input + '" value="' + initialValue + '" />' + '<div class="input-already-existing"></div>' + '<div class="input-sanitised"></div>';
 		if (strings.sub_text) newValueInput += '<p class="create_file_subtext">' + strings.sub_text + '</p>';
 		newValueInput += '<br/><br/>';
 		popup.form.prepend(newValueInput);
@@ -6627,7 +6629,7 @@ var popup = {
 			if (sanValue !== origValue && strings.sanitised) sanitisedWarning.html(strings.sanitised + " '" + sanValue + "'");else sanitisedWarning.html('');
 			if (getExistingValues().includes(sanValue)) {
 				if (strings.exists) existingWarning.html(strings.exists);
-				popup.disableSubmit();
+				if (!allowExisting) popup.disableSubmit();
 			} else {
 				existingWarning.html('');
 				popup.enableSubmit();
