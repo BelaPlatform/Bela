@@ -13,6 +13,7 @@
 #define BELA_LIBPD_GUI
 #define BELA_LIBPD_SERIAL
 #define BELA_LIBPD_SYSTEM_THREADED
+#define BELA_LIBPD_IO_THREADED
 
 #ifdef BELA_LIBPD_DISABLE_SCOPE
 #undef BELA_LIBPD_SCOPE
@@ -32,8 +33,10 @@
 #ifdef BELA_LIBPD_DISABLE_SYSTEM_THREADED
 #undef BELA_LIBPD_SYSTEM_THREADED
 #endif // BELA_LIBPD_DISABLE_SYSTEM_THREADED
+#ifdef BELA_LIBPD_DISABLE_IO_THREADED
+#undef BELA_LIBPD_IO_THREADED
+#endif // BELA_LIBPD_DISABLE_IO_THREADED
 
-#define PD_THREADED_IO
 #include <libraries/libpd/libpd.h>
 #include <DigitalChannelManager.h>
 #include <stdio.h>
@@ -1230,14 +1233,14 @@ static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 
-#ifdef PD_THREADED_IO
+#ifdef BELA_LIBPD_IO_THREADED
 void fdLoop(void* arg){
 	while(!Bela_stopRequested()){
 		if(!sys_doio(pd_this))
 			usleep(3000);
 	}
 }
-#endif /* PD_THREADED_IO */
+#endif // BELA_LIBPD_IO_THREADED
 
 #ifdef BELA_LIBPD_SCOPE
 Scope scope;
@@ -1425,12 +1428,12 @@ bool BelaLibpd_setup(BelaContext *context, void *userData)
 
 	// Tell Pd that we will manage the io loop,
 	// and we do so in an Auxiliary Task
-#ifdef PD_THREADED_IO
+#ifdef BELA_LIBPD_IO_THREADED
 	sys_dontmanageio(1);
 	AuxiliaryTask fdTask;
 	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
 	Bela_scheduleAuxiliaryTask(fdTask);
-#endif /* PD_THREADED_IO */
+#endif // BELA_LIBPD_IO_THREADED
 
 	dcm.setVerbose(false);
 #ifdef BELA_LIBPD_TRILL
