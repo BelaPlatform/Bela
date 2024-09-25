@@ -676,6 +676,30 @@ function uploadZipProject(data) {
     });
 }
 exports.uploadZipProject = uploadZipProject;
+// TODO: not a project event per-se, we are just squatting here for convenience
+function uploadZipLibrary(data) {
+    return __awaiter(this, void 0, void 0, function () {
+        var target_path, key;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.log("uploadZiplibrary", data);
+                    target_path = paths.libraries + data.newProject;
+                    return [4 /*yield*/, uploadZipArchive(data, target_path, false)];
+                case 1:
+                    _a.sent();
+                    // remove most members from object so it doesn't attempt to
+                    // open a file in the frontend
+                    for (key in data) {
+                        if ('timestamp' != key) // leave timestamp so that console notification is fulfilled
+                            delete data[key];
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.uploadZipLibrary = uploadZipLibrary;
 function uploadZipArchive(data, target_path, isProject) {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
