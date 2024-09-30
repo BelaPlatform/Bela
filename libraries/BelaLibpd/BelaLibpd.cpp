@@ -1266,9 +1266,14 @@ bool BelaLibpd_setup(BelaContext *context, void *userData, const BelaLibpdSettin
 #ifdef BELA_LIBPD_GUI
 	if(settings.useGui)
 	{
-		gui.setup(context->projectName);
+		int ret = gui.setup(context->projectName);
 		gui.setControlDataCallback(guiControlDataCallback, nullptr);
-		gGuiPipe.setup("guiControlPipe", 16384);
+		ret = ret || !gGuiPipe.setup("guiControlPipe", 16384);
+		if(ret)
+		{
+			fprintf(stderr, "Error starting gui: %d\n", ret);
+			::settings.useGui = false;
+		}
 	}
 #endif // BELA_LIBPD_GUI
 #ifdef BELA_LIBPD_SERIAL
@@ -1412,8 +1417,11 @@ bool BelaLibpd_setup(BelaContext *context, void *userData, const BelaLibpdSettin
 	libpd_bind("bela_setMidi");
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_GUI
-	libpd_bind("bela_guiOut");
-	libpd_bind("bela_setGui");
+	if(settings.useGui)
+	{
+		libpd_bind("bela_guiOut");
+		libpd_bind("bela_setGui");
+	}
 #endif // BELA_LIBPD_GUI
 #ifdef BELA_LIBPD_SERIAL
 	libpd_bind("bela_serialOut");
