@@ -450,13 +450,6 @@ static unsigned int gFirstDigitalChannel;
 static unsigned int gLibpdDigitalChannelOffset;
 static unsigned int gFirstScopeChannel;
 
-void Bela_userSettings(BelaInitSettings *settings)
-{
-	settings->uniformSampleRate = 1;
-	settings->interleave = 0;
-	settings->analogOutputsPersist = 0;
-}
-
 float* gInBuf;
 float* gOutBuf;
 #ifdef BELA_LIBPD_MIDI
