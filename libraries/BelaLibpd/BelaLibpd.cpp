@@ -1252,10 +1252,26 @@ std::vector<float> gScopeOut;
 #endif // BELA_LIBPD_SCOPE
 void* gPatch;
 bool gDigitalEnabled = 0;
+static bool gUniformSampleRateNonInterleaved;
 
 bool BelaLibpd_setup(BelaContext *context, void *userData, const BelaLibpdSettings& settings)
 {
 	::settings = settings;
+	bool uniformSampleRate = true;
+	if((context->analogSampleRate && context->analogFrames && (context->analogInChannels || context->analogOutChannels))
+			&& context->audioSampleRate != context->analogSampleRate)
+		uniformSampleRate = false;
+	if((context->digitalSampleRate && context->digitalFrames && context->digitalChannels)
+			&& context->audioSampleRate != context->digitalSampleRate)
+		uniformSampleRate = false;
+	bool interleaved = (context->flags | BELA_FLAG_INTERLEAVED);
+	if((!interleaved && !uniformSampleRate) || context->analogSampleRate > context->audioSampleRate)
+	{
+		fprintf(stderr, "BelaLibpd: combination of interleaved(%d) and sample rate(s) (%.0f %.0f %.0f) not supported\n", interleaved, context->audioSampleRate, context->analogSampleRate, context->digitalSampleRate);
+		return false;
+	}
+	gUniformSampleRateNonInterleaved = uniformSampleRate && !interleaved;
+
 #ifdef BELA_LIBPD_GUI
 	if(settings.useGui)
 	{
@@ -1276,20 +1292,6 @@ bool BelaLibpd_setup(BelaContext *context, void *userData, const BelaLibpdSettin
 	int major, minor, bugfix;
 	sys_getversion(&major, &minor, &bugfix);
 	printf("Running Pd %d.%d-%d\n", major, minor, bugfix);
-	// We requested in Bela_userSettings() to have uniform sampling rate for audio
-	// and analog and non-interleaved buffers.
-	// So let's check this actually happened
-	if(context->analogSampleRate != context->audioSampleRate)
-	{
-		fprintf(stderr, "The sample rate of analog and audio must match. Try running with --uniform-sample-rate\n");
-		return false;
-	}
-	if(context->flags & BELA_FLAG_INTERLEAVED)
-	{
-		fprintf(stderr, "The audio and analog channels must be interleaved.\n");
-		return false;
-	}
-
 	if(context->digitalFrames > 0 && context->digitalChannels > 0)
 		gDigitalEnabled = 1;
 
@@ -1733,28 +1735,57 @@ void BelaLibpd_render(BelaContext *context, void *userData)
 #endif // BELA_LIBPD_MIDI
 	unsigned int numberOfPdBlocksToProcess = context->audioFrames / gLibpdBlockSize;
 
-	// Remember: we have non-interleaved buffers and the same sampling rate for
-	// analogs, audio and digitals
 	for(unsigned int tick = 0; tick < numberOfPdBlocksToProcess; ++tick)
 	{
-		//audio input
-		for(unsigned int n = 0; n < context->audioInChannels; ++n)
+		if(gUniformSampleRateNonInterleaved)
 		{
-			memcpy(
-				gInBuf + n * gLibpdBlockSize,
-				context->audioIn + tick * gLibpdBlockSize + n * context->audioFrames, 
-				sizeof(context->audioIn[0]) * gLibpdBlockSize
-			);
-		}
+			// In the easiest case, we have non-interleaved buffers and the same sampling rate for
+			// analogs, audio and digitals
 
-		// analog input
-		for(unsigned int n = 0; n < context->analogInChannels; ++n)
-		{
-			memcpy(
-				gInBuf + gLibpdBlockSize * gFirstAnalogInChannel + n * gLibpdBlockSize,
-				context->analogIn + tick * gLibpdBlockSize + n * context->analogFrames, 
-				sizeof(context->analogIn[0]) * gLibpdBlockSize
-			);
+			// audio input
+			for(unsigned int n = 0; n < context->audioInChannels; ++n)
+			{
+				memcpy(
+					gInBuf + n * gLibpdBlockSize,
+					context->audioIn + tick * gLibpdBlockSize + n * context->audioFrames,
+					sizeof(context->audioIn[0]) * gLibpdBlockSize
+				);
+			}
+
+			// analog input
+			for(unsigned int n = 0; n < context->analogInChannels; ++n)
+			{
+				memcpy(
+					gInBuf + gLibpdBlockSize * gFirstAnalogInChannel + n * gLibpdBlockSize,
+					context->analogIn + tick * gLibpdBlockSize + n * context->analogFrames,
+					sizeof(context->analogIn[0]) * gLibpdBlockSize
+				);
+			}
+		} else {
+			// audio input
+			for(unsigned int n = 0; n < gLibpdBlockSize; ++n)
+			{
+				for(unsigned int c = 0; c < context->audioInChannels; ++c)
+					gInBuf[c * gLibpdBlockSize + n] = audioRead(context, n + tick * gLibpdBlockSize, c);
+			}
+			// analog input
+			// make both alternative options explicit in the hope of a tiny runtime benefit
+			if(context->audioSampleRate == context->analogSampleRate)
+			{
+				// same number of frames, analog or audio, for Bela and Pd
+				for(unsigned int n = 0; n < gLibpdBlockSize; ++n)
+				{
+					for(unsigned int c = 0; c < context->analogInChannels; ++c)
+						gInBuf[(c + gFirstAnalogInChannel) * gLibpdBlockSize + n] = analogRead(context, (n + tick * gLibpdBlockSize), c);
+				}
+			} else {
+				// two Pd audio frames per analog channel
+				for(unsigned int n = 0; n < gLibpdBlockSize; ++n) // always to audio frames
+				{
+					for(unsigned int c = 0; c < context->analogInChannels; ++c)
+						gInBuf[(c + gFirstAnalogInChannel) * gLibpdBlockSize + n] = analogRead(context, (n) / 2, c); // "/ 2": there's only half as many frames to read
+				}
+			}
 		}
 		// multiplexed analog input
 		if(pdMultiplexerActive)
@@ -1825,24 +1856,51 @@ void BelaLibpd_render(BelaContext *context, void *userData)
 		}
 #endif // BELA_LIBPD_SCOPE
 
-		// audio output
-		for(unsigned int n = 0; n < context->audioOutChannels; ++n)
+		if(gUniformSampleRateNonInterleaved)
 		{
-			memcpy(
-				context->audioOut + tick * gLibpdBlockSize + n * context->audioFrames, 
-				gOutBuf + n * gLibpdBlockSize,
-				sizeof(context->audioOut[0]) * gLibpdBlockSize
-			);
-		}
+			// audio output
+			for(unsigned int n = 0; n < context->audioOutChannels; ++n)
+			{
+				memcpy(
+					context->audioOut + tick * gLibpdBlockSize + n * context->audioFrames,
+					gOutBuf + n * gLibpdBlockSize,
+					sizeof(context->audioOut[0]) * gLibpdBlockSize
+				);
+			}
 
-		//analog output
-		for(unsigned int n = 0; n < context->analogOutChannels; ++n)
-		{
-			memcpy(
-				context->analogOut + tick * gLibpdBlockSize + n * context->analogFrames, 
-				gOutBuf + gLibpdBlockSize * gFirstAnalogOutChannel + n * gLibpdBlockSize,
-				sizeof(context->analogOut[0]) * gLibpdBlockSize
-			);
+			// analog output
+			for(unsigned int n = 0; n < context->analogOutChannels; ++n)
+			{
+				memcpy(
+					context->analogOut + tick * gLibpdBlockSize + n * context->analogFrames,
+					gOutBuf + gLibpdBlockSize * gFirstAnalogOutChannel + n * gLibpdBlockSize,
+					sizeof(context->analogOut[0]) * gLibpdBlockSize
+				);
+			}
+		} else {
+			// audio output
+			for(unsigned int n = 0; n < gLibpdBlockSize; ++n)
+			{
+				for(unsigned int c = 0; c < context->audioOutChannels; ++c)
+					audioWrite(context, n + tick * gLibpdBlockSize, c, gOutBuf[c * gLibpdBlockSize + n]);
+			}
+			// analog output
+			// make both alternative options explicit in the hope of a tiny runtime benefit
+			if(context->audioSampleRate == context->analogSampleRate)
+			{
+				for(unsigned int n = 0; n < gLibpdBlockSize; ++n)
+				{
+					for(unsigned int c = 0; c < context->analogOutChannels; ++c)
+						analogWriteOnce(context, n + tick * gLibpdBlockSize, c, gOutBuf[(c  + gFirstAnalogOutChannel) * gLibpdBlockSize + n]);
+				}
+			} else {
+				for(unsigned int n = 0; n < gLibpdBlockSize / 2; ++n)
+				{
+					// two Pd audio frames per analog channel
+					for(unsigned int c = 0; c < context->analogOutChannels; ++c)
+						analogWriteOnce(context, n + (tick * gLibpdBlockSize / 2), c, gOutBuf[(c + gFirstAnalogOutChannel) * gLibpdBlockSize + n * 2]); // * 2: skip every other sample from gOutBuf
+				}
+			}
 		}
 	}
 }
