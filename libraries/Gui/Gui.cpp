@@ -13,10 +13,8 @@ Gui::Gui(unsigned int port, std::string address)
 
 int Gui::setup(unsigned int port, std::string address)
 {
-	_port = port;
 	_addressData = address+"_data";
 	_addressControl = address+"_control";
-
 	// Set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
 	int ret = ws_server->setup(port);
@@ -25,6 +23,8 @@ int Gui::setup(unsigned int port, std::string address)
 		fprintf(stderr, "Gui: unable to create websocket on port %u\n", port);
 		return 1;
 	}
+	_port = port;
+
 	ws_server->addAddress(_addressData,
 		[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size)
 		{
@@ -201,6 +201,8 @@ int Gui::sendControl(const JSONValue* root, WSServer::CallingThread callingThrea
 
 int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)
 {
+	if(-1 == _port)
+		return -EINVAL;
 	std::string idTypeStr = std::to_string(bufferId) + "/" + std::string(type);
 	int ret;
 	if(0 == (ret = ws_server->sendRt(_addressData.c_str(), idTypeStr.c_str())))
