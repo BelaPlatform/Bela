@@ -345,12 +345,9 @@ int run(void)
 
 	int fd = gpio_open(BUTTON_PIN);
 
-#ifdef EDGE
 	struct pollfd pfd[1];
-
 	pfd[0].fd = fd;
 	pfd[0].events = POLLPRI;
-#endif
 	timestamp_ms_t pressed_at = 0;
 
 	printf("Monitoring pin `%d` (%s), will execute `%s` on click and `%s` on hold (>%dms). Button is pressed when pin is %s...\n", BUTTON_PIN, 
