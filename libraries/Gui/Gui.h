@@ -27,7 +27,7 @@ class Gui
 		void ws_onData(const std::string& address, const WSServerDetails* id, const unsigned char* data, size_t size);
 		int doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size);
 
-		unsigned int _port;
+		unsigned int _port = -1;
 		std::string _addressControl;
 		std::string _addressData;
 		std::wstring _projectName;
