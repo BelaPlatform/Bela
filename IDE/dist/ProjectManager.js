@@ -683,10 +683,14 @@ function uploadZipLibrary(data) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log("uploadZiplibrary", data);
                     target_path = paths.libraries + data.newProject;
-                    return [4 /*yield*/, uploadZipArchive(data, target_path, false)];
+                    if (!data.force) return [3 /*break*/, 2];
+                    return [4 /*yield*/, file_manager.delete_file(target_path)];
                 case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2: return [4 /*yield*/, uploadZipArchive(data, target_path, false)];
+                case 3:
                     _a.sent();
                     // remove most members from object so it doesn't attempt to
                     // open a file in the frontend
@@ -709,15 +713,18 @@ function uploadZipArchive(data, target_path, isProject) {
                 case 0:
                     tmp_path = paths.tmp + data.newFile;
                     tmp_target_path = tmp_path.replace(/\.zip$/, "/");
-                    return [4 /*yield*/, file_manager.file_exists(target_path)];
+                    return [4 /*yield*/, file_manager.delete_file(tmp_target_path)];
                 case 1:
-                    _a = (_b.sent());
-                    if (_a) return [3 /*break*/, 3];
-                    return [4 /*yield*/, file_manager.directory_exists(target_path)];
+                    _b.sent();
+                    return [4 /*yield*/, file_manager.file_exists(target_path)];
                 case 2:
                     _a = (_b.sent());
-                    _b.label = 3;
+                    if (_a) return [3 /*break*/, 4];
+                    return [4 /*yield*/, file_manager.directory_exists(target_path)];
                 case 3:
+                    _a = (_b.sent());
+                    _b.label = 4;
+                case 4:
                     file_exists = (_a);
                     if (file_exists && !data.force) {
                         data.error = 'Failed to create ' + (isProject ? 'project ' + data.newProject : target_path) + ': it already exists!';
@@ -726,7 +733,7 @@ function uploadZipArchive(data, target_path, isProject) {
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, file_manager.save_file(tmp_path, data.fileData)];
-                case 4:
+                case 5:
                     _b.sent();
                     _cleanup = function (tmp_path, tmp_target_path) {
                         //file_manager.delete_file(tmp_path);
