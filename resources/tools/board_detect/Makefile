@@ -1,4 +1,4 @@
-CXX=g++
+CXX=clang++
 CXXFLAGS=-std=c++11
 BUILD=build
 $(shell mkdir -p build)
