@@ -81,8 +81,8 @@ create_linkmakefile() {
 	local MKFILELINK="$DIR/build/Makefile.link"
 	# check if we need to rebuild, or return
 	if [ -f $MKFILELINK ]; then
-		FOUND=$(find "$DIR" -maxdepth 1 -regex ".*\.cpp\|.*\.c\|.*.cc" -newer $MKFILELINK 2> /dev/null | wc -l)
-		[ $FOUND -eq 0 ] && return
+		FOUND=$(find "$DIR" -maxdepth 1 -regex ".*\.cpp\|.*\.c\|.*.cc" -newer $MKFILELINK 2> /dev/null)
+		[ -z "$FOUND" ] && return
 	fi
 	mkdir -p "$DIR/build"
 
@@ -93,7 +93,7 @@ create_linkmakefile() {
 	echo "THIS_CFILES := \$(wildcard libraries/\$(LIBRARY)/*.c)"
 	echo "LIBRARIES_OBJS := \$(LIBRARIES_OBJS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.o) \$(THIS_CFILES:.c=.o)))"
 	echo "ALL_DEPS := \$(ALL_DEPS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.d)))"
-	for SOURCE in `ls $DIR/*.cpp $DIR/*.c $DIR/*.cc 2>/dev/null`; do
+	for SOURCE in $FOUND; do
 		FILENAME=`basename $SOURCE`
 		OBJ=$DIR/build/${FILENAME%.*}.o
 		echo "$OBJ: $SOURCE"
