@@ -311,8 +311,9 @@ export async function uploadZipProject(data: any){
 
 // TODO: not a project event per-se, we are just squatting here for convenience
 export async function uploadZipLibrary(data: any){
-	console.log("uploadZiplibrary", data);
 	let target_path = paths.libraries + data.newProject;
+	if (data.force)
+		await file_manager.delete_file(target_path)
 	await uploadZipArchive(data, target_path, false);
 	// remove most members from object so it doesn't attempt to
 	// open a file in the frontend
@@ -325,6 +326,7 @@ export async function uploadZipLibrary(data: any){
 async function uploadZipArchive(data: any, target_path: string, isProject: boolean){
 	let tmp_path = paths.tmp + data.newFile;
 	let tmp_target_path = tmp_path.replace(/\.zip$/, "/");
+	await file_manager.delete_file(tmp_target_path);
 	let file_exists = (await file_manager.file_exists(target_path) || await file_manager.directory_exists(target_path));
 	if (file_exists && !data.force){
 		data.error = 'Failed to create ' + (isProject ? 'project ' + data.newProject : target_path) + ': it already exists!';
