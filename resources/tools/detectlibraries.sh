@@ -40,9 +40,18 @@ process_libraries() {
 }
 
 extract_dependencies() {
-	for LIBRARY in $@; do
-		extract_dependencies_single "$LIBRARY"
-	done
+	local BIN=bela-extract-dependencies
+	if command -v $BIN 2>&1 > /dev/null
+	then
+		# new method, using external binary, much faster
+		LIBLIST=$($BIN $PWD $@)
+	else
+		# old method, using bash functions, slower
+		local LIBRARY
+		for LIBRARY in $@; do
+			extract_dependencies_single "$LIBRARY"
+		done
+	fi
 }
 
 extract_dependencies_single() {
