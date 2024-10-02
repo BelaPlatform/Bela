@@ -1,3 +1,4 @@
+CC=clang
 mcasp-dump-tool: mcasp-dump-tool.c
 
 install: mcasp-dump-tool

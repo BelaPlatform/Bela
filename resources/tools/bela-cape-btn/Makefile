@@ -19,11 +19,12 @@
 #
 
 BINARY_DIR ?= /usr/local/bin
+CC=clang
 
 all: bela-cape-btn
 
 bela-cape-btn: bela-cape-btn.c
-	gcc bela-cape-btn.c -o bela-cape-btn
+	$(CC) bela-cape-btn.c -o bela-cape-btn
 
 install: all 
 #if test -e /etc/init.d/bela-cape-btn; then \
