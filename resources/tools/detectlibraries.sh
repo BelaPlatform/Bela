@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 #busybox grep doesn't support -R, but only -r (i.e.: it doesn't follows symlinks).
 #Where available, we want to keep -R and use -r as a fallback.
 #The cheapest way of guessing current grep is to check whether
@@ -23,88 +24,107 @@ getfield() {
 	#grep "^$1=" "$2" | sed "s/^$1=//"
 }
 
+process_libraries() {
+	local LIBRARIES="$@"
+	# make sure we only include each library once
+	LIBRARIES=$(echo $LIBRARIES | sort -u)
+	MKFILE_CONTENT=
+	for LIBRARY in $LIBRARIES; do
+		echo Using library $LIBRARY
+		MDFILE="libraries/$LIBRARY/lib.metadata";
+		create_linkmakefile $LIBRARY $MDFILE # this is the biggest time sink when nothing has to be rebuilt
+		create_compilemakefile $LIBRARY $MDFILE
+		MKFILE_CONTENT="$MKFILE_CONTENT
+-include libraries/$LIBRARY/build/Makefile.link"
+	done
+}
+
 extract_dependencies() {
-	LIBRARY=$1
-	echo Using library $LIBRARY
+	for LIBRARY in $@; do
+		extract_dependencies_single "$LIBRARY"
+	done
+}
+
+extract_dependencies_single() {
+	local LIBRARY=$1
+	if grep -Fxq "$LIBRARY" <(echo "$LIBLIST"); then
+		if [ "$DETECT_LIBRARIES_VERBOSE" != 0 ]
+		then
+			echo Library $LIBRARY has already been checked for dependencies
+		fi
+		return
+	fi
+	[ -z "$LIBLIST" ] && LIBLIST=$LIBRARY ||
+		LIBLIST="$LIBLIST
+$LIBRARY" # important: no extra space or grep -x won't work
 	MDFILE="libraries/$LIBRARY/lib.metadata";
-	echo "$LIBRARY" >> "$LIBLIST"
-
-	create_linkmakefile $LIBRARY $MDFILE
-	create_compilemakefile $LIBRARY $MDFILE
-	echo "-include libraries/$LIBRARY/build/Makefile.link" >> $TMPMKFILE
-
 	DEPENDENCIES=$(getfield dependencies $MDFILE) ;
 	DEPENDENCIES=$(echo $DEPENDENCIES | sed 's/,/\n/g') ;
 	for D in $DEPENDENCIES ; do
-		if ! grep -Fxq "$D" "$LIBLIST" ; then
-			extract_dependencies $D ;
-		else
-			if [ "$DETECT_LIBRARIES_VERBOSE" != 0 ]
-			then
-				echo Library $D has already been checked for dependencies
-			fi
-		fi
+		extract_dependencies_single $D
 	done
 }
 
 create_linkmakefile() {
-	LIBRARY=$1
-	MDFILE=$2
-	MKFILELINK="libraries/$LIBRARY/build/Makefile.link"
+	local LIBRARY=$1
+	local MDFILE=$2
+	local DIR=libraries/$LIBRARY
+	local MKFILELINK="$DIR/build/Makefile.link"
 	# check if we need to rebuild, or return
 	if [ -f $MKFILELINK ]; then
-		FOUND=`find "libraries/$LIBRARY/" -maxdepth 1 -regex ".*\.cpp\|.*\.c\|.*.cc" -newer $MKFILELINK 2> /dev/null | wc -l`
+		FOUND=$(find "$DIR" -maxdepth 1 -regex ".*\.cpp\|.*\.c\|.*.cc" -newer $MKFILELINK 2> /dev/null | wc -l)
 		[ $FOUND -eq 0 ] && return
 	fi
+	mkdir -p "$DIR/build"
 
-	mkdir -p "libraries/$LIBRARY/build/"
-	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT" > $MKFILELINK
-	echo "LIBRARY := $LIBRARY" >> $MKFILELINK
-	echo "THIS_CPPFILES := \$(wildcard libraries/\$(LIBRARY)/*.cpp)" >> $MKFILELINK 
-	echo "THIS_CFILES := \$(wildcard libraries/\$(LIBRARY)/*.c)" >> $MKFILELINK
-	echo "LIBRARIES_OBJS := \$(LIBRARIES_OBJS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.o) \$(THIS_CFILES:.c=.o)))" >> $MKFILELINK
-	echo "ALL_DEPS := \$(ALL_DEPS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.d)))" >> $MKFILELINK
-	DIR=libraries/$LIBRARY
+	{
+	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT"
+	echo "LIBRARY := $LIBRARY"
+	echo "THIS_CPPFILES := \$(wildcard libraries/\$(LIBRARY)/*.cpp)"
+	echo "THIS_CFILES := \$(wildcard libraries/\$(LIBRARY)/*.c)"
+	echo "LIBRARIES_OBJS := \$(LIBRARIES_OBJS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.o) \$(THIS_CFILES:.c=.o)))"
+	echo "ALL_DEPS := \$(ALL_DEPS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.d)))"
 	for SOURCE in `ls $DIR/*.cpp $DIR/*.c $DIR/*.cc 2>/dev/null`; do
 		FILENAME=`basename $SOURCE`
 		OBJ=$DIR/build/${FILENAME%.*}.o
-		echo "$OBJ: $SOURCE" >> $MKFILELINK
+		echo "$OBJ: $SOURCE"
 	done
-	echo "LIBRARIES_LDLIBS += $(getfield LDLIBS $MDFILE)" >> $MKFILELINK
-	echo "LIBRARIES_LDFLAGS += $(getfield LDFLAGS $MDFILE)" >> $MKFILELINK
+	echo "LIBRARIES_LDLIBS += $(getfield LDLIBS $MDFILE)"
+	echo "LIBRARIES_LDFLAGS += $(getfield LDFLAGS $MDFILE)"
+	} > $MKFILELINK
 }
 
 echo_field() {
-	SEARCHFIELD=$1
-	FIELDNAME=$2; [ ! -z "$FIELDNAME" ] || FIELDNAME=$SEARCHFIELD
-	FIELD=`getfield $SEARCHFIELD $MDFILE`; [ -z "$FIELD" ] || echo "$FIELDNAME := $FIELD" >> $MKFILECOMP
+	local MDFILE=$1
+	local SEARCHFIELD=$2
+	local FIELDNAME=$3;
+	[ ! -z "$FIELDNAME" ] || FIELDNAME=$SEARCHFIELD
+	local FIELD="$(getfield $SEARCHFIELD $MDFILE)";
+	[ -z "$FIELD" ] || echo "$FIELDNAME += $FIELD"
 }
 create_compilemakefile() {
-	LIBRARY=$1
-	MDFILE=$2
-	MKFILECOMP="libraries/$LIBRARY/build/Makefile.compile"
+	local LIBRARY=$1
+	local MDFILE=$2
+	local MKFILECOMP="libraries/$LIBRARY/build/Makefile.compile"
 	# check if we need to rebuild, or return
-	[ "$MKFILECOMP" -nt "$MDFILE"  ] && return
+	[ "$MKFILECOMP" -nt "$MDFILE" ] && return
 	mkdir -p "libraries/$LIBRARY/build/"
-	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT" > $MKFILECOMP
-	echo_field CC LIBRARY_CC
-	echo_field CXX LIBRARY_CXX	
-	echo_field CFLAGS LIBRARY_CFLAGS
-	echo_field CXXFLAGS LIBRARY_CXXFLAGS
-	echo_field CPPFLAGS LIBRARY_CPPFLAGS
-
+	{
+	echo "#This file is generated automatically by $(basename $0). DO NOT EDIT"
+	echo_field $MDFILE CC LIBRARY_CC
+	echo_field $MDFILE CXX LIBRARY_CXX
+	echo_field $MDFILE CFLAGS LIBRARY_CFLAGS
+	echo_field $MDFILE CXXFLAGS LIBRARY_CXXFLAGS
+	echo_field $MDFILE CPPFLAGS LIBRARY_CPPFLAGS
+	} > $MKFILECOMP
 }
 
 ## Script starts here
 
 mkdir -p tmp/
-# Create & empty temporary files
-LIBLIST="tmp/liblist"
-IMMEDIATE_LIBS=tmp/libraries
-TMPMKFILE="tmp/Makefile.inc"
->"$LIBLIST"
->"$IMMEDIATE_LIBS"
->"$TMPMKFILE"
+
+LIBLIST=
+IMMEDIATE_LIBS=
 
 GREP_LIBRARY_REGEX='^libraries/[^/]\+/[^/]\+:'
 SED_LIBRARY_REGEX='s|.*libraries/\(.*\)/.*:|\1|'
@@ -126,9 +146,9 @@ function processBuildFolder()
 	DIR="$1"
 	if [ true == $BUSYBOX ]; then
 		# potentially slower: more processes spawned
-		find $DIR -name *.d -exec grep "$GREP_LIBRARY_REGEX" {} \; | sed "$SED_LIBRARY_REGEX" | sort -u >> "$IMMEDIATE_LIBS"
+		IMMEDIATE_LIBS="$IMMEDIATE_LIBS $(find $DIR -name "*.d" -exec grep "$GREP_LIBRARY_REGEX" {} \; | sed "$SED_LIBRARY_REGEX" | sort -u)"
 	else
-		$grepR -oh --include \*.d "$GREP_LIBRARY_REGEX" "$DIR" | sed "$SED_LIBRARY_REGEX" | sort -u >> "$IMMEDIATE_LIBS"
+		IMMEDIATE_LIBS="$IMMEDIATE_LIBS $($grepR -oh --include "*.d" "$GREP_LIBRARY_REGEX" "$DIR" | sed "$SED_LIBRARY_REGEX" | sort -u)"
 	fi
 	set_mkfilepath "$DIR" 0
 }
@@ -142,7 +162,7 @@ Usage:
 [-p|--project] PROJECT_NAME: the Bela project name to analyse for dependencies. The project
 	files must have been compiled and have generated temporary .i and .ii files
 --path path/to/folder: a folder containing .i or .ii files to analyse for dependencies
---file path/to/file: a .i or .ii file to analyse for dependencies
+--file path/to/file: a .i or .ii or .d file to analyse for dependencies
 [-l|--library] LIBRARY_NAME: a Bela library to analyse for dependencies. This is done
 	parsing the lib.metadata file and not the .i or .ii files. Output is
 	written to the library's build/ folder
@@ -186,7 +206,7 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			# Get included libraries from file
-			$grepR "$GREP_LIBRARY_REGEX" $FILE | sed "$SED_LIBRARY_REGEX" | sort -u >> "$IMMEDIATE_LIBS"
+			IMMEDIATE_LIBS="$IMMEDIATE_LIBS $($grepR "$GREP_LIBRARY_REGEX" $FILE | sed "$SED_LIBRARY_REGEX" | sort -u)"
 			set_mkfilepath "`dirname \"$FILE\"`" 0
 			;;
 		--outpath)
@@ -208,8 +228,8 @@ while [ $# -gt 0 ]; do
 				exit 1
 			fi
 			shift
-			echo $LIB
 			extract_dependencies $LIB
+			echo -e "$LIBLIST"
 			exit
 			;;
 		*)
@@ -223,10 +243,7 @@ done
 MKFILE="$MKFILEPATH/Makefile.inc"
 mkdir -p "$MKFILEPATH"
 
-cat $IMMEDIATE_LIBS | while read L; do
-	extract_dependencies $L
-done
+extract_dependencies $IMMEDIATE_LIBS
+process_libraries $LIBLIST
 
-# make sure we only include each library once
-cat $TMPMKFILE | sort -u  > tmp/tmpmkfile
-mv tmp/tmpmkfile $MKFILE
+echo -e "$MKFILE_CONTENT" > $MKFILE
