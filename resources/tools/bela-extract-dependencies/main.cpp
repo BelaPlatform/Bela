@@ -14,13 +14,16 @@ static void usage(char** argv)
 {
 	fprintf(stderr, "Usage: %s <Bela-root> <libraries...>\n", argv[0]);
 }
+
 int main(int argc, char** argv)
 {
-	if(argc < 3)
+	if(argc < 2)
 	{
 		usage(argv);
 		return 1;
 	}
+	if(argc < 3) // no libraries
+		return 0;
 	std::string belaHome = argv[1];
 	if(!IoUtils::pathExists(belaHome))
 	{
