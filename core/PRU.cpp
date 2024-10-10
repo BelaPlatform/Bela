@@ -658,7 +658,7 @@ int PRU::start(const char * const filename, const McaspRegisters& mcaspRegisters
 			// but in that case there are occasional channels swaps
 			// on the inputs, so we set it to true for peace of mind.
 			// This effectively makes pru_rtaudio.p unused
-			pruUsesMcaspIrq = true;
+			pruUsesMcaspIrq = false;
 			break;
 		case BelaHw_BelaMiniMultiAudio:
 			//nobreak
