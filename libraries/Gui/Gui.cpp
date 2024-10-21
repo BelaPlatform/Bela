@@ -203,9 +203,10 @@ int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data,
 {
 	if(-1 == _port)
 		return -EINVAL;
-	std::string idTypeStr = std::to_string(bufferId) + "/" + std::string(type);
+	char str[30]; // surely big enough?
+	snprintf(str, sizeof(str), "%u/%s", bufferId, type);
 	int ret;
-	if(0 == (ret = ws_server->sendRt(_addressData.c_str(), idTypeStr.c_str())))
+	if(0 == (ret = ws_server->sendRt(_addressData.c_str(), str)))
                     if(0 == (ret = ws_server->sendRt(_addressData.c_str(), (void*)data, size)))
                             return 0;
 	rt_fprintf(stderr, "You are sending messages to the GUI too fast. Please slow down\n");
