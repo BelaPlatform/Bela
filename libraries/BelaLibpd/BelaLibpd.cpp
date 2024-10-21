@@ -1264,7 +1264,7 @@ bool BelaLibpd_setup(BelaContext *context, void *userData, const BelaLibpdSettin
 	if((context->digitalSampleRate && context->digitalFrames && context->digitalChannels)
 			&& context->audioSampleRate != context->digitalSampleRate)
 		uniformSampleRate = false;
-	bool interleaved = (context->flags | BELA_FLAG_INTERLEAVED);
+	bool interleaved = (context->flags & BELA_FLAG_INTERLEAVED);
 	if((!interleaved && !uniformSampleRate) || context->analogSampleRate > context->audioSampleRate)
 	{
 		fprintf(stderr, "BelaLibpd: combination of interleaved(%d) and sample rate(s) (%.0f %.0f %.0f) not supported\n", interleaved, context->audioSampleRate, context->analogSampleRate, context->digitalSampleRate);
