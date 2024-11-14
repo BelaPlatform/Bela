@@ -212,6 +212,75 @@ int writeValue(const std::string& path, const std::string& key, const std::strin
 
 } // ConfigFileUtils
 
+#include <execinfo.h>
+#include <unistd.h>
+#include <regex>
+
+namespace ProcessUtils
+{
+
+int runCmd(std::string cmd, std::string& out)
+{
+	std::array<char,512> buffer;
+	out = "";
+	FILE* pipe = popen(cmd.c_str(), "r");
+	if(!pipe)
+	{
+		fprintf(stderr, "popen(%s, %s) failed\n", cmd.c_str(), "r");
+		return -2;
+	}
+	while(!feof(pipe))
+	{
+		if(fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+			out += buffer.data();
+	}
+	return pclose(pipe);
+}
+
+std::string getExecPath()
+{
+	char result[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	if(count <= 0)
+		return "";
+	return std::string(result, (count > 0) ? count : 0);
+}
+
+// From https://stackoverflow.com/a/51890324/2958741
+std::string getBacktrace(unsigned int ignore)
+{
+	void* bt[1024];
+	int bt_size = backtrace(bt, sizeof(bt));
+	char** bt_syms = backtrace_symbols(bt, bt_size);
+	std::regex re("\\[(.+)\\]");
+	std::string exec_path = getExecPath();
+	// start and end offsets in the loop below
+	// are to get rid of seemingly spurious entries
+	std::string cmd = "addr2line -e " + exec_path + " -i -s -p -f -C";
+	for(int i = 1 + ignore; i < bt_size - 1; i++)
+	{
+		std::string sym = bt_syms[i];
+		std::smatch ms;
+		if(std::regex_search(sym, ms, re)) {
+			std::string addr = ms[1];
+			cmd += " " + addr;
+		}
+	}
+	// execute command and get its output
+	std::string r;
+	int ret = runCmd(cmd, r);
+	if(ret)
+		return "";
+	r = std::regex_replace(r, std::regex("\\n$"), "");
+	r = std::regex_replace(r, std::regex("^"), "  ");
+	r = std::regex_replace(r, std::regex("\\n"), "\n  ");
+	r = std::regex_replace(r, std::regex("\\(discriminator [0-9]+\\)"), "");
+	free(bt_syms);
+	return r;
+}
+
+} // ProcessUtils
+
 namespace PinmuxUtils
 {
 	static std::string makePath(const std::string& pin)
