@@ -98,6 +98,29 @@ namespace ConfigFileUtils {
 	int writeValue(const std::string& file, const std::string& key, const std::string& value, IoUtils::Mode mode = IoUtils::TRUNCATE);
 }
 
+namespace ProcessUtils
+{
+	/**
+	 * Run a command and return its value and standard output.
+	 *
+	 * @param cmd The command to execute
+	 * @param out Upon successful return contains the standard output of the command.
+	 *
+	 * @return 0 on success, or an error code.
+	 */
+	int runCmd(std::string cmd, std::string& out);
+	/**
+	 * Get the path to the current executable.
+	 */
+	std::string getExecPath();
+	/**
+	 * Get a printable backtrace of the current thread's execution.
+	 *
+	 * @param ignore How many of the inner frames to ignore.
+	 */
+	std::string getBacktrace(unsigned int ignore);
+}
+
 /**
  * Utilities to manipulate pinmux via bone-pinmux-helper
  */
