@@ -303,10 +303,28 @@ static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 	return ret;
 }
 
+#include <signal.h>
+static void sigsegv_handler(int sig, siginfo_t *si, void *context)
+{
+	fprintf(stderr, "Program crashed with segmentation fault. Backtrace:\n");
+	std::string bt = ProcessUtils::getBacktrace(1);
+	fprintf(stderr, "%s\n", bt.c_str());
+	// disable signal handler and raise it again, so the program crashes
+	signal(SIGSEGV, NULL);
+	raise(SIGSEGV);
+}
+
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
 	if(!settings)
 		return -1;
+	// catch SIGSEGV and print the backtrace
+	struct sigaction sa;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = sigsegv_handler;
+	sa.sa_flags = SA_SIGINFO;
+	sigaction(SIGSEGV, &sa, NULL);
+
 	Bela_setVerboseLevel(settings->verbose);
 	if(Bela_isAlreadyRunning())
 	{
