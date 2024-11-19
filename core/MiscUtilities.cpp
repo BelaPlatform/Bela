@@ -215,6 +215,7 @@ int writeValue(const std::string& path, const std::string& key, const std::strin
 #include <execinfo.h>
 #include <unistd.h>
 #include <regex>
+#include <limits.h>
 
 namespace ProcessUtils
 {
