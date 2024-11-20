@@ -304,14 +304,14 @@ static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 }
 
 #include <signal.h>
-static void sigsegv_handler(int sig, siginfo_t *si, void *context)
+static void sig_handler(int sig, siginfo_t *si, void *context)
 {
-	fprintf(stderr, "Program crashed with segmentation fault. Backtrace:\n");
+	fprintf(stderr, "Program crashed with %s. Backtrace:\n", SIGSEGV == sig ? "Segmentation Fault" : "Bus Error");
 	std::string bt = ProcessUtils::getBacktrace(1);
 	fprintf(stderr, "%s\n", bt.c_str());
 	// disable signal handler and raise it again, so the program crashes
-	signal(SIGSEGV, NULL);
-	raise(SIGSEGV);
+	signal(sig, NULL);
+	raise(sig);
 }
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
@@ -321,9 +321,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// catch SIGSEGV and print the backtrace
 	struct sigaction sa;
 	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = sigsegv_handler;
+	sa.sa_sigaction = sig_handler;
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &sa, NULL);
+	sigaction(SIGBUS, &sa, NULL);
 
 	Bela_setVerboseLevel(settings->verbose);
 	if(Bela_isAlreadyRunning())
