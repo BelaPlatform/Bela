@@ -48,7 +48,7 @@ var lock = new Lock_1.Lock("SaveFile");
 // save_file has its own mutex, so it cannot run concurrently with itself
 function save_file(file_path, file_content, lockfile) {
     return __awaiter(this, void 0, void 0, function () {
-        var file_name, file_dir;
+        var file_name, file_dir, stat, e_1, opts;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, lock.acquire()];
@@ -56,7 +56,7 @@ function save_file(file_path, file_content, lockfile) {
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, , 10, 11]);
+                    _a.trys.push([2, , 14, 15]);
                     file_name = path.basename(file_path);
                     file_dir = path.dirname(file_path) + '/';
                     if (!lockfile) return [3 /*break*/, 4];
@@ -64,25 +64,41 @@ function save_file(file_path, file_content, lockfile) {
                 case 3:
                     _a.sent();
                     _a.label = 4;
-                case 4: return [4 /*yield*/, file_manager.write_file(file_dir + '.' + file_name + '~', file_content)];
+                case 4:
+                    stat = void 0;
+                    _a.label = 5;
                 case 5:
+                    _a.trys.push([5, 7, , 8]);
+                    return [4 /*yield*/, file_manager.stat_file(file_path)];
+                case 6:
+                    stat = _a.sent();
+                    return [3 /*break*/, 8];
+                case 7:
+                    e_1 = _a.sent();
+                    return [3 /*break*/, 8];
+                case 8:
+                    opts = void 0;
+                    if (stat)
+                        opts = { mode: stat.mode };
+                    return [4 /*yield*/, file_manager.write_file(file_dir + '.' + file_name + '~', file_content, opts)];
+                case 9:
                     _a.sent();
                     return [4 /*yield*/, file_manager.delete_file(file_path)];
-                case 6:
+                case 10:
                     _a.sent();
                     return [4 /*yield*/, file_manager.rename_file(file_dir + '.' + file_name + '~', file_path)];
-                case 7:
+                case 11:
                     _a.sent();
-                    if (!lockfile) return [3 /*break*/, 9];
+                    if (!lockfile) return [3 /*break*/, 13];
                     return [4 /*yield*/, file_manager.delete_file(lockfile)];
-                case 8:
+                case 12:
                     _a.sent();
-                    _a.label = 9;
-                case 9: return [3 /*break*/, 11];
-                case 10:
+                    _a.label = 13;
+                case 13: return [3 /*break*/, 15];
+                case 14:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 11: return [2 /*return*/];
+                case 15: return [2 /*return*/];
             }
         });
     });
