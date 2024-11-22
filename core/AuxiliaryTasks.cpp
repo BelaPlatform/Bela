@@ -65,6 +65,11 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 {
 	InternalAuxiliaryTask *taskToSchedule = (InternalAuxiliaryTask *)task;
+	if(!task)
+	{
+		fprintf(stderr, "Bela_scheduleAuxiliaryTask(): invalid or uninitialised task\n");
+		return -1;
+	}
 	return taskToSchedule->task.schedule(false);
 }
 
