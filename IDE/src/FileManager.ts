@@ -82,10 +82,12 @@ async function commit_folder(path: string)
 		await commit(path+"/"+file_path.name);
 }
 // primitive file and directory manipulation
-export async function write_file(file_path: string, data: string): Promise<void>{
+export async function write_file(file_path: string, data: string, opts: any = {}): Promise<void>{
 	await lock.acquire();
 	try{
 		await fs.outputFileAsync(file_path, data);
+		if(typeof(opts.mode) !== "undefined")
+			await fs.chmodAsync(file_path, opts.mode);
 		await commit(file_path);
 	}
 	finally{

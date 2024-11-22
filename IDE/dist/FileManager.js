@@ -221,7 +221,8 @@ function commit_folder(path) {
     });
 }
 // primitive file and directory manipulation
-function write_file(file_path, data) {
+function write_file(file_path, data, opts) {
+    if (opts === void 0) { opts = {}; }
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -230,18 +231,23 @@ function write_file(file_path, data) {
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, , 5, 6]);
+                    _a.trys.push([2, , 7, 8]);
                     return [4 /*yield*/, fs.outputFileAsync(file_path, data)];
                 case 3:
                     _a.sent();
-                    return [4 /*yield*/, commit(file_path)];
+                    if (!(typeof (opts.mode) !== "undefined")) return [3 /*break*/, 5];
+                    return [4 /*yield*/, fs.chmodAsync(file_path, opts.mode)];
                 case 4:
                     _a.sent();
-                    return [3 /*break*/, 6];
-                case 5:
+                    _a.label = 5;
+                case 5: return [4 /*yield*/, commit(file_path)];
+                case 6:
+                    _a.sent();
+                    return [3 /*break*/, 8];
+                case 7:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 6: return [2 /*return*/];
+                case 8: return [2 /*return*/];
             }
         });
     });
