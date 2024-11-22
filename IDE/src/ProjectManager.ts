@@ -240,7 +240,7 @@ export async function saveAs(data: any){
 	}
 	await cleanProject(data);
 	await file_manager.copy_directory(paths.projects+data.currentProject, paths.projects+data.newProject);
-	postNewProject(data);
+	await postNewProject(data);
 }
 
 export async function deleteProject(data: any){

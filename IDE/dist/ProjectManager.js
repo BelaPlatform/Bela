@@ -487,7 +487,9 @@ function saveAs(data) {
                     return [4 /*yield*/, file_manager.copy_directory(paths.projects + data.currentProject, paths.projects + data.newProject)];
                 case 3:
                     _a.sent();
-                    postNewProject(data);
+                    return [4 /*yield*/, postNewProject(data)];
+                case 4:
+                    _a.sent();
                     return [2 /*return*/];
             }
         });
