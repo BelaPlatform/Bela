@@ -104,8 +104,7 @@ inline ssize_t I2c::doIoctl(int address, i2c_char_t* data, int length, unsigned 
 	{
 		fprintf(stderr, "Failed to do ioctl for %d bytes on I2C at addr %d with flags %d: %d\n", length, address, flags, ret);
 		return -1;
-	} else
-		fprintf(stderr, "Successful to do ioctl for %d bytes on I2C at addr %d with flags %d: %d\n", length, address, flags, ret);
+	}
 	return  length;
 
 }
