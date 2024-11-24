@@ -427,7 +427,7 @@ build/core/math_runfast.o \
 build/core/board_detect.o \
 build/core/AuxiliaryTasks.o \
 build/core/RtLock.o \
-#$(CORE_HW_OBJS)
+$(CORE_HW_OBJS) \
 # this line intentionally left blank (it's not)
 
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS)) $(filter-out $(CORE_CORE_OBJS),$(CORE_ASM_OBJS))
