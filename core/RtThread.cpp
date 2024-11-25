@@ -116,7 +116,6 @@ int WaitingTask::schedule(bool force)
 {
 	if(!started)
 	{
-		printf("scheduled thread was not started yet\n");
 		// the task has not yet had a chance to run.
 		// let's enforce it now. This will block the current thread
 		// until the other starts.
