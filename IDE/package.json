@@ -41,7 +41,7 @@
     "archiver": "^2.1.1",
     "decompress-zip": "^0.2.2",
     "express": "^4.16.3",
-    "file-type": "^7.7.1",
+    "file-type": "^16.5.4",
     "fs-extra-promise": "^1.0.1",
     "isbinaryfile": "^3.0.2",
     "mime": "^2.3.1",
