@@ -28,7 +28,7 @@
     "@types/socket.io": "^1.4.33",
     "chai": "^4.1.2",
     "gulp": "^4.0.0",
-    "gulp-livereload": "^3.8.1",
+    "gulp-livereload": "^4.0.2",
     "gulp-replace": "^0.6.1",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^5.0.1",
