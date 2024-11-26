@@ -9,5 +9,6 @@
   "filterbanks",
   "FFT-phase-vocoder",
   "sample-streamer",
-  "sample-streamer-multi"
+  "sample-streamer-multi",
+  "resample"
 ]
