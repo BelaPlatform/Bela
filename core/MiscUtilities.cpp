@@ -223,7 +223,7 @@ namespace ProcessUtils
 
 int runCmd(std::string cmd, std::string& out)
 {
-	std::array<char,512> buffer;
+	std::vector<char> buffer(512);
 	out = "";
 	FILE* pipe = popen(cmd.c_str(), "r");
 	if(!pipe)
@@ -241,11 +241,13 @@ int runCmd(std::string cmd, std::string& out)
 
 std::string getExecPath()
 {
-	char result[PATH_MAX];
-	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	char const* link = "/proc/self/exe";
+	std::vector<char> result(4096);
+	ssize_t count = readlink(link, result.data(), result.size() - 1);
+	result.back() = '\0';
 	if(count <= 0)
 		return "";
-	return std::string(result, (count > 0) ? count : 0);
+	return std::string(result.data(), (count > 0) ? count : 0);
 }
 
 // From https://stackoverflow.com/a/51890324/2958741
