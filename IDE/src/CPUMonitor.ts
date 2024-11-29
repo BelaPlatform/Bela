@@ -11,14 +11,16 @@ let found_pid: boolean;
 let root_pid: number;
 let main_pid: number;
 let callback: (cpu: any) => void;
+let callbackError: () => void;
 let stopped: boolean;
 let find_pid_count: number;
 
-export function start(pid: number, project: string, cb: (cpu: any)=>void){
+export function start(pid: number, project: string, cb: (cpu: any)=>void, cbError: () => void){
 	root_pid = pid;
 	// the process name gets cut off at 15 chars
 	name = project.substring(0, 15) || project[0].substring(0, 15);
 	callback = cb;
+	callbackError = cbError;
 	stopped = false;
 	found_pid = false;
 	find_pid_count = 0;
@@ -44,7 +46,7 @@ async function timeout_func(){
 		}
 	}
 	catch(e){
-		console.log('Failed to get CPU usage'); 
+		callbackError();
 		found_pid = false;
 	}
 	finally{
