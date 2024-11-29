@@ -79,6 +79,16 @@ gulp.task('compile', () => {
 		//.pipe(sourcemaps.write())
 		.pipe(gulp.dest('dist'));
 });
+gulp.task('bela-cpu', () => {
+	return gulp.src(['src/bela-cpu.ts'])
+		.pipe(ts({
+			"noImplicitAny": true,
+			"noEmitOnError": true,
+			"target": "es5",
+			"downlevelIteration": true,
+		}))
+		.pipe(gulp.dest('dist'));
+});
 gulp.task('compile_test', () => {
 	return gulp.src('test/*.spec.ts')
 		.pipe(sourcemaps.init())
