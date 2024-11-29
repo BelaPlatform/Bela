@@ -47,7 +47,6 @@ var __values = (this && this.__values) || function (o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var child_process = require("child_process");
 var pidtree = require("pidtree");
-var ide_settings = require("./IDESettings");
 // this module monitors the linux-domain CPU usage of a running bela process
 // once it has found the correct pid it calls the callback passed to start()
 // every second with the cpu usage as a parameter
@@ -83,38 +82,35 @@ function timeout_func() {
         var cpu, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, ide_settings.get_setting('cpuMonitoring')];
-                case 1:
-                    if (!(_a.sent()))
-                        return [2 /*return*/];
+                case 0:
                     cpu = '0';
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 8, 9, 10]);
-                    if (!!found_pid) return [3 /*break*/, 5];
-                    if (!(find_pid_count++ < 3)) return [3 /*break*/, 4];
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 7, 8, 9]);
+                    if (!!found_pid) return [3 /*break*/, 4];
+                    if (!(find_pid_count++ < 3)) return [3 /*break*/, 3];
                     return [4 /*yield*/, find_pid()];
-                case 3:
+                case 2:
                     _a.sent();
-                    _a.label = 4;
-                case 4: return [3 /*break*/, 7];
-                case 5: return [4 /*yield*/, getCPU()];
-                case 6:
+                    _a.label = 3;
+                case 3: return [3 /*break*/, 6];
+                case 4: return [4 /*yield*/, getCPU()];
+                case 5:
                     cpu = _a.sent();
-                    _a.label = 7;
-                case 7: return [3 /*break*/, 10];
-                case 8:
+                    _a.label = 6;
+                case 6: return [3 /*break*/, 9];
+                case 7:
                     e_1 = _a.sent();
                     console.log('Failed to get CPU usage');
                     found_pid = false;
-                    return [3 /*break*/, 10];
-                case 9:
+                    return [3 /*break*/, 9];
+                case 8:
                     if (!stopped) {
                         callback(cpu);
                         timeout = setTimeout(timeout_func, 1000);
                     }
                     return [7 /*endfinally*/];
-                case 10: return [2 /*return*/];
+                case 9: return [2 /*return*/];
             }
         });
     });

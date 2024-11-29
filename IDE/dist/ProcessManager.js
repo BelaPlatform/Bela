@@ -56,6 +56,7 @@ var cpu_monitor = require("./CPUMonitor");
 var path = require("path");
 var MostRecentQueue_1 = require("./MostRecentQueue");
 var globals = require("./globals");
+var ide_settings = require("./IDESettings");
 var lock = new Lock_1.Lock("ProcessManager");
 var syntaxTimeout; // storing the value returned by setTimeout
 var syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
@@ -304,26 +305,37 @@ processes.build.on('finish', function (stderr, killed) {
         socket_manager.broadcast('std-warn', stderr);
 });
 processes.build.on('stdout', function (data) { return socket_manager.broadcast('status', { buildLog: data }); });
-processes.run.on('start', function (pid, project) {
-    socket_manager.broadcast('status', get_status());
-    cpu_monitor.start(pid, project, function (cpu) { return __awaiter(_this, void 0, void 0, function () {
-        var _a, _b, _c, _d;
-        return __generator(this, function (_e) {
-            switch (_e.label) {
-                case 0:
-                    _b = (_a = socket_manager).broadcast;
-                    _c = ['cpu-usage'];
-                    _d = {};
-                    return [4 /*yield*/, file_manager.read_file(paths.xenomai_stat).catch(function (e) { return console.log('error reading xenomai stats', e); })];
-                case 1:
-                    _b.apply(_a, _c.concat([(_d.bela = _e.sent(),
-                            _d.belaLinux = cpu,
-                            _d)]));
-                    return [2 /*return*/];
-            }
-        });
-    }); });
-});
+processes.run.on('start', function (pid, project) { return __awaiter(_this, void 0, void 0, function () {
+    var _this = this;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                socket_manager.broadcast('status', get_status());
+                return [4 /*yield*/, ide_settings.get_setting('cpuMonitoring')];
+            case 1:
+                if ((_a.sent())) {
+                    cpu_monitor.start(pid, project, function (cpu) { return __awaiter(_this, void 0, void 0, function () {
+                        var _a, _b, _c, _d;
+                        return __generator(this, function (_e) {
+                            switch (_e.label) {
+                                case 0:
+                                    _b = (_a = socket_manager).broadcast;
+                                    _c = ['cpu-usage'];
+                                    _d = {};
+                                    return [4 /*yield*/, file_manager.read_file(paths.xenomai_stat).catch(function (e) { return console.log('error reading xenomai stats', e); })];
+                                case 1:
+                                    _b.apply(_a, _c.concat([(_d.bela = _e.sent(),
+                                            _d.belaLinux = cpu,
+                                            _d)]));
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                }
+                return [2 /*return*/];
+        }
+    });
+}); });
 processes.run.on('finish', function (project) {
     socket_manager.broadcast('status', get_status());
     cpu_monitor.stop();

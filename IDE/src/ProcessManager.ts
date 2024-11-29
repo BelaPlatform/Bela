@@ -9,6 +9,7 @@ import * as cpu_monitor from './CPUMonitor';
 import * as path from 'path';
 import { MostRecentQueue } from './MostRecentQueue';
 import * as globals from './globals';
+import * as ide_settings from './IDESettings';
 
 const lock: Lock = new Lock("ProcessManager");
 let syntaxTimeout : NodeJS.Timer; // storing the value returned by setTimeout
@@ -206,14 +207,16 @@ processes.build.on('finish', (stderr: string, killed: boolean) => {
 });
 processes.build.on('stdout', (data) => socket_manager.broadcast('status', {buildLog: data}) );
 
-processes.run.on('start', (pid: number, project: string) => {
+processes.run.on('start', async (pid: number, project: string) => {
 	socket_manager.broadcast('status', get_status());
-	cpu_monitor.start(pid, project, async cpu => {
-		socket_manager.broadcast('cpu-usage', {
-			bela: await file_manager.read_file(paths.xenomai_stat).catch(e => console.log('error reading xenomai stats', e)),
-			belaLinux: cpu
+	if ((await ide_settings.get_setting('cpuMonitoring'))) {
+		cpu_monitor.start(pid, project, async cpu => {
+			socket_manager.broadcast('cpu-usage', {
+				bela: await file_manager.read_file(paths.xenomai_stat).catch(e => console.log('error reading xenomai stats', e)),
+				belaLinux: cpu
+			});
 		});
-	});
+	}
 });
 processes.run.on('finish', (project: string) => {
 	socket_manager.broadcast('status', get_status());
