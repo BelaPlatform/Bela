@@ -1,59 +1,48 @@
 import * as child_process from 'child_process';
 import * as pidtree from 'pidtree';
+import * as bela_cpu from './bela-cpu';
 
 // this module monitors the linux-domain CPU usage of a running bela process
 // once it has found the correct pid it calls the callback passed to start()
 // every second with the cpu usage as a parameter
 
 let name: string;
-let timeout: NodeJS.Timer;
 let found_pid: boolean;
 let root_pid: number;
 let main_pid: number;
 let callback: (cpu: any) => void;
-let callbackError: () => void;
 let stopped: boolean;
 let find_pid_count: number;
 
-export function start(pid: number, project: string, cb: (cpu: any)=>void, cbError: () => void){
+export function start(pid: number, project: string, cb: (cpu: any)=>void){
 	root_pid = pid;
 	// the process name gets cut off at 15 chars
 	name = project.substring(0, 15) || project[0].substring(0, 15);
 	callback = cb;
-	callbackError = cbError;
 	stopped = false;
 	found_pid = false;
 	find_pid_count = 0;
-	timeout = setTimeout( () => timeout_func(), 1000);
+	setTimeout(loop, 1000);
 }
 
 export function stop(){
-	if (timeout) clearTimeout(timeout);
+	bela_cpu.stop();
 	stopped = true;
 }
 
 // this function keeps trying every second to find the correct pid
 // once it has, it uses ps to get the cpu usage, and calls the callback
-async function timeout_func(){
-	let cpu: any = '0';
-	try{
+async function loop(){
+	while(!stopped) {
 		if (!found_pid){
-			if (find_pid_count++ < 3){
+			if (find_pid_count++ < 5){
 				await find_pid();
 			}
 		} else {
-			cpu = await getCPU();
+			await bela_cpu.getCPU(main_pid, callback);
+			found_pid = false;
 		}
-	}
-	catch(e){
-		callbackError();
-		found_pid = false;
-	}
-	finally{
-		if(!stopped){
-			callback(cpu);
-			timeout = setTimeout(timeout_func, 1000);
-		}
+		await (async () => { return new Promise((resolve) => { setTimeout(resolve, 1000) })})();
 	}
 }
 
@@ -74,15 +63,6 @@ async function find_pid(){
 function name_from_pid(pid: number){
 	return new Promise((resolve, reject) => {
 		child_process.exec('ps -p '+pid+' -o comm=', (err, stdout) => {
-			if (err) reject(err);
-			resolve(stdout);
-		});
-	});
-}
-
-function getCPU(){
-	return new Promise((resolve, reject) => {
-		child_process.exec('ps -p '+main_pid+' -o %cpu --no-headers', (err, stdout) => {
 			if (err) reject(err);
 			resolve(stdout);
 		});

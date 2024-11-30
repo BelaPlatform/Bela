@@ -47,11 +47,11 @@ var __values = (this && this.__values) || function (o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var child_process = require("child_process");
 var pidtree = require("pidtree");
+var bela_cpu = require("./bela-cpu");
 // this module monitors the linux-domain CPU usage of a running bela process
 // once it has found the correct pid it calls the callback passed to start()
 // every second with the cpu usage as a parameter
 var name;
-var timeout;
 var found_pid;
 var root_pid;
 var main_pid;
@@ -66,58 +66,49 @@ function start(pid, project, cb) {
     stopped = false;
     found_pid = false;
     find_pid_count = 0;
-    timeout = setTimeout(function () { return timeout_func(); }, 1000);
+    setTimeout(loop, 1000);
 }
 exports.start = start;
 function stop() {
-    if (timeout)
-        clearTimeout(timeout);
+    bela_cpu.stop();
     stopped = true;
 }
 exports.stop = stop;
 // this function keeps trying every second to find the correct pid
 // once it has, it uses ps to get the cpu usage, and calls the callback
-function timeout_func() {
+function loop() {
     return __awaiter(this, void 0, void 0, function () {
-        var cpu, e_1;
+        var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    cpu = '0';
-                    _a.label = 1;
-                case 1:
-                    _a.trys.push([1, 7, 8, 9]);
-                    if (!!found_pid) return [3 /*break*/, 4];
-                    if (!(find_pid_count++ < 3)) return [3 /*break*/, 3];
+                    if (!!stopped) return [3 /*break*/, 7];
+                    if (!!found_pid) return [3 /*break*/, 3];
+                    if (!(find_pid_count++ < 5)) return [3 /*break*/, 2];
                     return [4 /*yield*/, find_pid()];
-                case 2:
+                case 1:
                     _a.sent();
-                    _a.label = 3;
-                case 3: return [3 /*break*/, 6];
-                case 4: return [4 /*yield*/, getCPU()];
-                case 5:
-                    cpu = _a.sent();
-                    _a.label = 6;
-                case 6: return [3 /*break*/, 9];
-                case 7:
-                    e_1 = _a.sent();
-                    console.log('Failed to get CPU usage');
+                    _a.label = 2;
+                case 2: return [3 /*break*/, 5];
+                case 3: return [4 /*yield*/, bela_cpu.getCPU(main_pid, callback)];
+                case 4:
+                    _a.sent();
                     found_pid = false;
-                    return [3 /*break*/, 9];
-                case 8:
-                    if (!stopped) {
-                        callback(cpu);
-                        timeout = setTimeout(timeout_func, 1000);
-                    }
-                    return [7 /*endfinally*/];
-                case 9: return [2 /*return*/];
+                    _a.label = 5;
+                case 5: return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                        return [2 /*return*/, new Promise(function (resolve) { setTimeout(resolve, 1000); })];
+                    }); }); })()];
+                case 6:
+                    _a.sent();
+                    return [3 /*break*/, 0];
+                case 7: return [2 /*return*/];
             }
         });
     });
 }
 function find_pid() {
     return __awaiter(this, void 0, void 0, function () {
-        var pids, pids_1, pids_1_1, pid, test_name, e_2_1, e_2, _a;
+        var pids, pids_1, pids_1_1, pid, test_name, e_1_1, e_1, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, pidtree(root_pid, { root: true })];
@@ -144,14 +135,14 @@ function find_pid() {
                     return [3 /*break*/, 3];
                 case 6: return [3 /*break*/, 9];
                 case 7:
-                    e_2_1 = _b.sent();
-                    e_2 = { error: e_2_1 };
+                    e_1_1 = _b.sent();
+                    e_1 = { error: e_1_1 };
                     return [3 /*break*/, 9];
                 case 8:
                     try {
                         if (pids_1_1 && !pids_1_1.done && (_a = pids_1.return)) _a.call(pids_1);
                     }
-                    finally { if (e_2) throw e_2.error; }
+                    finally { if (e_1) throw e_1.error; }
                     return [7 /*endfinally*/];
                 case 9: return [2 /*return*/];
             }
@@ -162,15 +153,6 @@ function find_pid() {
 function name_from_pid(pid) {
     return new Promise(function (resolve, reject) {
         child_process.exec('ps -p ' + pid + ' -o comm=', function (err, stdout) {
-            if (err)
-                reject(err);
-            resolve(stdout);
-        });
-    });
-}
-function getCPU() {
-    return new Promise(function (resolve, reject) {
-        child_process.exec('ps -p ' + main_pid + ' -o %cpu --no-headers', function (err, stdout) {
             if (err)
                 reject(err);
             resolve(stdout);

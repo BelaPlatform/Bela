@@ -5056,11 +5056,7 @@ var View = require('./View');
 var popup = require('../popup');
 var json = require('../site-text.json');
 
-// ohhhhh i am a comment
-
 var modeswitches = 0;
-var NORMAL_MSW = 1;
-var nameIndex, CPUIndex, rootName, IRQName;
 var mswGraceEnd = 0;
 // avoid spurious MSWs when stopping or restarting
 var mswGraceMsStop = 3000;
@@ -5262,54 +5258,12 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
-			var bela = 0,
-			    rootCPU = 1;
-
-			if (data.bela != 0 && data.bela !== undefined) {
-
-				// extract the data from the output
-				var lines = data.bela.split('\n');
-				var taskData = [];
-				for (var j = 0; j < lines.length; j++) {
-					taskData.push([]);
-					lines[j] = lines[j].split(' ');
-					for (var k = 0; k < lines[j].length; k++) {
-						if (lines[j][k]) {
-							taskData[j].push(lines[j][k]);
-						}
-					}
-				}
-
-				var output = [];
-				for (var j = 0; j < taskData.length; j++) {
-					if (taskData[j].length) {
-						var proc = {
-							'name': taskData[j][nameIndex],
-							'cpu': taskData[j][CPUIndex],
-							'msw': taskData[j][2],
-							'csw': taskData[j][3]
-						};
-						if (proc.name === rootName) rootCPU = proc.cpu * 0.01;
-						if (proc.name === 'bela-audio') this.mode_switches(proc.msw - NORMAL_MSW);
-						// ignore uninteresting data
-						if (proc && proc.name && proc.name !== rootName && proc.name !== 'NAME' && proc.name !== IRQName) {
-							output.push(proc);
-						}
-					}
-				}
-
-				for (var j = 0; j < output.length; j++) {
-					if (output[j].cpu) {
-						bela += parseFloat(output[j].cpu);
-					}
-				}
-
-				if (data.belaLinux) bela += data.belaLinux * rootCPU;
-			}
+			var bela = data.cpu;
+			this.mode_switches(data.msw);
 
 			$('[data-toolbar-bela-cpu]').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
-			if (bela && bela > 80) {
+			if (bela > 80) {
 				$('[data-toolbar-bela-cpu]').css('color', 'red');
 			} else {
 				$('[data-toolbar-bela-cpu]').css('color', 'black');
