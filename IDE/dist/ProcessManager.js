@@ -315,20 +315,9 @@ processes.run.on('start', function (pid, project) { return __awaiter(_this, void
             case 1:
                 if ((_a.sent())) {
                     cpu_monitor.start(pid, project, function (cpu) { return __awaiter(_this, void 0, void 0, function () {
-                        var _a, _b, _c, _d;
-                        return __generator(this, function (_e) {
-                            switch (_e.label) {
-                                case 0:
-                                    _b = (_a = socket_manager).broadcast;
-                                    _c = ['cpu-usage'];
-                                    _d = {};
-                                    return [4 /*yield*/, file_manager.read_file(paths.xenomai_stat).catch(function (e) { return console.log('error reading xenomai stats', e); })];
-                                case 1:
-                                    _b.apply(_a, _c.concat([(_d.bela = _e.sent(),
-                                            _d.belaLinux = cpu,
-                                            _d)]));
-                                    return [2 /*return*/];
-                            }
+                        return __generator(this, function (_a) {
+                            socket_manager.broadcast('cpu-usage', cpu);
+                            return [2 /*return*/];
                         });
                     }); });
                 }
