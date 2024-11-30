@@ -21,8 +21,8 @@ class EditorView extends View {
 		this.projectModel = models[0];
 
 		this.highlights = {};
-    var data = tmpData;
-    var opts = tmpOpts;
+		var data = tmpData;
+		var opts = tmpOpts;
 
 		this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -54,33 +54,33 @@ class EditorView extends View {
 
 		// this function is called when the user modifies the editor
 		this.editor.session.on('change', (e) => {
-			//console.log('upload', !uploadBlocked);
-      var data = tmpData;
-      var opts = tmpOpts;
-			if (!uploadBlocked){
-				this.editorChanged(false);
-				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
-				// console.log('firing tokenizer');
+				//console.log('upload', !uploadBlocked);
+			var data = tmpData;
+			var opts = tmpOpts;
+				if (!uploadBlocked){
+					this.editorChanged(false);
+					this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
+					// console.log('firing tokenizer');
+				}
+			// set syntax mode - defaults to text
+			if (opts.fileType &&
+				opts.fileType == "cpp" ||
+				opts.fileType == "c" ||
+				opts.fileType == "h" ||
+				opts.fileType == "hh" ||
+				opts.fileType == "hpp" ||
+				opts.fileType == "cc" ) {
+				this.editor.session.setMode('ace/mode/c_cpp');
+			} else if (opts.fileType && opts.fileType == "js") {
+				this.editor.session.setMode('ace/mode/javascript');
+			} else if (opts.fileType && opts.fileType == "csd") {
+				this.editor.session.setMode('ace/mode/csound_document');
+			} else if (opts.fileType && opts.fileType == "scd") {
+				this.editor.session.setMode('ace/mode/supercollider');
+			} else {
+				// if we don't know what the file extension is just default to plain text
+				this.editor.session.setMode('ace/mode/text');
 			}
-      // set syntax mode - defaults to text
-      if (opts.fileType &&
-          opts.fileType == "cpp" ||
-          opts.fileType == "c" ||
-          opts.fileType == "h" ||
-          opts.fileType == "hh" ||
-          opts.fileType == "hpp" ||
-          opts.fileType == "cc" ) {
-        this.editor.session.setMode('ace/mode/c_cpp');
-      } else if (opts.fileType && opts.fileType == "js") {
-    		this.editor.session.setMode('ace/mode/javascript');
-      } else if (opts.fileType && opts.fileType == "csd") {
-        this.editor.session.setMode('ace/mode/csound_document');
-      } else if (opts.fileType && opts.fileType == "scd") {
-        this.editor.session.setMode('ace/mode/supercollider');
-      } else {
-        // if we don't know what the file extension is just default to plain text
-        this.editor.session.setMode('ace/mode/text');
-      }
 		});
 
 		// fired when the cursor changes position
@@ -123,7 +123,7 @@ class EditorView extends View {
 			});
 		});
 
-    this.on('search', this.search);
+		this.on('search', this.search);
 
 		let allAltSelectors = [
 			'data-img-display-parent', 'data-img-display',
@@ -135,9 +135,9 @@ class EditorView extends View {
 		this.allEditorAlts = $(allAltSelectors);
 	}
 
-  search(){
-    this.editor.execCommand('find');
-  }
+	search(){
+		this.editor.execCommand('find');
+	}
 
 	flush(){
 		this.editorChanged(true);
@@ -173,11 +173,11 @@ class EditorView extends View {
 		this.allEditorAlts.removeClass('active');
 		$('[data-editor]').removeClass('active');
 
-    tmpData = data;
-    tmpOpts = opts;
+		tmpData = data;
+		tmpOpts = opts;
 
-	this.modelChanged({readOnly: true}, ['readOnly']);
-	this.modelChanged({openElsewhere: false}, ['openElsewhere']);
+		this.modelChanged({readOnly: true}, ['readOnly']);
+		this.modelChanged({openElsewhere: false}, ['openElsewhere']);
 
 		this.projectModel.setKey('readOnly', true);
 		if (!opts.fileType) opts.fileType = '0';
@@ -203,11 +203,11 @@ class EditorView extends View {
 
 		} else if (opts.fileType.indexOf('audio') !== -1){
 
-      $('[data-audio-parent]')
-      .addClass('active')
-      .css({
-        'position': 'absolute',
-				'left'	: ($('[data-editor]').width() / 2) - ($('[data-audio]').width() / 2)  + 'px',
+			$('[data-audio-parent]')
+			.addClass('active')
+			.css({
+				'position': 'absolute',
+				'left'	: ($('[data-editor]').width() / 2) - ($('[data-audio]').width() / 2) + 'px',
 				'top': ($('[data-editor]').height() / 2) - ($('[data-audio]').height() / 2) + 'px'
 			});
 
