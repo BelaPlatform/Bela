@@ -90,6 +90,7 @@ export async function getArgs(project: any): Promise<{CL: string, make: string[]
 	if(!CLArgs)
 		return { CL: "", make: []};
 	let CL: string = '';
+	let user = '';
 	for (let key in CLArgs) {
 		CLArgs[key] = CLArgs[key].trim();
 		if (key[0] === '-' && key[1] === '-'){
@@ -103,11 +104,12 @@ export async function getArgs(project: any): Promise<{CL: string, make: string[]
 			// these are passed verbatim to the bash that's executing the program
 			// so we cannot have whitespaces in here
 			CLArgs[key] = CLArgs[key].replace(/(?:\r\n|\r|\n)/g, ' '); // remove whitespaces
-			CL += CLArgs[key]+' ';
+			user = ' ' + CLArgs[key]
 		} else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== ''){
 			CL += key+CLArgs[key]+' ';
 		}
 	}
+	CL += user
 	let make: string[] = []; 
 	if (CLArgs.make && CLArgs.make.split){
 		make = CLArgs.make.split(';');

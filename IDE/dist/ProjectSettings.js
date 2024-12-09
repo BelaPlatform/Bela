@@ -214,7 +214,7 @@ function restoreDefaultCLArgs(data) {
 exports.restoreDefaultCLArgs = restoreDefaultCLArgs;
 function getArgs(project) {
     return __awaiter(this, void 0, void 0, function () {
-        var CLArgs, CL, key, make;
+        var CLArgs, CL, user, key, make;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, read(project)];
@@ -223,6 +223,7 @@ function getArgs(project) {
                     if (!CLArgs)
                         return [2 /*return*/, { CL: "", make: [] }];
                     CL = '';
+                    user = '';
                     for (key in CLArgs) {
                         CLArgs[key] = CLArgs[key].trim();
                         if (key[0] === '-' && key[1] === '-') {
@@ -238,12 +239,13 @@ function getArgs(project) {
                             // these are passed verbatim to the bash that's executing the program
                             // so we cannot have whitespaces in here
                             CLArgs[key] = CLArgs[key].replace(/(?:\r\n|\r|\n)/g, ' '); // remove whitespaces
-                            CL += CLArgs[key] + ' ';
+                            user = ' ' + CLArgs[key];
                         }
                         else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== '') {
                             CL += key + CLArgs[key] + ' ';
                         }
                     }
+                    CL += user;
                     make = [];
                     if (CLArgs.make && CLArgs.make.split) {
                         make = CLArgs.make.split(';');
