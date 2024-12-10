@@ -4,6 +4,7 @@
  */
 #include <Bela.h>
 #include "BelaLibpd.h"
+#include <RtWrappers.h>
 
 // Enable features here. These may be undef'ed below if the corresponding
 // BELA_LIBPD_DISABLE_* flag is passed
@@ -1239,9 +1240,13 @@ static bool pdMultiplexerActive = false;
 
 #ifdef BELA_LIBPD_IO_THREADED
 void fdLoop(void* arg){
+	struct timespec t = {
+		.tv_sec = 0,
+		.tv_nsec = 3000 * 1000,
+	};
 	while(!Bela_stopRequested()){
 		if(!sys_doio(pd_this))
-			usleep(3000);
+			Bela_nanosleep(&t);
 	}
 }
 #endif // BELA_LIBPD_IO_THREADED
