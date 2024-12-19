@@ -700,7 +700,7 @@ int Trill::readI2C(bool shouldReadStatusByte) {
 	ssize_t bytesToRead = getBytesToRead(shouldReadStatusByte);
 	dataBuffer.resize(bytesToRead);
 	i2c_char_t offset = shouldReadStatusByte ? kOffsetStatusByte : kOffsetChannelData;
-	if(READ_BYTES_FROM(offset, dataBuffer.data(), dataBuffer.size()))
+	if(READ_BYTES_FROM(offset, (i2c_char_t*)dataBuffer.data(), dataBuffer.size()))
 	{
 		num_touches_ = 0;
 		fprintf(stderr, "Trill: error while reading from device %s at address %#x (%d)\n",
@@ -805,7 +805,7 @@ void Trill::processStatusByte(uint8_t newStatusByte)
 int Trill::readStatusByte()
 {
 	REQUIRE_FW_AT_LEAST(3);
-	uint8_t newStatusByte;
+	i2c_char_t newStatusByte;
 	if(READ_BYTE_FROM(kOffsetStatusByte, newStatusByte))
 		return -1;
 	processStatusByte(newStatusByte);
