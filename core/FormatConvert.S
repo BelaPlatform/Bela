@@ -16,6 +16,7 @@
 	.syntax unified
 	.arch armv7-a
 	.fpu neon
+	.section	".note.GNU-stack","",%progbits
 
 @	void int16_to_float_audio(int numSamples, int16_t *inBuffer, float *outBuffer);
 @
