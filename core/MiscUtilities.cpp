@@ -1,4 +1,5 @@
 #include "../include/MiscUtilities.h"
+#include <array>
 #include <iostream>
 #include <fstream>
 #include <sstream>
