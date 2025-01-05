@@ -110,7 +110,7 @@ struct {
 int main(int argc, char **argv) {
     int fd;
     void *map_base, *virt_addr; 
-	unsigned long read_result, writeval;
+	unsigned int read_result, writeval;
 	off_t target = 0x48038000;
 	int access_type = 'w';
 	int i = 0;
