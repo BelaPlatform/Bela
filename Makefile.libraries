@@ -1,8 +1,8 @@
 # This should be called from the Bela folder, with 
 # make -f Makefile.libraries LIBRARY=libraryname
 # set defaults
-CC := clang
-CXX := clang++
+CC ?= clang
+CXX ?= clang++
 LIBRARY_CC ?= $(CC)
 LIBRARY_CXX ?= $(CXX)
 .DEFAULT_GOAL := library

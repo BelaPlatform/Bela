@@ -32,6 +32,9 @@ libraries/%.o:
 	[ ! -f $$MAKEFILE ] && MAKEFILE=Makefile.libraries; \
 	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE CC=$(CC) CXX=$(CXX) $@
 
+librariesall:
+	make -f Makefile.libraries all
+
 LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
 # This is a nasty kludge: we want to be able to optionally link in a default
 # main file if the user hasn't supplied one. We check for the presence of the main()
