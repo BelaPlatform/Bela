@@ -19,6 +19,7 @@ pru_rtaudio*.txt
 resources/tools/bela-cape-btn/bela-cape-btn
 resources/tools/board_detect/board_detect
 resources/tools/mcasp-dump-tool/mcasp-dump-tool
+resources/tools/bela-extract-dependencies/bela-extract-dependencies
 lib/
 uploads/
 tmp/
