@@ -11,6 +11,7 @@
 	.syntax unified
 	.arch armv7-a
 	.fpu neon
+	.section	".note.GNU-stack","",%progbits
 
 @ 	void oscillator_bank_neon(int numAudioFrames, float *audioOut,
 @							  int activePartialNum, int lookupTableSize,
