@@ -5218,17 +5218,6 @@ var ToolbarView = function (_View) {
 		key: '_xenomaiVersion',
 		value: function _xenomaiVersion(ver) {
 			console.log('xenomai version:', ver);
-			if (ver.includes('2.6')) {
-				nameIndex = 7;
-				CPUIndex = 6;
-				rootName = 'ROOT';
-				IRQName = 'IRQ67:';
-			} else {
-				nameIndex = 8;
-				CPUIndex = 7;
-				rootName = '[ROOT]';
-				IRQName = '[IRQ16:';
-			}
 		}
 	}, {
 		key: 'shutdownBBB',
