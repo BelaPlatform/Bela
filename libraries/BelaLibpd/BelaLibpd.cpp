@@ -1731,8 +1731,8 @@ void BelaLibpd_render(BelaContext *context, void *userData)
 	}
 #else
 	int input;
-	for(unsigned int port = 0; port < NUM_MIDI_PORTS; ++port){
-		while((input = midi[port].getInput()) >= 0){
+	for(unsigned int port = 0; port < midi.size(); ++port){
+		while((input = midi[port]->getInput()) >= 0){
 			libpd_midibyte(port, input);
 		}
 	}
