@@ -176,17 +176,6 @@ class ToolbarView extends View {
 
 	_xenomaiVersion(ver){
 		console.log('xenomai version:', ver);
-		if (ver.includes('2.6')){
-			nameIndex = 7;
-			CPUIndex = 6;
-			rootName = 'ROOT';
-			IRQName = 'IRQ67:';
-		} else {
-			nameIndex = 8;
-			CPUIndex = 7;
-			rootName = '[ROOT]';
-			IRQName = '[IRQ16:';
-		}
 	}
 
   shutdownBBB(){
