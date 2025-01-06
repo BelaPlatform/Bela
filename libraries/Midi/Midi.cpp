@@ -37,6 +37,14 @@ midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength]=
 
 unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength]={2, 2, 2, 2, 1, 1, 2, 0, 0};
 
+void MidiParser::postSysex(midi_byte_t input)
+{
+	if(isSysexCallbackEnabled())
+		sysexCallback(input, sysexCallbackArg);
+	else
+		rt_printf("%02x ", input);
+}
+
 int MidiParser::parse(midi_byte_t* input, unsigned int length){
 	unsigned int consumedBytes = 0;
 	for(unsigned int n = 0; n < length; n++){
@@ -63,15 +71,12 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				receivingSysex = true;
 				if(!isSysexCallbackEnabled())
 					rt_printf("Receiving sysex\n");
+				postSysex(input[n]);
 			} else { // other system common
 				continue;
 			}
-		}
-		if (receivingSysex){
-			if(isSysexCallbackEnabled())
-				sysexCallback(input[n], sysexCallbackArg);
-			else
-				rt_printf("%c", input[n]);
+		} else if (receivingSysex){
+			postSysex(input[n]);
 			if(input[n] == 0xF7){
 				receivingSysex = false;
 				waitingForStatus = true;

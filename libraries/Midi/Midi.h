@@ -146,6 +146,7 @@ private:
 	void* callbackArg;
 	void (*sysexCallback)(midi_byte_t,void*);
 	void* sysexCallbackArg;
+	void postSysex(midi_byte_t);
 public:
 	MidiParser(){
 		waitingForStatus = true;
