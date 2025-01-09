@@ -27,7 +27,7 @@ export function set_Bela(new_path: string){
 	gui = webserver_root+'gui/';
 	exampleTempProject = projects+'exampleTempProject/';
 	media = Bela+'IDE/public/media/';
-	templates = Bela+'IDE/templates/';
+	templates = Bela+'/templates/';
 	ide_settings = Bela+'IDE/settings.json';
 	startup_env = '/opt/Bela/startup_env';
 	lockfile = Bela+'IDE/.lockfile';

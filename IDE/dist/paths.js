@@ -11,7 +11,7 @@ function set_Bela(new_path) {
     exports.gui = exports.webserver_root + 'gui/';
     exports.exampleTempProject = exports.projects + 'exampleTempProject/';
     exports.media = exports.Bela + 'IDE/public/media/';
-    exports.templates = exports.Bela + 'IDE/templates/';
+    exports.templates = exports.Bela + '/templates/';
     exports.ide_settings = exports.Bela + 'IDE/settings.json';
     exports.startup_env = '/opt/Bela/startup_env';
     exports.lockfile = exports.Bela + 'IDE/.lockfile';
