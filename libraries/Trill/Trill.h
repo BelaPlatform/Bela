@@ -6,7 +6,7 @@
 
 /**
  * \brief A class to use the Trill family of capacitive sensors.
- * http://bela.io/trill
+ * https://bela.io/trill
  * \nosubgrouping
  */
 

@@ -8,7 +8,7 @@
 
 The platform for ultra-low latency audio and sensor processing
 
-http://bela.io
+https://bela.io
 
 A project of the Augmented Instruments Laboratory within the
 Centre for Digital Music at Queen Mary University of London.

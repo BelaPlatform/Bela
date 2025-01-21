@@ -6,7 +6,7 @@
 @ and float with clipping and optional level scaling. 
 @ Written in assembly for performance reasons.
 @
-@ Bela: http://bela.io
+@ Bela: https://bela.io
 @
 @ (c) 2016 Andrew McPherson
 @ Centre for Digital Music

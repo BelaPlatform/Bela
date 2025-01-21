@@ -63,7 +63,7 @@
 
 #define AUTOMATIC_POLL_EDGE
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
-#define HOMEPAGE_URL "http://bela.io/wiki"
+#define HOMEPAGE_URL "https://bela.io/wiki"
 #define MAX_BUF 64
 
 #ifdef AUTOMATIC_POLL_EDGE
