@@ -247,15 +247,16 @@ SCREEN_NAME?=Bela
 
 # These are parsed by the IDE to understand if a program is active at startup
 BELA_STARTUP_ENV?=/opt/Bela/startup_env
-BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV)
-BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
+BELA_SYSTEMCTL:=systemctl
+BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p $$(dirname $(BELA_STARTUP_ENV)) && printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)\n" > $(BELA_STARTUP_ENV)
+BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p $$(dirname $(BELA_STARTUP_ENV)) && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
 
-BELA_ENABLE_STARTUP_COMMAND=systemctl enable bela_startup && $(BELA_POST_ENABLE_STARTUP_COMMAND)
-BELA_DISABLE_STARTUP_COMMAND=$(BELA_PRE_DISABLE_STARTUP_COMMAND); systemctl disable bela_startup
-BELA_IDE_START_COMMAND=systemctl restart bela_ide
-BELA_IDE_STOP_COMMAND=systemctl stop bela_ide
-BELA_IDE_ENABLE_STARTUP_COMMAND=systemctl enable bela_ide
-BELA_IDE_DISABLE_STARTUP_COMMAND=systemctl disable bela_ide
+BELA_ENABLE_STARTUP_COMMAND=$(BELA_SYSTEMCTL) enable bela_startup && $(BELA_POST_ENABLE_STARTUP_COMMAND)
+BELA_DISABLE_STARTUP_COMMAND=$(BELA_PRE_DISABLE_STARTUP_COMMAND); $(BELA_SYSTEMCTL) disable bela_startup
+BELA_IDE_START_COMMAND=$(BELA_SYSTEMCTL) restart bela_ide
+BELA_IDE_STOP_COMMAND=$(BELA_SYSTEMCTL) stop bela_ide
+BELA_IDE_ENABLE_STARTUP_COMMAND=$(BELA_SYSTEMCTL) enable bela_ide
+BELA_IDE_DISABLE_STARTUP_COMMAND=$(BELA_SYSTEMCTL) disable bela_ide
 BELA_IDE_CONNECT_COMMAND=journalctl -fu bela_ide -n 50
 SC_CL?=-u 57110 -z 16 -J 8 -K 8 -G 16 -i 2 -o 2 -B 0.0.0.0
 
@@ -647,7 +648,7 @@ startup: ## Same as startuploop
 startup: startuploop # compatibility only
 
 stopstartup: ## stop the system service that ran Bela at startup
-	$(AT) systemctl stop bela_startup || true
+	$(AT) $(BELA_SYSTEMCTL) stop bela_startup || true
 
 stoprunning: ## Stops a Bela program that is currently running
 ifeq (xenomai,$(strip $(BELA_RT_BACKEND)))
