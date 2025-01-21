@@ -21,7 +21,7 @@
  * Bela is based on the Xenomai real-time Linux extensions (http://xenomai.org) and
  * uses the BeagleBone %PRU subsystem to address the audio and sensor hardware.
  *
- * Further information can be found at http://bela.io
+ * Further information can be found at https://bela.io
  */
 
 #ifndef BELA_H_

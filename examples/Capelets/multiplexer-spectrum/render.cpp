@@ -4,7 +4,7 @@
 |  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-http://bela.io
+https://bela.io
 */
 /**
 \example Capelets/multiplexer-spectrum/render.cpp
