@@ -320,14 +320,14 @@ public:
 	/**
 	 * Open the specified input Midi port and start reading from it.
 	 * @param port Midi port to open
-	 * @return 1 on success, -1 on failure
+	 * @return 1 on success or a negative error code on failure
 	 */
 	int readFrom(const char* port);
 
 	/**
 	 * Open the specified output Midi port and prepares to write to it.
 	 * @param port Midi port to open
-	 * @return 1 on success, -1 on failure
+	 * @return 1 on success or a negative error code on failure
 	 */
 	int writeTo(const char* port);
 
