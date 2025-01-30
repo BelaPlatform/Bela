@@ -70,15 +70,25 @@ void sysexCallback(midi_byte_t byte, void* arg)
 
 Midi midi;
 
-const char* gMidiPort0 = "hw:1,0,0";
+const char* gMidiPort = "hw:1,0,0";
 
 bool setup(BelaContext *context, void *userData)
 {
-	midi.readFrom(gMidiPort0);
-	midi.writeTo(gMidiPort0);
+	int ret = midi.readFrom(gMidiPort);
+	if(ret <= 0)
+	{
+		fprintf(stderr, "Error %d when reading from device %s\n", ret, gMidiPort);
+		return false;
+	}
+	ret = midi.writeTo(gMidiPort);
+	if(ret <= 0)
+	{
+		fprintf(stderr, "Error %d when writing to device %s\n", ret, gMidiPort);
+		return false;
+	}
 	midi.enableParser(true);
-	midi.getParser()->setCallback(midiMessageCallback, (void*) gMidiPort0);
-	midi.getParser()->setSysexCallback(sysexCallback, (void*) gMidiPort0);
+	midi.getParser()->setCallback(midiMessageCallback, (void*)gMidiPort);
+	midi.getParser()->setSysexCallback(sysexCallback, (void*)gMidiPort);
 	gSamplingPeriod = 1 / context->audioSampleRate;
 	return true;
 }
