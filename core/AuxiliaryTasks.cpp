@@ -94,7 +94,7 @@ void Bela_deleteAllAuxiliaryTasks()
 	// each thread should be checking on Bela_stopRequested(), which
 	// should return true at this point. Let's make sure it does:
 	Bela_requestStop();
-	for(size_t n = getAuxTasks().size() - 1; n != -1; --n) {
+	for(ssize_t n = getAuxTasks().size() - 1; n != -1; --n) {
 		InternalAuxiliaryTask *taskStruct = getAuxTasks()[n];
 		delete taskStruct;
 	}
