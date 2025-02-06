@@ -115,7 +115,7 @@ int Tlv320_Es9080_Codec::stopAudio()
 	/* else  */ \
 	/* TLV is always first and ES is always last*/ \
 	unsigned int tlvChs = in ? tlv320->getNumIns() : tlv320->getNumOuts(); \
-	if(channel < tlv320->getNumIns()) { \
+	if(channel < (int)tlv320->getNumIns()) { \
 		if(tlv320->do) return 1; \
 	} else { \
 		channel -= tlvChs; \
