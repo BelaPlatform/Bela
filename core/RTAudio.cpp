@@ -1022,6 +1022,8 @@ int Bela_setHeadphoneLevel(float decibels)
 // Returns 0 on success
 int Bela_muteSpeakers(int mute)
 {
+	if(!gAmplifierMutePin.enabled())
+		return 0;
 	//TODO: Nothing to be done for CTAG audio cards
 	int pinValue = mute ? LOW : HIGH;
 	gAmplifierMutePin.write(pinValue);
