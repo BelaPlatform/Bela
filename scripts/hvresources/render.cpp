@@ -190,7 +190,9 @@ void readTouchSensors(void*)
 }
 #endif // BELA_HV_TRILL
 #ifdef BELA_HV_OSC
+#include <libraries/OscSender/OscSender.h>
 #include <libraries/OscReceiver/OscReceiver.h>
+
 void oscCallback(oscpkt::Message* msg, const char* addr, void* arg)
 {
 	extern HeavyContextInterface *gHeavyContext;
@@ -233,6 +235,7 @@ void oscCallback(oscpkt::Message* msg, const char* addr, void* arg)
 }
 
 OscReceiver oscReceiver(7562, oscCallback);
+OscSender oscSender(7563, "127.0.0.1");
 #endif // BELA_HV_OSC
 
 /*
@@ -575,6 +578,33 @@ static void sendHook(
 			return;
 		}
 #endif // BELA_HV_TRILL
+#ifdef BELA_HV_OSC
+		case 0xecffe7de: { // bela_oscSender
+			const size_t argc = hv_msg_getNumElements(m);
+			if(argc < 2 || !hv_msg_isSymbol(m, 0))
+			{
+				rt_fprintf(stderr, "bela_oscSender: wrong format. It should be\n"
+						"[path <values> ...(");
+				heavyPrintMsgTypes(m);
+				return;
+			}
+			oscSender.newMessage(hv_msg_getSymbol(m, 0));
+			for(unsigned int n = 0; n < argc; ++n)
+			{
+				if(hv_msg_isSymbol(m, n))
+					oscSender.add(std::string(hv_msg_getSymbol(m, n)));
+				else if (hv_msg_isFloat(m, n))
+					oscSender.add(hv_msg_getFloat(m, n));
+				else {
+					rt_fprintf(stderr, "bela_oscSender: wrong type for element %u\n", n);
+					heavyPrintMsgTypes(m);
+					return;
+				}
+			}
+			oscSender.send();
+			return;
+		}
+#endif // BELA_HV_OSC
 		default: {
 			break;
 		}
