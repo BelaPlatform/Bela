@@ -1,7 +1,6 @@
 name=sndfile
 description=A convenience wrapper for libsndfile.
-examples=Audio/FFT-phase-vocoder, Audio/sample-loader, Audio/sample-piezo-trigger, Audio/sample-streamer, Extras/audio-capelet-test, Extras/tank-wars, terminal-only/filter-FIR, terminal-only/filter-IIR, terminal-only/samples 
+examples=Gui/sequencer, Audio/sample-streamer-multi
 license=LGPL 3.0
 LDFLAGS=
 LDLIBS=-lsndfile
-
