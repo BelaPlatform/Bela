@@ -5123,14 +5123,15 @@ var ToolbarView = function (_View) {
 		var openUrl = function openUrl(url, evt) {
 			// set a target name so that the same tab is used if it was
 			// previously opened
-			var target = location.host + "/url";
+			var fullUrl = location.origin + ('/' + url);
+			var target = fullUrl;
 			if (evt) {
 				// if a modifier is pressed, then just "open" it and the
 				// browser will figure out what the modifier means (e.g.: new
 				// tab vs new window)
 				if (evt.altKey || evt.ctrlKey || evt.shiftKey || evt.metaKey) target = undefined;
 			}
-			window.open(url, target);
+			window.open(fullUrl, target);
 		};
 		$('[data-toolbar-scope]').on('click', function (evt) {
 			openUrl('scope', evt);
