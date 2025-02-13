@@ -1431,9 +1431,6 @@ if (dataDisabled) controlView.controlsVisibility(true);
 var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', allSettings, renderer);
 var channelView = new (require('./ChannelView'))('channelView', allSettings);
 
-// main bela socket
-var belaSocket = io('/IDE');
-
 function sendToWs(obj) {
   // do not send frameWidth if we are not receiving data,
   // or the server will get confused
@@ -1631,7 +1628,14 @@ controlView.on('clear', function () {
   });
 });
 
-belaSocket.on('cpu-usage', CPU);
+if (typeof "io" === "function") {
+  // if served by the Bela IDE server, we'll have loaded socket.io which can
+  // send us CPU usage notifications
+  // main bela socket
+  var belaSocket = io('/IDE');
+  belaSocket.on('cpu-usage', CPU);
+  console.log("Receiving notifications for cpu-usage from belaSocket");
+}
 
 // model events
 settings.on('set', function (data, changedKeys) {
