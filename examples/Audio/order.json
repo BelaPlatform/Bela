@@ -5,7 +5,7 @@
   "tremolo",
   "telephone-filter",
   "envelope-generator",
-  "record-audio",
+  "file-recorder-stream",
   "filterbanks",
   "FFT-phase-vocoder",
   "sample-streamer",

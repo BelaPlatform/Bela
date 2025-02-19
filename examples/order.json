@@ -11,9 +11,9 @@
   "PureData",
   "SuperCollider",
   "Csound",
+  "Pepper",
   "Capelets",
   "Instruments",
   "terminal-only",
-  "Salt",
-  "Pepper"
+  "Salt"
 ]
