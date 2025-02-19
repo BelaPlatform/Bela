@@ -2,6 +2,6 @@
   "digital-input",
   "digital-output",
   "level-meter",
-  "bicolour-LEDs",
+  "bicolor-LEDs",
   "synchronous-gpio"
 ]
