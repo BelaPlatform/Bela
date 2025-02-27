@@ -24,6 +24,15 @@ getfield() {
 	#grep "^$1=" "$2" | sed "s/^$1=//"
 }
 
+get_mdfile() {
+	mdfile="libraries/$LIBRARY/lib.metadata"
+	[ -f "$mdfile" ] || {
+		echo "$mdfile does not exist, creating it" >&2
+		touch "$mdfile"
+	}
+	echo $mdfile
+}
+
 process_libraries() {
 	local LIBRARIES="$@"
 	# make sure we only include each library once
@@ -31,7 +40,7 @@ process_libraries() {
 	MKFILE_CONTENT=
 	for LIBRARY in $LIBRARIES; do
 		echo Using library $LIBRARY
-		MDFILE="libraries/$LIBRARY/lib.metadata";
+		MDFILE=$(get_mdfile "$LIBRARY")
 		create_linkmakefile $LIBRARY $MDFILE # this is the biggest time sink when nothing has to be rebuilt
 		create_compilemakefile $LIBRARY $MDFILE
 		MKFILE_CONTENT="$MKFILE_CONTENT
@@ -66,7 +75,7 @@ extract_dependencies_single() {
 	[ -z "$LIBLIST" ] && LIBLIST=$LIBRARY ||
 		LIBLIST="$LIBLIST
 $LIBRARY" # important: no extra space or grep -x won't work
-	MDFILE="libraries/$LIBRARY/lib.metadata";
+	MDFILE=$(get_mdfile $LIBRARY)
 	DEPENDENCIES=$(getfield dependencies $MDFILE) ;
 	DEPENDENCIES=$(echo $DEPENDENCIES | sed 's/,/\n/g') ;
 	for D in $DEPENDENCIES ; do
