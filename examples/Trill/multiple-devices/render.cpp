@@ -13,7 +13,8 @@ Connecting and Detecting Multiple Trill
 =========================================
 
 This example scans the I2C bus for Trill sensors and will then generate
-a GUI element for each one.
+a GUI element for each one. Trill Craft is excluded because it doesn't
+have a GUI element.
 
 NOTE: as this example scans several addresses on the i2c bus
 it could cause non-Trill peripherals connected to it to malfunction.
@@ -64,7 +65,7 @@ bool setup(BelaContext *context, void *userData)
 	for(uint8_t addr = 0x20; addr <= 0x50; ++addr)
 	{
 		Trill::Device device = Trill::probe(i2cBus, addr);
-		if(Trill::NONE != device && Trill::CRAFT != device)
+		if(Trill::NONE != device && Trill::CRAFT != device) // exclude CRAFT because we can't show it in the GUI
 		{
 			gTouchSensors.push_back(new Trill(i2cBus, device, addr));
 			gTouchSensors.back()->printDetails();
