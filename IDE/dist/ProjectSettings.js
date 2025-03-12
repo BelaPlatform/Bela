@@ -225,6 +225,7 @@ function getArgs(project) {
                     CL = '';
                     user = '';
                     for (key in CLArgs) {
+                        CLArgs[key] += ''; // convert to string in case it's not (e.g.: numbers)
                         CLArgs[key] = CLArgs[key].trim();
                         if (key[0] === '-' && key[1] === '-') {
                             if (key === '--disable-led') {
