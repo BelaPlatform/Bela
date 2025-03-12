@@ -92,6 +92,7 @@ export async function getArgs(project: any): Promise<{CL: string, make: string[]
 	let CL: string = '';
 	let user = '';
 	for (let key in CLArgs) {
+		CLArgs[key] += ''; // convert to string in case it's not (e.g.: numbers)
 		CLArgs[key] = CLArgs[key].trim();
 		if (key[0] === '-' && key[1] === '-'){
 			if (key === '--disable-led'){
