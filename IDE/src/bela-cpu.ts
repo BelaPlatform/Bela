@@ -125,10 +125,12 @@ export async function getCPU(tid: string|number, callback: Function)
 			let timeDiff = stat.time - oldStat.time;
 			oldStat = stat;
 			let xstat = await getFile(xenomaiStatPath);
-			let res = computeCPU(xstat, cpuDiff / timeDiff* 100);
-			if(shouldStop)
-				break;
-			callback(res);
+			if(xstat) {
+				let res = computeCPU(xstat, cpuDiff / timeDiff* 100);
+				if(shouldStop) // computeCPU may take some time, check again
+					break;
+				callback(res);
+			}
 		}
 	})()
 }
