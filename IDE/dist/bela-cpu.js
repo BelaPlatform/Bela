@@ -194,10 +194,12 @@ function getCPU(tid, callback) {
                                         return [4 /*yield*/, getFile(xenomaiStatPath)];
                                     case 3:
                                         xstat = _a.sent();
-                                        res = computeCPU(xstat, cpuDiff / timeDiff * 100);
-                                        if (shouldStop)
-                                            return [3 /*break*/, 4];
-                                        callback(res);
+                                        if (xstat) {
+                                            res = computeCPU(xstat, cpuDiff / timeDiff * 100);
+                                            if (shouldStop) // computeCPU may take some time, check again
+                                                return [3 /*break*/, 4];
+                                            callback(res);
+                                        }
                                         return [3 /*break*/, 0];
                                     case 4: return [2 /*return*/];
                                 }
