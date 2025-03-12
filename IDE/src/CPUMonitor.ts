@@ -63,7 +63,7 @@ async function find_pid(){
 function name_from_pid(pid: number){
 	return new Promise((resolve, reject) => {
 		child_process.exec('ps -p '+pid+' -o comm=', (err, stdout) => {
-			if (err) reject(err);
+			if (err) resolve("");
 			resolve(stdout);
 		});
 	});

@@ -154,7 +154,7 @@ function name_from_pid(pid) {
     return new Promise(function (resolve, reject) {
         child_process.exec('ps -p ' + pid + ' -o comm=', function (err, stdout) {
             if (err)
-                reject(err);
+                resolve("");
             resolve(stdout);
         });
     });
