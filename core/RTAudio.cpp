@@ -549,7 +549,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		belaHw = userHw;
 	else
 		belaHw = actualHw;
-	if(gRTAudioVerbose)
 		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
 	if(BelaHw_NoHw == belaHw)
 	{
@@ -889,6 +888,7 @@ void fifoLoop(void* userData)
 		printf("fifo thread ended\n");
 }
 
+Gpio gpio;
 static int startAudioInline(){
 	if(gRTAudioVerbose)
 		printf("startAudioInline\n");
@@ -908,6 +908,17 @@ static int startAudioInline(){
 	McaspConfig mcaspConfig = gAudioCodec->getMcaspConfig();
 	if(gRTAudioVerbose)
 		mcaspConfig.print();
+	//auto* c = new Es9080_Codec(codecI2cBus, es9080CodecAddress, AudioCodecParams::kClockSourceExternal, es9080CodecResetPin, 24000000, gRTAudioVerbose);
+	//c->initCodec();
+	//c->startAudio(0);
+	//usleep(100000);
+	PinmuxUtils::set("P8_33", "gpio");
+
+	gpio.open(11, Gpio::OUTPUT);
+	gpio.clear();
+	for(volatile int n = 0; n < 3000; ++n)
+		;
+	gpio.set();
 	// initialize and run the PRU
 	if(gPRU->start(gPRUFilename, mcaspConfig.getRegisters())) {
 		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);

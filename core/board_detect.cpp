@@ -179,7 +179,9 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	else
 	{
 		int ctag = detectCtag();
+		printf("CTAG: %d\n", ctag);
 		bool hasTlv32 = detectTlv32(codecI2cBus, tlv320CodecI2cAddress);
+		printf("hastlv32: %d\n", hasTlv32);
 		if(ctag == 1)
 		{
 			if(hasTlv32)

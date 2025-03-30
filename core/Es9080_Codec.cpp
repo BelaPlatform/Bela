@@ -79,7 +79,7 @@ McaspConfig& Es9080_Codec::getMcaspConfig()
 
 int Es9080_Codec::initCodec(){
         // make sure the AHCLKX is running os the codec's registers can be accessed
-        Mcasp::startAhclkx();
+        //Mcasp::startAhclkx();
 	gpio.set();
 	// check it's alive. Write a register to the write-only address and
 	// make sure it succeeds
@@ -199,6 +199,7 @@ int Es9080_Codec::startAudio(int dummy){
 		fprintf(stderr, "Es9080: cannot generate only one of bclk, wclk\n");
 		return 1;
 	}
+	printf("ISMASTER %d\n", isMaster);
 	std::string program = R"HEREDOC(
 w 0x98 192 0x03; //Set GPIO1 (MCLK) pad to input mode, Invert CLKHV phase for better DNR
 w 0x98 193 0xC3; //Set PLL Bypass, Remove 10k DVDD shunt to ground, set PLL input to MCLK, enable the PLL clock inputs

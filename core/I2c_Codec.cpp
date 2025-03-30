@@ -1090,6 +1090,7 @@ int I2c_Codec::disable(){
 	if (writeRegister(0x5E, 0xC0)) // Power fully down left and right DAC
 		return 1;
 
+	Mcasp::stopAhclkx();
 	return 0;
 }
 

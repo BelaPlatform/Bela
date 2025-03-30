@@ -328,21 +328,22 @@
 #define FLAG_BIT_CTAG_BEAST     13
 #define FLAG_BIT_BELA_MULTI_TLV	14
 #define FLAG_BIT_ADS816X        15
+#define FLAG_BIT_SKIP_SPI_DAC   16
 
 // reg_flags should hold the number of audio in/out channels, up to 32
-#define FLAG_BIT_AUDIO_IN_CHANNELS0 16
-#define FLAG_BIT_AUDIO_IN_CHANNELS1 17
-#define FLAG_BIT_AUDIO_IN_CHANNELS2 18
-#define FLAG_BIT_AUDIO_IN_CHANNELS3 19
-#define FLAG_BIT_AUDIO_IN_CHANNELS4 20
-#define FLAG_BIT_AUDIO_IN_CHANNELS5 21
+#define FLAG_BIT_AUDIO_IN_CHANNELS0 17
+#define FLAG_BIT_AUDIO_IN_CHANNELS1 18
+#define FLAG_BIT_AUDIO_IN_CHANNELS2 19
+#define FLAG_BIT_AUDIO_IN_CHANNELS3 20
+#define FLAG_BIT_AUDIO_IN_CHANNELS4 21
+#define FLAG_BIT_AUDIO_IN_CHANNELS5 22
 
-#define FLAG_BIT_AUDIO_OUT_CHANNELS0 22
-#define FLAG_BIT_AUDIO_OUT_CHANNELS1 23
-#define FLAG_BIT_AUDIO_OUT_CHANNELS2 24
-#define FLAG_BIT_AUDIO_OUT_CHANNELS3 25
-#define FLAG_BIT_AUDIO_OUT_CHANNELS4 26
-#define FLAG_BIT_AUDIO_OUT_CHANNELS5 27
+#define FLAG_BIT_AUDIO_OUT_CHANNELS0 23
+#define FLAG_BIT_AUDIO_OUT_CHANNELS1 24
+#define FLAG_BIT_AUDIO_OUT_CHANNELS2 25
+#define FLAG_BIT_AUDIO_OUT_CHANNELS3 26
+#define FLAG_BIT_AUDIO_OUT_CHANNELS4 27
+#define FLAG_BIT_AUDIO_OUT_CHANNELS5 28
         
 // Registers used throughout
 
@@ -425,11 +426,17 @@ DONE:
 
 .macro IF_HAS_ANALOG_DAC_JMP_TO
 .mparam DEST
+     QBBS DONE, reg_flags, FLAG_BIT_SKIP_SPI_DAC
+     QBA DEST
+DONE:
+.endm
+
+.macro IF_HAS_BELA_SPI_ADC_CS_JMP_TO
+.mparam DEST
      QBBS DONE, reg_flags, FLAG_BIT_BELA_MINI
      QBA DEST
 DONE:
 .endm
-#define IF_HAS_BELA_SPI_ADC_CS_JMP_TO IF_HAS_ANALOG_DAC_JMP_TO
 
 .macro IF_NOT_CTAG_JMP_TO
 .mparam DEST
@@ -837,15 +844,27 @@ QBA DALOOP
 // Complete DAC write with chip select
 .macro DAC_WRITE
 .mparam reg
-     QBBS SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_BELA_MINI
+     IF_HAS_ANALOG_DAC_JMP_TO DO_DAC_WRITE
+SKIP_DAC_WRITE:
+     // waste some time so we do not sample the ADC too fast.
+     // earlier we used to just do the SPI without the CS, but with
+     // (BEAST+BELAREVC), i.e.:24-bit (ADS816x) ADC transactions with 8+16 audio channels,
+     // we were getting McASP underruns. So here we still sleep to avoid sampling the ADC too fast,
+     // but not quite as long as a full DAC transaction, in order to save the
+     // precious time for those extra 8 bits elsewhere.
+     // The proper fix would be to just not busy wait the SPI transactions
+     MOV r27, 150
+LOOP:
+     SUB r27, r27, 1
+     QBNE LOOP, r27, 0
+     DAC_DISCARD_RX
+     QBA DONE
+DO_DAC_WRITE:
      DAC_CS_ASSERT
-SKIP_DAC_WRITE_1:	 
      DAC_TX reg
      DAC_WAIT_FOR_FINISH
-     QBBS SKIP_DAC_WRITE_2, reg_flags, FLAG_BIT_BELA_MINI
      DAC_CS_UNASSERT
-SKIP_DAC_WRITE_2:
-     DAC_DISCARD_RX
+DONE:
 .endm
 
 .macro DAC_WRITE_ALL_ZEROS
@@ -881,6 +900,7 @@ DAC_CHANNEL_REORDER_DONE:
 // Bring CS line low to write to ADC
 .macro ADC_CS_ASSERT
      IF_HAS_BELA_SPI_ADC_CS_JMP_TO BELA_CS
+BELA_MINI_CS:
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
      QBA DONE
@@ -1181,7 +1201,11 @@ PRU_NUMBER_CHECK_DONE:
      QBBC BELA_MINI_CHECK_DONE, r2, BOARD_FLAGS_BELA_MINI
      SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
 BELA_MINI_CHECK_DONE:
-	 // Find out whether we are on a multi-TLV Bela setup
+     // Find out whether we should skip the SPI DAC
+     QBBC SKIP_SPI_DAC_CHECK_DONE, r2, BOARD_FLAGS_SKIP_SPI_DAC
+     SET reg_flags, reg_flags, FLAG_BIT_SKIP_SPI_DAC
+SKIP_SPI_DAC_CHECK_DONE:
+     // Find out whether we are on a multi-TLV Bela setup
      QBBC BELA_MULTI_TLV_CHECK_DONE, r2, BOARD_FLAGS_BELA_GENERIC_TDM
      SET reg_flags, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 BELA_MULTI_TLV_CHECK_DONE: 
@@ -1307,7 +1331,10 @@ SPI_WAIT_RESET:
      // REG_ACCESS is in top 8 bits of a 24-bit word
      LSR r2, r2, 16
      QBEQ ADC_INIT_DONE, r2, 0x05
-
+#define AAA
+#ifdef AAA
+ DIE:
+    QBA DIE
      // Expected value not found: assume AD7699 and reinit SPI
 
      // Turn off ADC SPI channels
@@ -1323,6 +1350,7 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
 
      CLR reg_flags, reg_flags, FLAG_BIT_ADS816X
+#endif
 
 ADC_INIT_DONE:
 
@@ -2300,7 +2328,7 @@ ANALOG_CHANNEL_5_END:
      SUB r17, reg_num_channels, 1
      AND r16, r16, r17
      ADC_PREPARE_DATA r16
-     ADC_WRITE r16, r16
+     //ADC_WRITE r16, r16
      ADC_PROCESS_DATA r16
 
      LSL r16, r16, 16 // Move result to high word

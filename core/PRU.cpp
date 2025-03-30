@@ -190,8 +190,8 @@ static unsigned int* gDigitalPins = NULL;
 const unsigned int belaMiniLedBlue = 87;
 const unsigned int belaMiniLedRed = 89;
 const unsigned int belaMiniRevCAdcPin = 65;
-const unsigned int belaRevCLedRed = 81;
-const unsigned int belaRevCLedBlue = 79;
+const unsigned int belaRevCLedRed = 38;
+const unsigned int belaRevCLedBlue = 37;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
@@ -629,6 +629,8 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	}
 	if(Bela_hwContains(belaHw, BelaMiniCape))
 		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
+	//if(!Bela_hwContains(belaHw, BelaCape))
+		board_flags |= 1 << BOARD_FLAGS_SKIP_SPI_DAC;
 	pru_buffer_comm[PRU_COMM_BOARD_FLAGS] = board_flags;
     /* Set up flags */
 	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 0;
