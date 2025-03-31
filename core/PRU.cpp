@@ -50,14 +50,14 @@
 
 #ifdef BELA_USE_RTDM
 static char rtdm_driver[] = "/dev/rtdm/rtdm_pruss_irq_0";
-static int rtdm_fd_pru_to_arm = 0;
+static int rtdm_fd_pru_to_arm = -1;
 #if RTDM_PRUSS_IRQ_VERSION >= 1
 static const unsigned int pru_system_event_rtdm = PRU_SYSTEM_EVENT_RTDM;
 #define PRU_SYS_EV_MCASP_RX_INTR    54 // mcasp_r_intr_pend
 #define PRU_SYS_EV_MCASP_TX_INTR    55 // mcasp_x_intr_pend
 static const uint8_t pru_system_events_mcasp[] = {PRU_SYS_EV_MCASP_RX_INTR, PRU_SYS_EV_MCASP_TX_INTR};
 enum {mcasp_to_pru_channel = 1};
-static int rtdm_fd_mcasp_to_pru = 0;
+static int rtdm_fd_mcasp_to_pru = -1;
 #endif /* RTDM_PRUSS_IRQ_VERSION >= 1 */
 #endif
 
@@ -212,7 +212,6 @@ extern "C" {
 PRU::PRU(InternalBelaContext *input_context)
 : context(input_context),
   pru_number(1),
-  initialised(false),
   running(false),
   analog_enabled(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
@@ -227,9 +226,8 @@ PRU::PRU(InternalBelaContext *input_context)
 PRU::~PRU()
 {
 	if(running)
-		disable();
-	exitPRUSS();
-	delete pruMemory;
+		stop();
+	deinit();
 	if(gpio_enabled)
 		cleanupGPIO();
 	if(audio_expander_input_history != 0)
@@ -598,8 +596,6 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 			context->digital[n] = 0x0000ffff;
 		}
 	}
-
-	initialised = true;
 	return 0;
 }
 
@@ -1584,15 +1580,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	}
 
-#if defined(BELA_USE_RTDM)
-        if(rtdm_fd_pru_to_arm)
-                __wrap_close(rtdm_fd_pru_to_arm);
-#if RTDM_PRUSS_IRQ_VERSION >= 1
-        if(rtdm_fd_pru_to_arm)
-                __wrap_close(rtdm_fd_mcasp_to_pru);
-#endif /* RTDM_PRUSS_IRQ_VERSION */
-#endif /* BELA_USE_RTDM */
-
 	// Tell PRU to stop
 	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 1;
 	if(underrunLed.enabled())
@@ -1601,34 +1588,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	// Wait for the PRU to finish
 	task_sleep_ns(100000000);
 
-	// Clean up after ourselves
-	free(context->audioIn);
-	free(context->audioOut);
-
-	if(analog_enabled) {
-		free(context->analogIn);
-		free(context->analogOut);
-		free(last_analog_out_frame);
-		if(context->multiplexerAnalogIn != 0)
-			free(context->multiplexerAnalogIn);
-		if(audio_expander_input_history != 0) {
-			free(audio_expander_input_history);
-			audio_expander_input_history = 0;
-		}
-		if(audio_expander_output_history != 0) {
-			free(audio_expander_output_history);
-			audio_expander_output_history = 0;
-		}
-	}
-
-	if(digital_enabled) {
-		free(last_digital_buffer);
-	}
-
-	context->audioIn = context->audioOut = 0;
-	context->analogIn = context->analogOut = 0;
-	context->digital = 0;
-	context->multiplexerAnalogIn = 0;
+	return 0;
 }
 
 // Wait for an interrupt from the PRU indicate it is finished
@@ -1647,18 +1607,61 @@ void PRU::waitForFinish()
 }
 
 // Turn off the PRU when done
-void PRU::disable()
+void PRU::stop()
 {
 	/* Disable PRU and close memory mapping*/
 	pruManager->stop();
 	running = false;
+#if defined(BELA_USE_RTDM)
+        if(rtdm_fd_pru_to_arm >= 0)
+	{
+                __wrap_close(rtdm_fd_pru_to_arm);
+		rtdm_fd_pru_to_arm = -1;
+	}
+#if RTDM_PRUSS_IRQ_VERSION >= 1
+        if(rtdm_fd_mcasp_to_pru >= 0)
+	{
+                __wrap_close(rtdm_fd_mcasp_to_pru);
+		rtdm_fd_mcasp_to_pru = -1;
+	}
+#endif /* RTDM_PRUSS_IRQ_VERSION */
+#endif /* BELA_USE_RTDM */
 }
 
 // Exit the pru subsystem
-void PRU::exitPRUSS()
+void PRU::deinit()
 {
-	if(initialised)
-		delete pruManager;
-	initialised = false;
-}
+	// Clean up after ourselves
+	free(context->audioIn);
+	free(context->audioOut);
 
+	if(analog_enabled) {
+		free(context->analogIn);
+		free(context->analogOut);
+		free(last_analog_out_frame);
+		if(context->multiplexerAnalogIn != 0)
+			free(context->multiplexerAnalogIn);
+		if(audio_expander_input_history != 0) {
+			free(audio_expander_input_history);
+			audio_expander_input_history = 0;
+		}
+		if(audio_expander_output_history != 0) {
+			free(audio_expander_output_history);
+			audio_expander_output_history = 0;
+		}
+		analog_enabled = false;
+	}
+
+	if(digital_enabled) {
+		free(last_digital_buffer);
+		digital_enabled = false;
+	}
+
+	context->audioIn = context->audioOut = nullptr;
+	context->analogIn = context->analogOut = nullptr;
+	last_digital_buffer = nullptr;
+	context->digital = nullptr;
+	context->multiplexerAnalogIn = 0;
+	delete pruManager;
+	pruManager = nullptr;
+}

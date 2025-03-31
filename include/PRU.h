@@ -169,16 +169,16 @@ public:
 	int start(char * const filename, const McaspRegisters& mcaspRegisters);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
-	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData);
+	int loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData);
 
 	// Wait for an interrupt from the PRU indicate it is finished
 	void waitForFinish();
 
 	// Turn off the PRU when done
-	void disable();
+	void stop();
 
 	// Exit the whole PRU subsystem
-	void exitPRUSS();
+	void deinit();
 	PruManager *pruManager;
 
 private:
@@ -187,7 +187,6 @@ private:
 	InternalBelaContext *context;	// Overall settings
 
 	int pru_number;		// Which PRU we use
-	bool initialised;	// Whether the prussdrv system is initialised
 	bool running;		// Whether the PRU is running
 	bool analog_enabled;  // Whether SPI ADC and DAC are used
 	bool digital_enabled; // Whether digital is used
