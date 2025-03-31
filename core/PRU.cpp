@@ -98,7 +98,7 @@ extern int gRTAudioVerbose;
 class PruMemory
 {
 public:
-	PruMemory(int pruNumber, InternalBelaContext* context, PruManager& pruManager, size_t audioOutChannels)
+	PruMemory(int pruNumber, InternalBelaContext* context, PruManager& pruManager, size_t audioOutChannels, size_t analogOutChannels)
 	{
 		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
@@ -113,7 +113,7 @@ public:
 		if(context->analogFrames > 0)
 		{
 			pruDataRam = static_cast<char*>(pruManager.getOwnMemory());
-			analogOut.resize(context->analogOutChannels * context->analogFrames);
+			analogOut.resize(analogOutChannels * context->analogFrames);
 			analogIn.resize(context->analogInChannels * context->analogFrames);
 			pruAnalogOutStart[0] = pruDataRam + PRU_MEM_DAC_OFFSET;
 			pruAnalogOutStart[1] = pruDataRam + PRU_MEM_DAC_OFFSET + analogOut.size() * sizeof(analogOut[0]);
@@ -382,7 +382,9 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 		analog_out_is_audio = true;
 		context->audioOutChannels = 2;
 	}
+	context->analogOutChannels = 0; // TODO: only if has Bela Rev C cape with CTAG, though it should be handled elsewhere
 	pru_audio_out_channels = analog_out_is_audio ? context->audioOutChannels + context->analogOutChannels : context->audioOutChannels;
+	size_t pru_analog_out_channels = 0;// analog_out_is_audio ? 0 : context->analogOutChannels;
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(prepareGPIO(enableLed)) {
 		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
@@ -405,7 +407,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 #if ENABLE_PRU_RPROC == 1
 	pruManager = new PruManagerRprocMmap(pru_number, gRTAudioVerbose);
 #endif	// ENABLE_PRU_RPROC
-	pruMemory = new PruMemory(pru_number, context, *pruManager, pru_audio_out_channels);
+	pruMemory = new PruMemory(pru_number, context, *pruManager, pru_audio_out_channels, pru_analog_out_channels);
 
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
