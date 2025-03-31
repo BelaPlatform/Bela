@@ -1101,6 +1101,21 @@ POLL:
      QBEQ POLL, r28, 0
 .endm
 
+.macro MCASP_REG_SET_BIT_AND_POLL_TIMEOUT
+.mparam reg, mask, tmp, timeout_label
+     MOV r27, mask
+     LBBO r28, reg_mcasp_addr, reg, 4
+     OR r28, r28, r27
+     SBBO r28, reg_mcasp_addr, reg, 4
+     MOV tmp, 1000
+POLL:
+     SUB tmp, tmp, 1
+     QBEQ timeout_label, tmp, 0
+     LBBO r28, reg_mcasp_addr, reg, 4
+     AND r28, r28, r27
+     QBEQ POLL, r28, 0
+.endm
+
 // Multiplexer Capelet: Increment channel on muxes 0-3
 .macro MUX_INCREMENT_0_TO_3
      MOV r28, FLAG_MASK_MUX_CONFIG
@@ -1331,10 +1346,7 @@ SPI_WAIT_RESET:
      // REG_ACCESS is in top 8 bits of a 24-bit word
      LSR r2, r2, 16
      QBEQ ADC_INIT_DONE, r2, 0x05
-#define AAA
-#ifdef AAA
- DIE:
-    QBA DIE
+
      // Expected value not found: assume AD7699 and reinit SPI
 
      // Turn off ADC SPI channels
@@ -1350,7 +1362,6 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
 
      CLR reg_flags, reg_flags, FLAG_BIT_ADS816X
-#endif
 
 ADC_INIT_DONE:
 
@@ -1410,15 +1421,26 @@ CHANNEL_COUNT_OK:
     SET reg_flags, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
     MOV r2, 0
     SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
-	
+
+    QBA MCASP_INIT // on first run, skip turning off the clock.
+MCASP_ERROR_RECOVERY: // we come here if there are any issues while running:
+    // start by resetting the clock and perform the whol initialisation
+    // disable MCASP interface clock in PRCM
+    MOV r2, 0x00000
+    MOV r3, CLOCK_BASE + CLOCK_MCASP0
+    SBBO r2, r3, 0, 4
+    MOV r2, 100
+WAIT_FOR_CLOCK_OFF:
+    SUB r2, r2, 1
+    QBNE WAIT_FOR_CLOCK_OFF, r2, 0
+
+MCASP_INIT:
     // enable MCASP interface clock in PRCM
     MOV r2, 0x30002
     MOV r3, CLOCK_BASE + CLOCK_MCASP0
     SBBO r2, r3, 0, 4
 
     // Prepare McASP0 for audio
-MCASP_INIT:
-MCASP_ERROR_RECOVERY: // we also come back here if there are any issues while running
 
 // Comments on McASP initialisation below are from the AM335x TRM, TI SPRUH73H
 // 22.3.12.2 Transmit/Receive Section Initialization
@@ -1549,8 +1571,8 @@ MCASP_SRCTL_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 // (a) Take the respective internal high-frequency serial clock divider(s) out of
 // reset by setting the RHCLKRST bit for the receiver and/or the XHCLKRST bit for
 // the transmitter in GBLCTL. All other bits in GBLCTL should be held at 0.
-    MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 1)  // Set RHCLKRST
-    MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 9)  // Set XHCLKRST
+    MCASP_REG_SET_BIT_AND_POLL_TIMEOUT MCASP_GBLCTL, (1 << 1), r2, MCASP_ERROR_RECOVERY // Set RHCLKRST
+    MCASP_REG_SET_BIT_AND_POLL_TIMEOUT MCASP_GBLCTL, (1 << 9), r2, MCASP_ERROR_RECOVERY // Set XHCLKRST
 
 // The above write sequence may have temporarily changed the AHCLKX frequency
 // The codec's PLL (if any) needs time to settle or the sample rate will be
@@ -1562,8 +1584,8 @@ MCASP_INIT_WAIT:
      SUB r2, r2, 1
      QBNE MCASP_INIT_WAIT, r2, 0
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 0)  // Set RCLKRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 8)  // Set XCLKRST
+MCASP_REG_SET_BIT_AND_POLL_TIMEOUT MCASP_GBLCTL, (1 << 0), r2,  MCASP_ERROR_RECOVERY // Set RCLKRST
+MCASP_REG_SET_BIT_AND_POLL_TIMEOUT MCASP_GBLCTL, (1 << 8), r2, MCASP_ERROR_RECOVERY // Set XCLKRST
 
 // 5. Setup data acquisition as required:
 // (a) If DMA is used to service the McASP, set up data acquisition as desired
@@ -1672,8 +1694,8 @@ WRITE_FRAME_EMPTY_RX:
 // for the receiver and/or the XSMRST bit for the transmitter in GBLCTL. All other
 // bits in GBLCTL should be left at the previous state.
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 3)  // Set RSMRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 11) // Set XSMRST
+MCASP_REG_SET_BIT_AND_POLL_TIMEOUT MCASP_GBLCTL, (1 << 3), r2, MCASP_ERROR_RECOVERY  // Set RSMRST
+MCASP_REG_SET_BIT_AND_POLL_TIMEOUT MCASP_GBLCTL, (1 << 11), r2, MCASP_ERROR_RECOVERY // Set XSMRST
 
 // 9. Release frame sync generators from reset. Note that it is necessary to
 // release the internal frame sync generators from reset, even if an external
@@ -2328,7 +2350,7 @@ ANALOG_CHANNEL_5_END:
      SUB r17, reg_num_channels, 1
      AND r16, r16, r17
      ADC_PREPARE_DATA r16
-     //ADC_WRITE r16, r16
+     ADC_WRITE r16, r16
      ADC_PROCESS_DATA r16
 
      LSL r16, r16, 16 // Move result to high word
