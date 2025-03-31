@@ -915,9 +915,8 @@ static inline int16_t analogFloatToAudioRaw(float value)
 }
 
 // Main loop to read and write data from/to PRU
-void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData)
+int PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData)
 {
-
 	// these pointers will be constant throughout the lifetime of pruMemory
 	uint16_t* analogInRaw = pruMemory->getAnalogInPtr();
 	uint16_t* analogOutRaw = pruMemory->getAnalogOutPtr();
@@ -957,6 +956,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	int underrunLedCount = -1;
+	int interruptTimeoutCount = 0;
 	while(!Bela_stopRequested()) {
 
 #if defined BELA_USE_POLL || defined BELA_USE_BUSYWAIT
@@ -985,7 +985,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
                 }
 		if(ret < 0)
 		{
-			static int interruptTimeoutCount = 0;
 			++interruptTimeoutCount;
 			rt_fprintf(stderr, "PRU interrupt timeout, %d %d %s\n", ret, errno, strerror(errno));
 			if(interruptTimeoutCount >= 5)
