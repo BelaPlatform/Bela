@@ -108,10 +108,12 @@ function loop() {
 }
 function find_pid() {
     return __awaiter(this, void 0, void 0, function () {
-        var pids, pids_1, pids_1_1, pid, test_name, e_1_1, e_1, _a;
+        var pids, pids_1, pids_1_1, pid, test_name, e_1_1, e_2, e_1, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, pidtree(root_pid, { root: true })];
+                case 0:
+                    _b.trys.push([0, 10, , 11]);
+                    return [4 /*yield*/, pidtree(root_pid, { root: true })];
                 case 1:
                     pids = _b.sent();
                     _b.label = 2;
@@ -144,7 +146,12 @@ function find_pid() {
                     }
                     finally { if (e_1) throw e_1.error; }
                     return [7 /*endfinally*/];
-                case 9: return [2 /*return*/];
+                case 9: return [3 /*break*/, 11];
+                case 10:
+                    e_2 = _b.sent();
+                    console.log("pidtree failed (process died?)");
+                    return [3 /*break*/, 11];
+                case 11: return [2 /*return*/];
             }
         });
     });
