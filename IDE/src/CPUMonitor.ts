@@ -48,14 +48,19 @@ async function loop(){
 
 async function find_pid(){
 	// use pidtree to find all the child pids of the root process
-	let pids = await pidtree(root_pid, {root: true});
-	// look through the pids to see if any of them belong to a process with the right name
-	for (let pid of pids){
-		let test_name = (await name_from_pid(pid) as string).trim();
-		if (test_name === name){
-			main_pid = pid;
-			found_pid = true;
+	try {
+		let pids = await pidtree(root_pid, {root: true});
+		// look through the pids to see if any of them belong to a process with the right name
+		for (let pid of pids){
+			let test_name = (await name_from_pid(pid) as string).trim();
+			if (test_name === name){
+				main_pid = pid;
+				found_pid = true;
+			}
 		}
+	}
+	catch (e) {
+		console.log("pidtree failed (process died?)");
 	}
 }
 
