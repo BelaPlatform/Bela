@@ -23,7 +23,7 @@ namespace oscpkt{
 class OscSender{
 	public:
 		OscSender();
-		OscSender(int port, std::string ip_address=std::string("127.0.0.1"));
+		OscSender(int port, const std::string& ip_address = "127.0.0.1", int priority = 0);
 		~OscSender();
 		
         /**
@@ -37,7 +37,7 @@ class OscSender{
 		 * @param address the IP address OSC messages are sent to (defaults to 127.0.0.1)
 		 *
 		 */
-		void setup(int port, std::string ip_address=std::string("127.0.0.1"));
+		void setup(int port, const std::string& ip_address = "127.0.0.1", int priority = 0);
 		
 		/**
 		 * \brief Creates a new OSC message

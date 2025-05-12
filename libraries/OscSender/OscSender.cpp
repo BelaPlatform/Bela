@@ -9,8 +9,8 @@
 #define OSCSENDER_MAX_BYTES 65536
 
 OscSender::OscSender(){}
-OscSender::OscSender(int port, std::string ip_address){
-	setup(port, ip_address);
+OscSender::OscSender(int port, const std::string& ip_address, int priority){
+	setup(port, ip_address, priority);
 }
 OscSender::~OscSender(){}
 
@@ -18,7 +18,7 @@ void OscSender::doSendToSocket(const void* buf, size_t size) {
 	socket->send(buf, size);
 }
 
-void OscSender::setup(int port, std::string ip_address){
+void OscSender::setup(int port, const std::string& ip_address, int priority){
 
     pw = std::unique_ptr<oscpkt::PacketWriter>(new oscpkt::PacketWriter());
     msg = std::unique_ptr<oscpkt::Message>(new oscpkt::Message());
@@ -30,7 +30,7 @@ void OscSender::setup(int port, std::string ip_address){
 	send_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	send_task->create(std::string("OscSndrTsk_") + ip_address + std::to_string(port), [this](const void* buf, int size){
 		doSendToSocket(buf, size);
-	});
+	}, priority);
 }
 
 OscSender &OscSender::newMessage(std::string address){
