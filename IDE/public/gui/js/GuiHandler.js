@@ -220,26 +220,25 @@ export default class GuiHandler {
 		return scriptElement;
 	}
 
-	updateP5(p5) {
-		p5.prototype.loadScript = function (path) {
+        updateP5(p5) {
+                // Define your custom preload function on the p5 prototype
+                p5.prototype.loadScript = function (path) {
+                const ret = {};
+                var that = this;
+                // Assuming Bela.control.loadResource returns a Promise
+            let resource = Bela.control.loadResource(path)
+                .then(()=>{
+                    if (typeof that._decrementPreload === 'function') {
+                        that._decrementPreload();
+                    }
+                })
+                .catch(()=>{
+                });
 
-			const ret = {};
-			var that = this;
-			let resource = Bela.control.loadResource(path)
-			.then(()=>{
-				if (typeof that._decrementPreload === 'function') {
-					that._decrementPreload();
-				}
-			})
-			.catch(()=>{
-			});
+            return resource;
+        };
 
-			return resource;
-		};
-
-		p5.prototype.registerPreloadMethod('loadScript', p5.prototype);
-		p5 = new p5();
-		return p5;
-	}
-
+        p5 = new p5();
+        return p5;
+    }
 }
