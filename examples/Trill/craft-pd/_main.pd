@@ -1,10 +1,9 @@
-#N canvas 270 0 1003 778 10;
+#N canvas 270 32 1003 778 10;
 #X obj 35 351 list;
 #X obj 35 311 metro 200;
 #X obj 35 285 loadbang;
 #X text 105 311 Throttle printing;
-#X obj 243 287 unpack f f f f f f f f f f f f f f f f f f f f f f f
-f f f;
+#X obj 243 287 unpack f f f f f f f f f f f f f f f f f f f f f f f f f f;
 #X obj 257 549 playAudioFile~;
 #X obj 253 472 change;
 #X obj 253 507 route 1 0;
@@ -41,23 +40,18 @@ f f f;
 #X text 360 247 Which will be prepended with the sensor_id;
 #X text 517 128 [prescaler <sensor_id> <value> (between 1 and 8);
 #X text 516 149 [threshold <sensor_id> <value>(between 0 and 1.0);
-#X text 567 355 trigger sample playback and print all on the console.
-;
+#X text 567 355 trigger sample playback and print all on the console.;
 #X obj 243 248 route mycraft;
-#X text 20 613 device that was successfully initialised. The message
-;
-#X text 20 623 will contain: <sensor_id> <device> <mode> <address>
-;
+#X text 20 613 device that was successfully initialised. The message;
+#X text 20 623 will contain: <sensor_id> <device> <mode> <address>;
 #X text 19 602 bela_trillCreated will receive a message for each;
 #X obj 24 655 r bela_trillCreated;
 #X obj 24 684 print bela_trillCreated;
-#X text 84 16 >>> See full documentation in examples/Trill/general-pd
-<<<;
+#X text 84 16 >>> See full documentation in examples/Trill/general-pd <<<;
 #X text 516 108 We are also changing settings on initialisation:;
-#X msg 35 128 new mycraft 1 CRAFT \, prescaler mycraft 2 \, threshold
-mycraft 0.01;
-#X text 159 82 Message: [new <sensor_id> <bus> <device> <address=255>(
-;
+#X text 159 82 Message: [new <sensor_id> <bus> <device> <address=255>(;
+#X text 516 169 [scanSettings <sensor_id> <speed> <bits> (speed between 0 and 3 and bits between 9 and 16);
+#X msg 35 128 new mycraft 1 CRAFT \, prescaler mycraft 2 \, threshold mycraft 0.01 \, scanSettings mycraft 0 12;
 #X connect 0 0 30 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
@@ -97,9 +91,9 @@ mycraft 0.01;
 #X connect 27 0 25 0;
 #X connect 28 0 29 0;
 #X connect 29 0 24 3;
-#X connect 31 0 50 0;
+#X connect 31 0 52 0;
 #X connect 32 0 42 0;
 #X connect 42 0 4 0;
 #X connect 42 0 0 1;
 #X connect 46 0 47 0;
-#X connect 50 0 33 0;
+#X connect 52 0 33 0;
