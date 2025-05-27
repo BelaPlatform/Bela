@@ -723,11 +723,13 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 void setTrillPrintError()
 {
 	rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
-		"[mode <sensor_id> <prescaler_value>(\n"
+		"[mode <sensor_id> <mode>(\n"
 		" or\n"
 		"[threshold <sensor_id> <threshold_value>(\n"
 		" or\n"
-		"[prescaler <sensor_id> <prescaler_value>(\n");
+		"[prescaler <sensor_id> <prescaler_value>(\n"
+		" or\n"
+		"[scanSettings <sensor_id> <speed> <bits>(\n");
 }
 #endif // BELA_LIBPD_TRILL
 
@@ -1118,8 +1120,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 		if(argc < 1 || !libpd_is_symbol(argv))
 		{
-			rt_fprintf(stderr, "bela_setTrill: wrong format. It should be\n"
-					"[<command> <sensor_id> ...(");
+			setTrillPrintError();
 			return;
 		}
 		const char* sensorId = libpd_get_symbol(argv);
@@ -1136,10 +1137,8 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 		if(0 == strcmp(symbol, "mode"))
 		{
-			if(argc < 2
-				|| !libpd_is_symbol(argv)
-				|| !libpd_is_symbol(argv + 1)
-			) {
+			if(argc < 2 || !libpd_is_symbol(argv + 1))
+			{
 				setTrillPrintError();
 				return;
 			}
@@ -1147,16 +1146,20 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			Trill::Mode mode = Trill::getModeFromName(modeString);
 			gTouchSensors[idx].second->setMode(mode);
 		}
-		if(
-			0 == strcmp(symbol, "threshold")
-			|| 0 == strcmp(symbol, "prescaler")
-		)
+		if(0 == strcmp(symbol, "scanSettings"))
 		{
-			if(
-				argc < 2
-				|| !libpd_is_symbol(argv)
-				|| !libpd_is_float(argv + 1)
-			  ) {
+			if(argc < 3 || !libpd_is_float(argv + 1) || !libpd_is_float(argv + 2))
+			{
+				setTrillPrintError();
+				return;
+			}
+			gTouchSensors[idx].second->setScanSettings(libpd_get_float(argv + 1), libpd_get_float(argv + 2));
+			return;
+		}
+		if(0 == strcmp(symbol, "threshold") || 0 == strcmp(symbol, "prescaler"))
+		{
+			if(argc < 2 || !libpd_is_float(argv + 1))
+			{
 				setTrillPrintError();
 				return;
 			}
