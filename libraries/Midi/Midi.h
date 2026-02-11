@@ -100,7 +100,7 @@ private:
 protected:
 	midi_byte_t _statusByte;
 	midi_byte_t _dataBytes[maxDataBytes]; // where 2 is the maximum number of data bytes for a channel message
-	MidiMessageType _type;
+	MidiMessageType _type = kmmNoteOff;
 	midi_byte_t _channel;
 };
 /*
