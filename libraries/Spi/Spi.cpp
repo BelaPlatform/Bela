@@ -75,7 +75,7 @@ int Spi::setup (const Spi::Settings& settings)
 	transaction.tx_nbits = 0;
 	transaction.rx_nbits = 0;
 	transaction.delay_usecs = delay;
-	transaction.cs_change = true; //deselect device before starting the next transfer
+	transaction.cs_change = false;
 	// .tx_buf, .rx_buf, numBytes Set in transfer()
 	// .speed_hz Set in setSpeed()
 	// .bits_per_word Set in setNumBits()
