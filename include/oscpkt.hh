@@ -25,7 +25,7 @@
     - oscpkt::PacketReader  : read the bundles/messages embedded in an OSC packet
     - oscpkt::PacketWriter  : write bundles/messages into an OSC packet
 
-  And optionaly:
+  And optionally:
     - oscpkt::UdpSocket     : read/write OSC packets over UDP.
 
   @example: oscpkt_demo.cc

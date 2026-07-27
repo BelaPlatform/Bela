@@ -464,7 +464,7 @@ typedef struct {
 
 	/// Whether to begin with the speakers muted
 	int beginMuted;
-	/// Level for the audio DAC output. DEPRECATED: ues lineOutGains
+	/// Level for the audio DAC output. DEPRECATED: use lineOutGains
 	float dacLevel;
 	/// Level for the audio ADC input. DEPRECATED: use audioInputGains
 	float adcLevel;
@@ -513,7 +513,7 @@ typedef struct {
 	//// \brief The requested stack size for the audio thread. Defaults
 	// to 128KiB
 	unsigned int audioThreadStackSize;
-	//// \brief The requested stack size for each AuxilaryTask. Defaults
+	//// \brief The requested stack size for each AuxiliaryTask. Defaults
 	// to 128KiB
 	unsigned int auxiliaryTaskStackSize;
 
@@ -530,7 +530,7 @@ typedef struct {
 	/// Pointer to an optional function to be called when the audio thread is done.
 	/// This function is called from the audio thread itself just before it returns.
 	void (*audioThreadDone)(BelaContext*, void*);
-	/// A codec-specific intialisation parameter
+	/// A codec-specific initialisation parameter
 	char* codecMode;
 	/// audio input gains
 	struct BelaChannelGainArray audioInputGains;
@@ -562,7 +562,7 @@ typedef void* AuxiliaryTask;	// Opaque data type to keep track of aux tasks
 
 /** \ingroup render
  *
- * Flag that indicates whether the audio thread shuold stop. Threads can poll
+ * Flag that indicates whether the audio thread should stop. Threads can poll
  * this variable to indicate when
  * they should stop. Additionally, a program can set this to \c true
  * to indicate that audio processing should terminate. Calling
@@ -690,7 +690,7 @@ void Bela_defaultSettings(BelaInitSettings *settings);
  * \brief Initialise the data structure containing settings for Bela.
  *
  * This function fwill be called by Bela_defaultSettings() after the settings have been
- * initialied. It has weak linking so the user is free - but not forced to - define it.
+ * initialized. It has weak linking so the user is free - but not forced to - define it.
  * It can be used to override some of the default settings if the user code does not have 
  * access to the call to Bela_defaultSettings() (e.g.: because it is handled by the backend
  * code).
@@ -859,7 +859,7 @@ int Bela_stopRequested();
  * When setting the internal CPU monitoring via Bela_cpuMonitoringInit(), the
  * user can compute the CPU time of the entire audio thread. The core
  * code internally calls Bela_cpuTic() and Bela_cpuToc() and the user can get
- * the CPU usage details vai Bela_cpuMonitoringGet();
+ * the CPU usage details via Bela_cpuMonitoringGet();
  *
  * @note These measurements are based on reading a monotonic clock and therefore they
  * include not only actual CPU cycles consumed by the current thread but also
