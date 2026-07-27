@@ -12,7 +12,7 @@ public:
 	~BelaContextSplitter(){cleanup();}
 	/**
 	 * Initialize the object. The #in and #out parameters will determine
-	 * the frames ratio between the input context (passsed through push(),
+	 * the frames ratio between the input context (passed through push(),
 	 * and of which a template has to be provided here as #context), and
 	 * the output contexts (retrieved via pop())
 	 * The output contexts will have a frame count that is #out/#in the

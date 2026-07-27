@@ -24,7 +24,7 @@ class DataBuffer
 			}
 			else
 			{
-				printf("Type unkown. Creating byte (char) buffer.\n");
+				printf("Type unknown. Creating byte (char) buffer.\n");
 			}
 		}
 	public:

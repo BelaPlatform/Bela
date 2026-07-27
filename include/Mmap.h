@@ -39,7 +39,7 @@ public:
 	}
 
 	/**
-	 * Write the content of @p value into the memory at @p offser.
+	 * Write the content of @p value into the memory at @p offset.
 	 */
 	template<typename T>
 	static int write(off_t offset, const T& value)
